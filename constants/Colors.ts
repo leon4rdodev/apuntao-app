@@ -1,26 +1,80 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Paleta de colores rediseñada para una mayor consistencia y escalabilidad.
+ * Los nombres son semánticos, describiendo el "propósito" del color, no el color en sí.
  */
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+// --- COLORES BASE ---
+// Definimos los colores principales una sola vez para reutilizarlos.
+const BRAND_PRIMARY = '#16a34a'; // Verde principal de la marca (Apunta'o)
 
+// --- PALETA EXPORTADA ---
 export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-  },
+    light: {
+        // --- Marca (Brand) ---
+        primary: BRAND_PRIMARY,
+        primaryLight: '#dcfce7', // Un tono más claro para fondos o highlights sutiles
+        primaryDark: '#14532d', // Un tono más oscuro para estados "presionado" (pressed)
+
+        // --- Texto ---
+        text: '#111827', // Texto principal (casi negro, un gris muy oscuro)
+        textSecondary: '#6b7280', // Texto secundario, para subtítulos o placeholders (gris medio)
+        textOnPrimary: '#ffffff', // Texto que va sobre un fondo de color primario (blanco)
+
+        // --- Fondos y Superficies (La clave de la consistencia) ---
+        background: '#f8fafc',
+        green: '#f0fdf4', // Fondo principal de la app (un gris muy claro, casi blanco)
+        surface: '#ffffff', // Fondo para elementos que "flotan" sobre el fondo (tarjetas, modales)
+
+        // --- Bordes y Separadores ---
+        border: '#e5e7eb', // Borde estándar para inputs, tarjetas, etc.
+        borderSubtle: '#f3f4f6', // Un borde aún más sutil para separadores de listas
+
+        // --- Semánticos (Estados) ---
+        success: '#22c55e',
+        successLight: '#dcfce7',
+        error: '#ef4444',
+        errorLight: '#fee2e2',
+        warning: '#f59e0b',
+        warningLight: '#fef3c7',
+        info: '#3b82f6',
+
+        // --- Compatibilidad con Expo Router Tabs ---
+        tint: BRAND_PRIMARY,
+        tabIconDefault: '#6b7280', // Coincide con textSecondary
+        tabIconSelected: BRAND_PRIMARY,
+    },
+    dark: {
+        // --- Marca (Brand) ---
+        primary: '#22c55e', // Un verde un poco más brillante para mejor contraste en modo oscuro
+        primaryLight: '#166534',
+        primaryDark: '#15803d',
+
+        // --- Texto ---
+        text: '#f9fafb', // Texto principal (casi blanco)
+        textSecondary: '#9ca3af', // Texto secundario (gris claro)
+        textOnPrimary: '#ffffff', // Texto sobre el primario sigue siendo blanco
+
+        // --- Fondos y Superficies ---
+        background: '#111827', // Fondo principal de la app (un gris azulado oscuro)
+        surface: '#1f2937', // Fondo para tarjetas, un poco más claro que el fondo principal para crear profundidad
+
+        // --- Bordes y Separadores ---
+        border: '#374151', // Borde estándar
+        borderSubtle: '#262f3d', // Borde sutil
+
+        // --- Semánticos (Estados) ---
+        success: '#4ade80',
+        successLight: '#14532d',
+        error: '#f87171',
+        errorLight: '#450a0a',
+        warning: '#facc15',
+        warningLight: '#78350f',
+        info: '#60a5fa',
+
+        // --- Compatibilidad con Expo Router Tabs ---
+        tint: '#22c55e',
+        tabIconDefault: '#9ca3af', // Coincide con textSecondary
+        tabIconSelected: '#22c55e',
+        green: '#f0fdf4',
+    },
 };
