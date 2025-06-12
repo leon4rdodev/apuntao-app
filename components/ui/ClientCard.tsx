@@ -58,7 +58,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ item, onPress }) => {
                             <Text style={[styles.badgeText, { color }]}>{text}</Text>
                         </View>
                     </View>
-                    <Text style={styles.debt}>Debe: ${formattedDebt}</Text>
+                    <Text style={[styles.debt, {color: theme.textSecondary}]}>Debe: ${formattedDebt}</Text>
                 </View>
 
                 <View style={styles.arrow}>
@@ -110,7 +110,6 @@ const styles = StyleSheet.create({
     debt: {
         fontSize: 16,
         fontWeight: '500',
-        color: '#4B5563',
     },
     arrow: {
         marginLeft: 12,

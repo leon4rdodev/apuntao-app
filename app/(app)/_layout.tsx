@@ -1,24 +1,23 @@
-import { Tabs } from 'expo-router';
-
-import CustomTabBar from '@/components/tabbar/MyCustomTabBar';
 import { ClientProvider } from '@/context/ClientContext';
+import { Stack } from 'expo-router';
 
-export default function TabLayout() {
+export default function AppStackLayout() {
     return (
         <ClientProvider>
-            <Tabs
-                screenOptions={{
-                    headerShown: false,
-                    tabBarShowLabel: false,
-                    
-                }}
-                tabBar={(props) => <CustomTabBar {...props} />}
-            >
-                <Tabs.Screen name="index" />
-                <Tabs.Screen name="agregar" />
-                <Tabs.Screen name="cuenta" />
-                <Tabs.Screen name="ayuda" />
-            </Tabs>
+            <Stack>
+                {/* La pantalla principal son las pestañas. Ocultamos su header */}
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+
+                {/* Aquí definimos la pantalla de detalle del cliente */}
+                <Stack.Screen
+                    name="clients/[id]"
+                    options={{
+                        // El título y otras opciones se pueden configurar aquí
+                        // o directamente en el archivo de la pantalla como ya lo hicimos.
+                        headerBackTitle: 'Atrás', // Opcional: para iOS
+                    }}
+                />
+            </Stack>
         </ClientProvider>
     );
 }

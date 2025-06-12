@@ -1,54 +1,104 @@
 'use client';
 
 /**
- * Componente reutilizable de input de búsqueda
- * @module components/inputs/CustomInput
+ * Componente de input reutilizable y altamente personalizable para la aplicación.
+ * Puede ser usado como un simple campo de texto, un input de búsqueda, o un
+ * campo de formulario con íconos y prefijos.
+ * @module components/input/CustomInput
  */
 
 import { Colors } from '@/constants/Colors';
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { TextInput as RNTextInput, StyleSheet, TextInput, TextInputProps, useColorScheme } from 'react-native';
+import {
+    TextInput as RNTextInput,
+    StyleSheet,
+    Text,
+    TextInputProps,
+    useColorScheme,
+    View,
+} from 'react-native';
 
 /**
- * Props para el componente CustomInput
- * @param value - Texto actual del input
- * @param onChangeText - Función que maneja el cambio de texto
- * @param placeholder - Texto del placeholder del input (opcional)
- * @param inputRef - Referencia al TextInput (opcional)
+ * Props para el componente CustomInput, extendiendo las de TextInput.
  */
 interface CustomInputProps extends TextInputProps {
-    onChangeText: (text: string) => void;
-    placeholder?: string;
+    // No se necesita onChangeText aquí, ya que viene de TextInputProps
+
+    /** Un ícono de Ionicons para mostrar a la izquierda del input. */
+    icon?: keyof typeof Ionicons.glyphMap;
+
+    /** Un texto de prefijo (ej. '$') para mostrar antes del texto del input. */
+    prefix?: string;
+
+    /** Referencia al componente TextInput subyacente. */
     inputRef?: React.RefObject<RNTextInput>;
+
+    /** Estilo para el contenedor principal del input. */
+    containerStyle?: View['props']['style'];
 }
 
 export default function CustomInput({
-    onChangeText,
-    placeholder = 'Buscar cliente...',
+    icon,
+    prefix,
     inputRef,
+    style, // Extraemos el 'style' de las props para aplicarlo al TextInput
+    containerStyle,
     ...rest
 }: CustomInputProps) {
     const theme = Colors[useColorScheme() || 'light'];
+
     return (
-        <TextInput
-            ref={inputRef}
-            style={[styles.input, { color: theme.text, backgroundColor: theme.inputBackground }]}
-            placeholder={placeholder}
-            placeholderTextColor="#9CA3AF"
-            onChangeText={onChangeText}
-            {...rest}
-        />
+        <View
+            style={[
+                styles.container,
+                { backgroundColor: theme.inputBackground, borderColor: theme.border },
+                containerStyle, // Estilo del contenedor principal
+            ]}
+        >
+            {/* Renderiza el ícono si se proporciona */}
+            {icon && (
+                <Ionicons name={icon} size={20} color={theme.textSecondary} style={styles.icon} />
+            )}
+
+            {/* Renderiza el prefijo si se proporciona */}
+            {prefix && (
+                <Text style={[styles.prefix, { color: theme.textSecondary }]}>{prefix}</Text>
+            )}
+
+            {/* El componente de TextInput real */}
+            <RNTextInput
+                ref={inputRef}
+                style={[styles.input, { color: theme.text }, style]} // Combina estilos base y personalizados
+                placeholderTextColor={theme.textSecondary}
+                {...rest}
+            />
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
+    container: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderRadius: 12,
+        borderWidth: 1.5,
+        height: 52,
+        paddingHorizontal: 12,
+        width: '100%',
+    },
+    icon: {
+        marginRight: 8,
+    },
+    prefix: {
+        fontSize: 16,
+        fontWeight: '600',
+        marginRight: 4,
+    },
     input: {
         flex: 1,
+        height: '100%',
         fontSize: 16,
-        paddingVertical: 12,
-        height: 48,
-        paddingHorizontal: 18,
-        borderRadius: 24,
-        fontWeight: '500',
+        paddingVertical: 0, // Importante para centrado vertical en Android
     },
 });

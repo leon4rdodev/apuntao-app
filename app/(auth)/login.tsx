@@ -63,7 +63,7 @@ export default function Login() {
                         },
                     })
                 );
-                router.replace('/(app)');
+                router.replace('/(app)/(tabs)');
             } else {
                 console.error('Sign-in failed: Response was not successful.');
             }

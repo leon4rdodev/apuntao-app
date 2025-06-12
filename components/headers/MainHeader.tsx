@@ -1,24 +1,24 @@
 import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import CustomInput from '../input/CustomInput';
 
 interface MainHeaderProps {
     setSearchQuery: (query: string) => void;
+    setIsSearchOpen: (isOpen: boolean) => void;
+    isSearchOpen: boolean;
 }
-
 /**
  * Componente de encabezado principal que muestra un ícono de búsqueda y el título de la aplicación.
  * @component
  * @param {MainHeaderProps} props - Props que contiene la función a ejecutar al presionar el botón de búsqueda.
  */
-export default function MainHeader({ setSearchQuery }: MainHeaderProps) {
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
+export default function MainHeader({ setSearchQuery, setIsSearchOpen, isSearchOpen }: MainHeaderProps) {
 
     const onSearchPress = () => {
         setIsSearchOpen(!isSearchOpen);
+
         if (isSearchOpen) {
             setSearchQuery(''); // Limpiar la búsqueda al abrir
         }
@@ -39,7 +39,7 @@ export default function MainHeader({ setSearchQuery }: MainHeaderProps) {
         >
             {isSearchOpen ? (
                 <View style={[styles.headerContent, { marginRight: 18 }]}>
-                    <CustomInput onChangeText={setSearchQuery} autoFocus />
+                    <CustomInput onChangeText={setSearchQuery} autoFocus placeholder='Buscar cliente...'/>
                 </View>
             ) : (
                 <View style={styles.headerContent}>

@@ -15,83 +15,90 @@ interface ClientsSummaryProps {
 }
 
 /**
- * Componente de resumen de clientes
+ * Componente de tarjeta de resumen que muestra la deuda total y el número de clientes.
+ * Presenta la información clave de un vistazo en un formato de tarjeta limpio y moderno.
  * @param totalDebt - Deuda total
  * @param clientsWithDebt - Número de clientes con deuda
  */
 export default function ClientsSummary({ totalDebt, clientsWithDebt }: ClientsSummaryProps) {
     const formattedDebt = formatMoney(totalDebt);
-    
-    const colorScheme = useColorScheme();
-    const theme = Colors[colorScheme || 'light'];
+    const colorScheme = useColorScheme() || 'light';
+    const theme = Colors[colorScheme];
 
     return (
-        <>
-            <View style={(styles.card, { backgroundColor: theme.surface })}>
+        <View style={[styles.container]}>
+            <View
+                style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}
+            >
+                {/* Sección Principal: Monto de la Deuda */}
                 <View style={styles.amountSection}>
-                    <Text style={(styles.amount, { color: theme.text })}>RD$ {formattedDebt}</Text>
-                    <Text style={(styles.subtitle, { color: theme.textSecondary })}>
+                    <Text style={[styles.amount, { color: theme.text }]}>RD$ {formattedDebt}</Text>
+                    <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
                         Deuda total
                     </Text>
                 </View>
 
-                <View style={styles.statsSection}>
-                    <Ionicons name="people" size={16} color={theme.primary} />
-                    <Text style={styles.statsText}>
-                        {clientsWithDebt} {clientsWithDebt === 1 ? 'cliente' : 'clientes'}
+                {/* Sección Secundaria: Estadísticas de Clientes */}
+                <View style={[styles.statsSection, { borderTopColor: theme.borderSubtle }]}>
+                    <Ionicons name="people-outline" size={20} color={theme.textSecondary} />
+                    <Text style={[styles.statsText, { color: theme.text }]}>
+                        {clientsWithDebt}{' '}
+                        {clientsWithDebt === 1 ? 'cliente debe' : 'clientes deben'}
                     </Text>
                 </View>
             </View>
 
-            {totalDebt > 0 && (
-                <Text style={(styles.separatorText, { color: theme.textSecondary })}>
-                    Clientes con más deuda
+            {/* Separador de texto (si hay clientes) */}
+            {clientsWithDebt > 0 && (
+                <Text style={[styles.separatorText, { color: theme.textSecondary }]}>
+                    {totalDebt > 0 ? 'Clientes con más deuda' : 'Clientes sin deuda'}
                 </Text>
             )}
-        </>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
+    container: {
+        marginBottom: 8, // Espacio antes de que empiece la lista de clientes
+    },
     card: {
         borderRadius: 16,
-        padding: 20,
-        marginBottom: 16,
         borderWidth: 1,
-        borderColor: '#F3F4F6',
+        overflow: 'hidden', // Asegura que los bordes redondeados se apliquen a los hijos
+        marginBottom: 24,
     },
     amountSection: {
         alignItems: 'center',
-        marginBottom: 16,
+        paddingVertical: 24,
     },
     amount: {
-        fontSize: 32,
-        fontWeight: '700',
-      
+        fontSize: 40, // <-- AUMENTADO: Texto de la deuda más grande
+        fontWeight: 'bold',
         marginBottom: 4,
     },
     subtitle: {
         fontSize: 14,
         fontWeight: '500',
+        textTransform: 'uppercase', // Estilo adicional para diferenciar
+        letterSpacing: 0.5,
     },
     statsSection: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingTop: 12,
+        paddingVertical: 14,
         borderTopWidth: 1,
-        borderTopColor: '#f3f4f6',
     },
     statsText: {
         fontSize: 16,
-        color: '#374151',
         marginLeft: 8,
         fontWeight: '500',
     },
     separatorText: {
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: '600',
         textAlign: 'center',
-        marginBottom: 16,
+        marginBottom: 8,
     },
 });
