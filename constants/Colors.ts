@@ -42,25 +42,28 @@ export const Colors = {
         tint: BRAND_PRIMARY,
         tabIconDefault: '#6b7280', // Coincide con textSecondary
         tabIconSelected: BRAND_PRIMARY,
+
+        // Input
+        inputBackground: '#F3F4F6', // Fondo de inputs, un gris claro
     },
     dark: {
         // --- Marca (Brand) ---
-        primary: '#22c55e', // Un verde un poco más brillante para mejor contraste en modo oscuro
+        primary: '#22c55e',
         primaryLight: '#166534',
         primaryDark: '#15803d',
 
         // --- Texto ---
-        text: '#f9fafb', // Texto principal (casi blanco)
-        textSecondary: '#9ca3af', // Texto secundario (gris claro)
-        textOnPrimary: '#ffffff', // Texto sobre el primario sigue siendo blanco
+        text: '#f1f1f1',
+        textSecondary: '#aaaaaa',
+        textOnPrimary: '#ffffff',
 
         // --- Fondos y Superficies ---
-        background: '#111827', // Fondo principal de la app (un gris azulado oscuro)
-        surface: '#1f2937', // Fondo para tarjetas, un poco más claro que el fondo principal para crear profundidad
+        background: '#0f0f0f', // Similar al fondo de YouTube
+        surface: '#1e1e1e', // Para tarjetas u otros elementos elevados
 
         // --- Bordes y Separadores ---
-        border: '#374151', // Borde estándar
-        borderSubtle: '#262f3d', // Borde sutil
+        border: '#3d3d3d',
+        borderSubtle: '#2a2a2a',
 
         // --- Semánticos (Estados) ---
         success: '#4ade80',
@@ -73,8 +76,11 @@ export const Colors = {
 
         // --- Compatibilidad con Expo Router Tabs ---
         tint: '#22c55e',
-        tabIconDefault: '#9ca3af', // Coincide con textSecondary
+        tabIconDefault: '#aaaaaa',
         tabIconSelected: '#22c55e',
         green: '#f0fdf4',
+
+        // Input
+        inputBackground: '#2c2c2c', // Fondo de inputs similar a YouTube en dark mode
     },
 };

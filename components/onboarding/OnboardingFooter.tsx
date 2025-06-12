@@ -1,0 +1,84 @@
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import CustomButton from '../ui/CustomButton';
+import PaginationDot from './ui/PaginationDot';
+
+interface Props {
+    step: number;
+    totalSteps: number;
+    theme: any;
+    onNext: () => void;
+    onLogin: () => void;
+}
+
+export default function OnboardingFooter({ step, totalSteps, theme, onNext, onLogin }: Props) {
+    const isLast = step === totalSteps - 1;
+
+    return (
+        <SafeAreaView
+            style={[
+                styles.container,
+                { backgroundColor: theme.surface, borderTopColor: theme.border },
+            ]}
+        >
+            <View style={styles.dotsContainer}>
+                {Array.from({ length: totalSteps }).map((_, index) => (
+                    <PaginationDot key={index} index={index} activeIndex={step} theme={theme} />
+                ))}
+            </View>
+
+            <CustomButton
+                title={isLast ? 'EMPEZAR PRUEBA GRATIS' : 'Siguiente'}
+                onPress={isLast ? onLogin : onNext}
+                iconName={isLast ? 'rocket' : 'arrow-forward'}
+                iconPosition={isLast ? 'left' : 'right'}
+                buttonStyle={[styles.primaryButton, { backgroundColor: theme.primary }]}
+                textStyle={{ color: theme.textOnPrimary }}
+                iconColor={theme.textOnPrimary}
+            />
+
+            <CustomButton
+                title="¿Ya tienes una cuenta?"
+                onPress={onLogin}
+                activeOpacity={0.7}
+                buttonStyle={styles.secondaryButton}
+                textStyle={[styles.secondaryButtonText, { color: theme.primary }]}
+            />
+        </SafeAreaView>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        paddingHorizontal: 24,
+        borderTopWidth: 1,
+    },
+    dotsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    primaryButton: {
+        paddingVertical: 18,
+        borderRadius: 12,
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 10,
+    },
+    buttonText: {
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    secondaryButton: {
+        paddingVertical: 12,
+        marginTop: 12,
+        alignItems: 'center',
+    },
+    secondaryButtonText: {
+        fontSize: 15,
+        fontWeight: '600',
+    },
+});

@@ -1,6 +1,8 @@
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
+
+
 import { StyleSheet, Text, useColorScheme, View } from 'react-native';
 import Animated, {
     Easing,
@@ -9,10 +11,23 @@ import Animated, {
     withTiming,
 } from 'react-native-reanimated';
 
-import { Entypo, Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { AntDesign, Entypo, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import * as Font from 'expo-font';
 
+import { STORAGE_KEYS } from '@/constants';
 import { Colors } from '@/constants/Colors';
+import { existsInStorage } from '@/utils/storage';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+
+GoogleSignin.configure({
+    webClientId: '678047446795-nju0hhb4hq4pabp3q893fp7fh2i2gi98.apps.googleusercontent.com',
+    scopes: ['https://www.googleapis.com/auth/drive.file', 'openid', 'profile', 'email'],
+    offlineAccess: true,
+    profileImageSize: 150,
+    forceCodeForRefreshToken: true,
+});
+
+let isLoguedIn: boolean 
 
 export default function SplashScreen() {
     const router = useRouter();
@@ -22,22 +37,29 @@ export default function SplashScreen() {
 
     useEffect(() => {
         const prepare = async () => {
-            // Pre-cargar íconos (y otras fuentes si lo necesitas)
             await Font.loadAsync({
                 ...Ionicons.font,
                 ...MaterialIcons.font,
                 ...Entypo.font,
+                ...AntDesign.font,
             });
 
-            // Inicia la animación
+
+            await existsInStorage(STORAGE_KEYS.AUTH_DATA).then((data) => {
+                isLoguedIn = data ? true : false;
+            });
+            
             progress.value = withTiming(1, {
                 duration: 5000,
                 easing: Easing.out(Easing.cubic),
             });
 
-            // Redirección una vez completada la animación
             setTimeout(() => {
-                router.replace('/(auth)');
+                if (isLoguedIn) {
+                    router.replace('/(app)');
+                } else {
+                    router.replace('/(auth)/onboarding');
+                }
             }, 5000);
         };
 

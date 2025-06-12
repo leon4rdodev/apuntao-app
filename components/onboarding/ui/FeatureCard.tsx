@@ -1,31 +1,28 @@
+import { Colors } from '@/constants/Colors';
+import { Entypo, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons, MaterialIcons, Entypo } from '@expo/vector-icons';
+import { StyleSheet, Text, useColorScheme, View } from 'react-native';
 
-// --- INTERFACES y TIPOS ---
-// Exportamos la interfaz 'Feature' para que otros componentes (como la pantalla de Onboarding)
-// sepan qué forma deben tener los datos que le pasan a esta tarjeta.
 export interface Feature {
     icon: string;
     iconLib: typeof Ionicons | typeof MaterialIcons | typeof Entypo;
     text: string;
 }
 
-// Definimos las props que el componente FeatureCard necesita recibir.
 interface FeatureCardProps {
     feature: Feature;
-    theme: {
-        surface: string;
-        background: string;
-        border: string;
-        primary: string;
-        text: string;
-    };
 }
 
-// --- COMPONENTE ---
-const FeatureCard: React.FC<FeatureCardProps> = ({ feature, theme }) => {
+/**
+ * Componente que muestra una tarjeta con un ícono y un texto descriptivo,
+ * representando una característica o funcionalidad.
+ *
+ * @component
+ * @param {FeatureCardProps} props - Props que contiene la información de la característica.
+ */
+export default function FeatureCard({ feature }: FeatureCardProps) {
     const FeatureIcon = feature.iconLib;
+    const theme = Colors[useColorScheme() || 'light'];
 
     return (
         <View
@@ -41,7 +38,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ feature, theme }) => {
                 style={[
                     styles.iconContainer,
                     {
-                        backgroundColor: theme.background,
+                        backgroundColor: theme.surface,
                         borderColor: theme.border,
                     },
                 ]}
@@ -51,10 +48,8 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ feature, theme }) => {
             <Text style={[styles.featureText, { color: theme.text }]}>{feature.text}</Text>
         </View>
     );
-};
+}
 
-// --- ESTILOS ---
-// Estos estilos son específicos y encapsulados para este componente.
 const styles = StyleSheet.create({
     card: {
         flexDirection: 'row',
@@ -82,5 +77,3 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
 });
-
-export default FeatureCard;
