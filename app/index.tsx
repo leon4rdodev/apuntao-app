@@ -1,6 +1,8 @@
-import Constants from 'expo-constants';
+// apuntao-app-master/app/index.tsx
+
+import { AntDesign, Entypo, FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
+import * as Font from 'expo-font';
 import { useRouter } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, useColorScheme, View } from 'react-native';
 import Animated, {
@@ -10,38 +12,32 @@ import Animated, {
     withTiming,
 } from 'react-native-reanimated';
 
-import { AntDesign, Entypo, FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
-import * as Font from 'expo-font';
-
-import { STORAGE_KEYS } from '@/constants';
 import { Colors } from '@/constants/Colors';
-import { existsInStorage } from '@/utils/storage';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-
-let isLoguedIn: boolean = false;
-
-// Configura Google Sign-In
-GoogleSignin.configure({
-    webClientId: '678047446795-nju0hhb4hq4pabp3q893fp7fh2i2gi98.apps.googleusercontent.com',
-    scopes: ['https://www.googleapis.com/auth/drive.file', 'openid', 'profile', 'email'],
-    offlineAccess: true,
-    profileImageSize: 150,
-    forceCodeForRefreshToken: true,
-});
-
-// 👇 Previene que el splash nativo desaparezca automáticamente
-SplashScreen.preventAutoHideAsync();
+import { useSessionStore } from '@/store/sessionStore';
 
 export default function SplashScreenComponent() {
     const router = useRouter();
-    const progress = useSharedValue(0);
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
 
+    // Obtenemos el estado de inicialización del store
+    const { isInitialized, user } = useSessionStore();
+
+    // Animación para la barra de progreso
+    const progress = useSharedValue(0);
+
     useEffect(() => {
-        const prepare = async () => {
+        let isMounted = true;
+
+        async function prepareAndNavigate() {
             try {
-                // Cargar fuentes e íconos
+                // Iniciar animación de carga
+                progress.value = withTiming(0.5, {
+                    duration: 2000,
+                    easing: Easing.out(Easing.cubic),
+                });
+
+                // Cargar fuentes e íconos (esto puede ser rápido si ya están en caché)
                 await Font.loadAsync({
                     ...Ionicons.font,
                     ...MaterialIcons.font,
@@ -50,61 +46,58 @@ export default function SplashScreenComponent() {
                     ...FontAwesome.font,
                 });
 
-                // Verifica si hay sesión
-                const authData = await existsInStorage(STORAGE_KEYS.AUTH_DATA);
-                isLoguedIn = !!authData;
+                // La inicialización de la sesión se dispara en el layout raíz,
+                // aquí solo esperamos a que termine.
 
-                // Inicia animación de progreso
-                progress.value = withTiming(1, {
-                    duration: 5000,
-                    easing: Easing.out(Easing.cubic),
-                });
+                // Simular que la carga restante toma tiempo
+                progress.value = withTiming(1, { duration: 1500, easing: Easing.linear });
 
-                // Espera a que termine la animación
-                setTimeout(async () => {
-                    await SplashScreen.hideAsync(); // Oculta el splash nativo
-                    if (isLoguedIn) {
+                // Esperar un poco para que la animación se vea bien
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+
+                if (!isMounted) return;
+
+                // Cuando la sesión esté inicializada, decidimos a dónde ir
+                if (isInitialized) {
+                    if (user) {
                         router.replace('/(app)/(tabs)');
                     } else {
                         router.replace('/(auth)/onboarding');
                     }
-                }, 5000);
-            } catch (error) {
-                console.warn('Error preparando splash:', error);
+                }
+            } catch (e) {
+                console.warn('Error durante la preparación de la app:', e);
+                // En caso de error, podríamos redirigir a una pantalla de error o al login.
+                if (isMounted) {
+                    router.replace('/(auth)/login');
+                }
             }
-        };
+        }
 
-        prepare();
-    }, [progress, router]);
+        if (isInitialized) {
+            prepareAndNavigate();
+        }
+
+        return () => {
+            isMounted = false;
+        };
+    }, [isInitialized, progress, router, user]); // El efecto se dispara cuando isInitialized cambia a true
 
     const animatedStyle = useAnimatedStyle(() => ({
         width: `${progress.value * 100}%`,
         backgroundColor: theme.primary,
     }));
 
-    const containerAnimatedStyle = useAnimatedStyle(() => ({
-        opacity: withTiming(1, {
-            duration: 1000,
-            easing: Easing.out(Easing.quad),
-        }),
-        transform: [
-            {
-                scale: withTiming(1, {
-                    duration: 1000,
-                    easing: Easing.out(Easing.back(1.2)),
-                }),
-            },
-        ],
-    }));
-
     return (
         <View style={[styles.container, { backgroundColor: theme.background }]}>
-            <Animated.View style={[styles.content, containerAnimatedStyle]}>
-                <Text style={[styles.text, { color: theme.text }]}>Cargando...</Text>
-                <View style={[styles.progressBarBackground, { backgroundColor: theme.border }]}>
-                    <Animated.View style={[styles.progressBar, animatedStyle]} />
-                </View>
-            </Animated.View>
+            <Ionicons name="book-outline" size={60} color={theme.primary} />
+            <Text style={[styles.text, { color: theme.text }]}>Apunta&apos;o</Text>
+            <View style={[styles.progressBarBackground, { backgroundColor: theme.border }]}>
+                <Animated.View style={[styles.progressBar, animatedStyle]} />
+            </View>
+            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+                Cargando tu negocio...
+            </Text>
         </View>
     );
 }
@@ -112,27 +105,26 @@ export default function SplashScreenComponent() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        paddingTop: Constants.statusBarHeight,
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    content: {
-        alignItems: 'center',
-        justifyContent: 'center',
+        gap: 20,
     },
     text: {
-        fontSize: 18,
-        marginBottom: 20,
-        fontWeight: '600',
+        fontSize: 32,
+        fontWeight: '700',
+    },
+    subtitle: {
+        fontSize: 16,
+        fontWeight: '500',
     },
     progressBarBackground: {
-        width: 250,
-        height: 10,
-        borderRadius: 5,
+        width: 200,
+        height: 8,
+        borderRadius: 4,
         overflow: 'hidden',
     },
     progressBar: {
-        height: 10,
-        borderRadius: 5,
+        height: '100%',
+        borderRadius: 4,
     },
 });

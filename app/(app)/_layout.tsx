@@ -4,7 +4,9 @@ import { Stack } from 'expo-router';
 export default function AppStackLayout() {
     return (
         <ClientProvider>
-            <Stack>
+            <Stack
+                screenOptions={{animation: 'fade_from_bottom'}}
+            >
                 {/* La pantalla principal son las pestañas. Ocultamos su header */}
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 

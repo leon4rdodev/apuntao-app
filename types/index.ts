@@ -12,6 +12,8 @@ export interface UserInfo {
     photo: string | null;
 }
 
+// Estructura de lo que guardaremos en AsyncStorage
+
 /** Configuración para la autenticación con Google. */
 export interface GoogleAuthConfig {
     /** ID del cliente de Google para la aplicación. */
@@ -120,6 +122,7 @@ export interface ClientContextType {
      * @param transactionId - El ID de la transacción a eliminar.
      */
     deleteTransaction: (clientId: string, transactionId: string) => void;
+    clearClients: () => void;
 }
 
 // --- Tipos de Navegación y UI ---
