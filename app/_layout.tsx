@@ -2,70 +2,54 @@
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useSessionStore } from '@/store/sessionStore';
-import { Ionicons } from '@expo/vector-icons';
+import { AntDesign, Entypo, FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import * as Font from 'expo-font';
-import { Slot, useRouter, useSegments } from 'expo-router';
+import { Slot } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import 'react-native-reanimated';
 
-// ✅ Configurar Google Sign-In una sola vez
+// ✅ Configurar Google Sign-In (perfecto aquí)
 GoogleSignin.configure({
     webClientId: process.env.EXPO_PUBLIC_WEB_CLIENT_ID,
     scopes: ['https://www.googleapis.com/auth/drive.file', 'openid', 'profile', 'email'],
     offlineAccess: true,
 });
 
+// ✅ Evita que el splash nativo se oculte hasta que se lo indiquemos
 SplashScreen.preventAutoHideAsync();
-
-function RootLayoutNav() {
-    const segments = useSegments();
-    const router = useRouter();
-    const { user, isInitialized } = useSessionStore();
-
-    useEffect(() => {
-        const prepare = async () => {
-            await Font.loadAsync({
-                ...Ionicons.font,
-            });
-
-            if (!isInitialized) return;
-
-            const inApp = segments[0] === '(app)';
-
-            if (user && !inApp) {
-                router.replace('/(app)/(tabs)');
-            } else if (!user && inApp) {
-                router.replace('/(auth)/login');
-            }
-
-            await SplashScreen.hideAsync();
-        };
-
-        prepare();
-    }, [user, segments, isInitialized, router]);
-
-    return <Slot />;
-}
 
 export default function RootLayout() {
     const colorScheme = useColorScheme();
+
+    async function prepare() {
+        await Font.loadAsync({
+            ...Ionicons.font,
+            ...MaterialIcons.font,
+            ...Entypo.font,
+            ...AntDesign.font,
+            ...FontAwesome.font,
+        });
+    }
+
     const initializeSession = useSessionStore((state) => state.initializeSession);
 
     useEffect(() => {
+        prepare();
         initializeSession();
     }, [initializeSession]);
 
     const backgroundColor = colorScheme === 'dark' ? '#0f0f0f' : '#f8fafc';
 
     return (
+        // El layout solo provee el contexto del tema y renderiza la ruta activa.
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
             <View style={{ flex: 1, backgroundColor }}>
-                <RootLayoutNav />
+                <Slot />
                 <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
             </View>
         </ThemeProvider>

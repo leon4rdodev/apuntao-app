@@ -66,19 +66,27 @@ export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         loadClientsFromStorage();
     }, []);
 
-    // ✅ --- NUEVA FUNCIÓN ---
-    /**
-     * Resetea el estado de los clientes a un array vacío.
-     * Se utiliza durante el cierre de sesión para limpiar los datos del usuario anterior.
-     */
     const clearClients = useCallback(() => {
         setClients([]);
-        // Opcional: también limpiar el almacenamiento inmediatamente
         saveToStorage(STORAGE_KEYS.CLIENTS, []);
     }, []);
 
     const restoreClients = useCallback((newClientsData: Client[] | string) => {
-        // ... (lógica de restoreClients sin cambios)
+        try {
+            let parsedClients: any[] =
+                typeof newClientsData === 'string'
+                    ? JSON.parse(newClientsData).data || JSON.parse(newClientsData)
+                    : newClientsData;
+
+            if (!Array.isArray(parsedClients)) {
+                throw new Error('Los datos proporcionados para restaurar no son un array válido.');
+            }
+            const normalizedClients = parsedClients.map(normalizeClient);
+            setClients(normalizedClients);
+        } catch (error) {
+            console.error('Error al restaurar clientes desde backup:', error);
+            handleError(error, 'ClientContext.restoreClients');
+        }
     }, []);
 
     const addClient = useCallback(
@@ -107,12 +115,59 @@ export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         setClients((prevClients) => prevClients.filter((c) => c.id !== clientId));
     }, []);
 
+    // ✅ --- IMPLEMENTACIÓN COMPLETA Y CORREGIDA ---
     const addTransaction = useCallback((clientId: string, transaction: Omit<Transaction, 'id'>) => {
-        // ... (lógica de addTransaction sin cambios)
+        setClients((prevClients) =>
+            prevClients.map((client) => {
+                if (client.id !== clientId) return client;
+
+                const debtChange =
+                    transaction.type === 'Deuda' ? transaction.amount : -transaction.amount;
+                const newDebt = Math.max(0, client.debt + debtChange);
+                const newTransactionWithId: Transaction = {
+                    ...transaction,
+                    id: `txn_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                };
+
+                return {
+                    ...client,
+                    debt: newDebt,
+                    // Mantenemos tu lógica de optimización, pero asegurando que la nueva transacción se añade.
+                    transactions:
+                        newDebt === 0 ? [] : [newTransactionWithId, ...client.transactions],
+                    lastModified: Date.now(),
+                };
+            })
+        );
     }, []);
 
+    // ✅ --- IMPLEMENTACIÓN COMPLETA Y CORREGIDA ---
     const deleteTransaction = useCallback((clientId: string, transactionId: string) => {
-        // ... (lógica de deleteTransaction sin cambios)
+        setClients((prevClients) =>
+            prevClients.map((client) => {
+                if (client.id !== clientId) return client;
+
+                const transactionToDelete = client.transactions.find((t) => t.id === transactionId);
+                if (!transactionToDelete) return client;
+
+                const debtChange =
+                    transactionToDelete.type === 'Deuda'
+                        ? -transactionToDelete.amount
+                        : transactionToDelete.amount;
+                const newDebt = Math.max(0, client.debt + debtChange);
+                const updatedTransactions = client.transactions.filter(
+                    (t) => t.id !== transactionId
+                );
+
+                return {
+                    ...client,
+                    debt: newDebt,
+                    // Mantenemos tu lógica de optimización.
+                    transactions: newDebt === 0 ? [] : updatedTransactions,
+                    lastModified: Date.now(),
+                };
+            })
+        );
     }, []);
 
     const contextValue = useMemo<ClientContextType>(
@@ -126,7 +181,7 @@ export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             deleteTransaction,
             restoreClients,
             getClientById: (id: string) => clients.find((c) => c.id === id),
-            clearClients, // ✅ Exponer la nueva función en el contexto
+            clearClients,
         }),
         [
             clients,
@@ -137,7 +192,7 @@ export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             addTransaction,
             deleteTransaction,
             restoreClients,
-            clearClients, // ✅ Añadir a las dependencias
+            clearClients,
         ]
     );
 

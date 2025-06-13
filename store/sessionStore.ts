@@ -7,6 +7,7 @@ import { STORAGE_KEYS } from '@/constants';
 import { fetchSubscriptionStatus } from '@/services/apiService';
 import { StoredAuthData, UserInfo } from '@/types';
 import { getFromStorage, removeFromStorage, saveToStorage } from '@/utils/storage';
+import { router } from 'expo-router';
 
 // --- Definición de Tipos para el Estado ---
 
@@ -120,6 +121,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
                 subscription: { status: 'unknown', plan: 'none' },
                 isInitialized: true,
             });
+            router.replace('/(auth)/login');
         }
     },
 }));

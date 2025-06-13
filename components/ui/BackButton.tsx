@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 8, // Espacio entre el icono y el texto
         borderRadius: 30,
-        elevation: 5,
+        elevation: 2,
         opacity: 0.99, // Añade un poco de opacidad para el efecto hover
     },
 });

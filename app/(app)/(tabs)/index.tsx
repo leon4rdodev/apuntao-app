@@ -1,5 +1,5 @@
+import ClientCard from '@/components/cards/ClientCard';
 import MainHeader from '@/components/headers/MainHeader';
-import ClientCard from '@/components/ui/ClientCard';
 import ClientsSummary from '@/components/ui/ClientsSummary';
 import { Colors } from '@/constants/Colors';
 import { useClientContext } from '@/context/ClientContext';
