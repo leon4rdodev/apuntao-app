@@ -1,7 +1,7 @@
 import CustomButton from '@/components/ui/CustomButton';
 import CustomText from '@/components/ui/CustomText';
 import { Colors } from '@/constants/Colors';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
     BackHandler,
     Keyboard,
@@ -27,24 +27,26 @@ const ActionModal = ({
     title,
     children,
     actions,
+    paddingBottom,
 }: {
     isVisible: boolean;
     onClose: () => void;
     title: string;
     children: React.ReactNode;
     actions: any[];
+    paddingBottom: number;
 }) => {
     const theme = Colors[useColorScheme() || 'light'];
     const translateY = useSharedValue(500); // Empieza fuera de pantalla
 
     // Función para cerrar el modal
-    const closeModal = () => {
+    const closeModal = useCallback(() => {
         translateY.value = withTiming(500, { duration: 200 }, (finished) => {
             if (finished) {
                 runOnJS(onClose)();
             }
         });
-    };
+    }, [translateY, onClose]);
 
     // Animación de entrada/salida
     useEffect(() => {
@@ -78,7 +80,7 @@ const ActionModal = ({
 
         const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
         return () => backHandler.remove();
-    }, [isVisible]);
+    }, [closeModal, isVisible]);
 
     // Listener para cerrar modal cuando se cierre el teclado
     useEffect(() => {
@@ -91,7 +93,7 @@ const ActionModal = ({
         return () => {
             keyboardDidHideListener?.remove();
         };
-    }, [isVisible]);
+    }, [closeModal, isVisible]);
 
     // No renderizar si no es visible (ya lo animamos para salir)
     if (!isVisible) return null;
@@ -106,6 +108,11 @@ const ActionModal = ({
                 />
             </TouchableWithoutFeedback>
 
+            {/* 
+              --- CORRECCIÓN ---
+              No se usa KeyboardAvoidingView. En su lugar, el ScrollView se encarga del ajuste
+              y se añade un padding inferior grande para asegurar que el contenido sea desplazable.
+            */}
             <View style={styles.modalPositioner} pointerEvents="box-none">
                 <Animated.View
                     style={[styles.modalContent, { backgroundColor: theme.surface }, animatedStyle]}
@@ -114,7 +121,7 @@ const ActionModal = ({
                     <ScrollView
                         showsVerticalScrollIndicator={false}
                         bounces={false}
-                        contentContainerStyle={styles.scrollContentContainer}
+                        contentContainerStyle={[styles.scrollContentContainer, {paddingBottom: paddingBottom}]}
                         keyboardShouldPersistTaps="always"
                     >
                         <View style={styles.handleContainer}>
@@ -166,7 +173,8 @@ const styles = StyleSheet.create({
     },
     scrollContentContainer: {
         paddingHorizontal: 24,
-        paddingBottom: 370,
+        // Este padding grande asegura que haya suficiente espacio para hacer scroll
+        // y ver los botones incluso cuando el teclado está abierto en Android.
     },
     handleContainer: {
         alignItems: 'center',

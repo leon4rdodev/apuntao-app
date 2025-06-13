@@ -189,7 +189,7 @@ export default function ClientDetailScreen() {
                         >
                             Nombre del Cliente
                         </CustomText>
-                        <CustomInput value={editName} onChangeText={setEditName} />
+                        <CustomInput value={editName} onChangeText={setEditName}  autoFocus/>
                     </View>
                     <View style={styles.inputGroup}>
                         <CustomText
@@ -204,6 +204,7 @@ export default function ClientDetailScreen() {
                             value={editPhone}
                             onChangeText={(text) => setEditPhone(formatPhoneNumber(text))}
                             keyboardType="phone-pad"
+                            placeholder='000-000-0000'
                             maxLength={12}
                         />
                     </View>
@@ -254,6 +255,7 @@ export default function ClientDetailScreen() {
                         onPress: handleUpdateClient,
                         buttonStyle: { backgroundColor: theme.primary, flex: 1 },
                         textStyle: { color: theme.textOnPrimary },
+
                     },
                 ],
             };
@@ -304,6 +306,7 @@ export default function ClientDetailScreen() {
                 />
             </ScrollView>
             <ActionModal
+                paddingBottom={modalConfig?.type === 'transaction' ? 350 : 430 }
                 isVisible={!!modalConfig}
                 onClose={() => setModalConfig(null)}
                 title={title}

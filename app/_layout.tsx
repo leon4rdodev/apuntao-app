@@ -1,6 +1,7 @@
 // apuntao-app-master/app/_layout.tsx
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { AuthService } from '@/services/authService';
 import { useSessionStore } from '@/store/sessionStore';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
@@ -11,9 +12,12 @@ import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import 'react-native-reanimated';
 
+const webClientId = process.env.EXPO_PUBLIC_WEB_CLIENT_ID;
+const androidClientId = process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID;
+
 // ✅ Configurar Google Sign-In (perfecto aquí)
 GoogleSignin.configure({
-    webClientId: process.env.EXPO_PUBLIC_WEB_CLIENT_ID,
+    webClientId,
     scopes: ['https://www.googleapis.com/auth/drive.file', 'openid', 'profile', 'email'],
     offlineAccess: true,
 });
@@ -24,6 +28,10 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
     const colorScheme = useColorScheme();
     const initializeSession = useSessionStore((state) => state.initializeSession);
+    
+    if (androidClientId) {
+        AuthService.checkAndRefreshToken(androidClientId);
+    }
 
     useEffect(() => {
         initializeSession();
@@ -32,7 +40,6 @@ export default function RootLayout() {
     const backgroundColor = colorScheme === 'dark' ? '#0f0f0f' : '#f8fafc';
 
     return (
-        // El layout solo provee el contexto del tema y renderiza la ruta activa.
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
             <View style={{ flex: 1, backgroundColor }}>
                 <Slot />
