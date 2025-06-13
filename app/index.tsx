@@ -56,7 +56,7 @@ export default function SplashScreen() {
 
             setTimeout(() => {
                 if (isLoguedIn) {
-                    router.replace('/(app)');
+                    router.replace('/(app)/(tabs)');
                 } else {
                     router.replace('/(auth)/onboarding');
                 }

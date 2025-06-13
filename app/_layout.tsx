@@ -16,7 +16,7 @@ export default function RootLayout() {
         return null;
     }
 
-    const backgroundColor = colorScheme === 'dark' ? '#111827' : '#f8fafc';
+    const backgroundColor = colorScheme === 'dark' ? '#0f0f0f' : '#f8fafc';
 
     return (
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
