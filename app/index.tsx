@@ -1,20 +1,21 @@
 // apuntao-app-master/app/index.tsx
 
-
+import { AntDesign, Entypo, FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
+import * as Font from 'expo-font';
 import { useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen'; // Importa SplashScreen aquí
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, useColorScheme, View } from 'react-native';
 import Animated, {
     Easing,
+    runOnJS,
     useAnimatedStyle,
     useSharedValue,
-    withTiming,
+    withTiming
 } from 'react-native-reanimated';
 
 import { Colors } from '@/constants/Colors';
 import { useSessionStore } from '@/store/sessionStore';
-import { Ionicons } from '@expo/vector-icons';
 
 export default function CustomSplashScreen() {
     const router = useRouter();
@@ -23,6 +24,31 @@ export default function CustomSplashScreen() {
 
     const { isInitialized, user } = useSessionStore();
     const progress = useSharedValue(0);
+    const opacity = useSharedValue(1);
+
+    const navigateToApp = () => {
+        if (user) {
+            router.replace('/(app)/(tabs)');
+        } else {
+            router.replace('/(auth)/onboarding');
+        }
+    };
+
+    const navigateWithFadeOut = () => {
+        // Animación de fade out antes de navegar
+        opacity.value = withTiming(
+            0,
+            {
+                duration: 500,
+                easing: Easing.out(Easing.cubic),
+            },
+            (finished) => {
+                if (finished) {
+                    runOnJS(navigateToApp)();
+                }
+            }
+        );
+    };
 
     useEffect(() => {
         // Solo procederemos cuando el store de sesión haya terminado de inicializarse.
@@ -44,7 +70,13 @@ export default function CustomSplashScreen() {
                 });
 
                 // 3. Cargar fuentes e íconos.
-                
+                await Font.loadAsync({
+                    ...Ionicons.font,
+                    ...MaterialIcons.font,
+                    ...Entypo.font,
+                    ...AntDesign.font,
+                    ...FontAwesome.font,
+                });
 
                 // 4. Completar la animación y esperar para una mejor UX.
                 progress.value = withTiming(1, { duration: 1500, easing: Easing.linear });
@@ -52,18 +84,24 @@ export default function CustomSplashScreen() {
 
                 if (!isMounted) return;
 
-                // 5. Redirigir según el estado del usuario.
-                // Esta pantalla será reemplazada, por lo que no se podrá volver a ella.
-                if (user) {
-                    router.replace('/(app)/(tabs)');
-                } else {
-                    router.replace('/(auth)/onboarding');
-                }
+                // 5. Navegar con animación suave
+                navigateWithFadeOut();
             } catch (e) {
                 console.warn('Error durante la preparación de la app:', e);
                 if (isMounted) {
-                    // En caso de error, es seguro redirigir al login.
-                    router.replace('/(auth)/login');
+                    // En caso de error, también navegamos con animación
+                    opacity.value = withTiming(
+                        0,
+                        {
+                            duration: 500,
+                            easing: Easing.out(Easing.cubic),
+                        },
+                        (finished) => {
+                            if (finished) {
+                                runOnJS(() => router.replace('/(auth)/login'))();
+                            }
+                        }
+                    );
                 }
             }
         }
@@ -81,10 +119,20 @@ export default function CustomSplashScreen() {
         backgroundColor: theme.primary,
     }));
 
+    const containerAnimatedStyle = useAnimatedStyle(() => ({
+        opacity: opacity.value,
+    }));
+
     // Mientras isInitialized es false, se sigue mostrando el splash nativo.
     // Cuando se vuelve true, este componente se renderiza y toma el control.
     return (
-        <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <Animated.View
+            style={[
+                styles.container,
+                { backgroundColor: theme.background },
+                containerAnimatedStyle,
+            ]}
+        >
             <Ionicons name="book-outline" size={60} color={theme.primary} />
             <Text style={[styles.text, { color: theme.text }]}>Apunta&apos;o</Text>
             <View style={[styles.progressBarBackground, { backgroundColor: theme.border }]}>
@@ -93,7 +141,7 @@ export default function CustomSplashScreen() {
             <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
                 Cargando tu negocio...
             </Text>
-        </View>
+        </Animated.View>
     );
 }
 

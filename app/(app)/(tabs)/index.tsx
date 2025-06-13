@@ -6,14 +6,14 @@ import { useClientContext } from '@/context/ClientContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { FlatList, StyleSheet, Text, useColorScheme, View } from 'react-native';
 
 export default function Index() {
     const theme = Colors[useColorScheme() || 'light'];
     const router = useRouter();
 
     // 1. Obtener datos y estado de carga del contexto
-    const { clients, isLoading } = useClientContext();
+    const { clients } = useClientContext();
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -50,16 +50,6 @@ export default function Index() {
     const handleClientPress = (clientId: string) => {
         router.push(`/(app)/clients/${clientId}`);
     };
-
-    // Muestra un indicador de carga mientras los datos se recuperan por primera vez
-    if (isLoading) {
-        return (
-            <View style={[styles.container, styles.center, { backgroundColor: theme.background }]}>
-                <ActivityIndicator size="large" color={theme.primary} />
-                <Text style={{ color: theme.text, marginTop: 10 }}>Cargando datos...</Text>
-            </View>
-        );
-    }
 
     // Componente para mostrar cuando la lista está vacía
     const renderEmptyListComponent = () => (

@@ -2,10 +2,8 @@
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useSessionStore } from '@/store/sessionStore';
-import { AntDesign, Entypo, FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import * as Font from 'expo-font';
 import { Slot } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -25,21 +23,9 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
     const colorScheme = useColorScheme();
-
-    async function prepare() {
-        await Font.loadAsync({
-            ...Ionicons.font,
-            ...MaterialIcons.font,
-            ...Entypo.font,
-            ...AntDesign.font,
-            ...FontAwesome.font,
-        });
-    }
-
     const initializeSession = useSessionStore((state) => state.initializeSession);
 
     useEffect(() => {
-        prepare();
         initializeSession();
     }, [initializeSession]);
 
