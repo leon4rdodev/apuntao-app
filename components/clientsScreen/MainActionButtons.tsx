@@ -1,0 +1,46 @@
+import { Colors } from '@/constants/Colors';
+import React from 'react';
+import { StyleSheet, View, useColorScheme } from 'react-native';
+import CustomButton from '../ui/CustomButton';
+
+/**
+ * @component MainActionButtons
+ * @description Contiene los botones de acción principales para añadir o pagar deudas.
+ */
+const MainActionButtons = ({ onPay, onAddDebt }: { onPay: () => void; onAddDebt: () => void }) => {
+    const theme = Colors[useColorScheme() || 'light'];
+    return (
+        <View style={styles.actionsContainer}>
+            <CustomButton
+                title="Añadir Pago"
+                onPress={onPay}
+                iconName="arrow-down-circle-outline"
+                buttonStyle={[styles.mainActionButton, { backgroundColor: theme.successLight }]}
+                textStyle={{ color: theme.success }}
+                iconColor={theme.success}
+            />
+            <CustomButton
+                title="Añadir Deuda"
+                onPress={onAddDebt}
+                iconName="arrow-up-circle-outline"
+                buttonStyle={[styles.mainActionButton, { backgroundColor: theme.errorLight, }]}
+                textStyle={{ color: theme.error }}
+                iconColor={theme.error}
+            />
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    actionsContainer: {
+        flexDirection: 'column',
+        gap: 16,
+        marginBottom: 18,
+    },
+    mainActionButton: {
+        flex: 1,
+        paddingVertical: 24,
+    },
+});
+
+export default MainActionButtons;

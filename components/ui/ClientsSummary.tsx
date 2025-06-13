@@ -40,7 +40,7 @@ export default function ClientsSummary({ totalDebt, clientsWithDebt }: ClientsSu
 
                 {/* Sección Secundaria: Estadísticas de Clientes */}
                 <View style={[styles.statsSection, { borderTopColor: theme.borderSubtle }]}>
-                    <Ionicons name="people-outline" size={20} color={theme.textSecondary} />
+                    <Ionicons name="people-outline" size={20} color={theme.primary} />
                     <Text style={[styles.statsText, { color: theme.text }]}>
                         {clientsWithDebt}{' '}
                         {clientsWithDebt === 1 ? 'cliente debe' : 'clientes deben'}
