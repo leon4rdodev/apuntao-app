@@ -26,7 +26,7 @@ export default function ClientsSummary({ totalDebt, clientsWithDebt }: ClientsSu
     const theme = Colors[colorScheme];
 
     return (
-        <View style={[styles.container]}>
+        <View>
             <View
                 style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}
             >
@@ -59,14 +59,11 @@ export default function ClientsSummary({ totalDebt, clientsWithDebt }: ClientsSu
 }
 
 const styles = StyleSheet.create({
-    container: {
-        marginBottom: 8, // Espacio antes de que empiece la lista de clientes
-    },
     card: {
         borderRadius: 16,
         borderWidth: 1,
         overflow: 'hidden', // Asegura que los bordes redondeados se apliquen a los hijos
-        marginBottom: 24,
+        marginBottom: 18,
     },
     amountSection: {
         alignItems: 'center',

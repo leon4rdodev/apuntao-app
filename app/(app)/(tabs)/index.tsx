@@ -84,6 +84,7 @@ export default function Index() {
                 data={displayedClients}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
                 ListHeaderComponent={
                     !isSearchOpen ? (
                         <ClientsSummary
@@ -111,8 +112,7 @@ const styles = StyleSheet.create({
     },
     listContent: {
         paddingHorizontal: 18,
-        paddingBottom: 24,
-        paddingTop: 18,
+        paddingVertical: 18,
     },
     emptyContainer: {
         flex: 1,

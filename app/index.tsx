@@ -1,8 +1,7 @@
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
-
-
 import { StyleSheet, Text, useColorScheme, View } from 'react-native';
 import Animated, {
     Easing,
@@ -11,7 +10,7 @@ import Animated, {
     withTiming,
 } from 'react-native-reanimated';
 
-import { AntDesign, Entypo, Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { AntDesign, Entypo, FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import * as Font from 'expo-font';
 
 import { STORAGE_KEYS } from '@/constants';
@@ -19,6 +18,9 @@ import { Colors } from '@/constants/Colors';
 import { existsInStorage } from '@/utils/storage';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
+let isLoguedIn: boolean = false;
+
+// Configura Google Sign-In
 GoogleSignin.configure({
     webClientId: '678047446795-nju0hhb4hq4pabp3q893fp7fh2i2gi98.apps.googleusercontent.com',
     scopes: ['https://www.googleapis.com/auth/drive.file', 'openid', 'profile', 'email'],
@@ -27,9 +29,10 @@ GoogleSignin.configure({
     forceCodeForRefreshToken: true,
 });
 
-let isLoguedIn: boolean 
+// 👇 Previene que el splash nativo desaparezca automáticamente
+SplashScreen.preventAutoHideAsync();
 
-export default function SplashScreen() {
+export default function SplashScreenComponent() {
     const router = useRouter();
     const progress = useSharedValue(0);
     const colorScheme = useColorScheme();
@@ -37,30 +40,38 @@ export default function SplashScreen() {
 
     useEffect(() => {
         const prepare = async () => {
-            await Font.loadAsync({
-                ...Ionicons.font,
-                ...MaterialIcons.font,
-                ...Entypo.font,
-                ...AntDesign.font,
-            });
+            try {
+                // Cargar fuentes e íconos
+                await Font.loadAsync({
+                    ...Ionicons.font,
+                    ...MaterialIcons.font,
+                    ...Entypo.font,
+                    ...AntDesign.font,
+                    ...FontAwesome.font,
+                });
 
+                // Verifica si hay sesión
+                const authData = await existsInStorage(STORAGE_KEYS.AUTH_DATA);
+                isLoguedIn = !!authData;
 
-            await existsInStorage(STORAGE_KEYS.AUTH_DATA).then((data) => {
-                isLoguedIn = data ? true : false;
-            });
-            
-            progress.value = withTiming(1, {
-                duration: 5000,
-                easing: Easing.out(Easing.cubic),
-            });
+                // Inicia animación de progreso
+                progress.value = withTiming(1, {
+                    duration: 5000,
+                    easing: Easing.out(Easing.cubic),
+                });
 
-            setTimeout(() => {
-                if (isLoguedIn) {
-                    router.replace('/(app)/(tabs)');
-                } else {
-                    router.replace('/(auth)/onboarding');
-                }
-            }, 5000);
+                // Espera a que termine la animación
+                setTimeout(async () => {
+                    await SplashScreen.hideAsync(); // Oculta el splash nativo
+                    if (isLoguedIn) {
+                        router.replace('/(app)/(tabs)');
+                    } else {
+                        router.replace('/(auth)/onboarding');
+                    }
+                }, 5000);
+            } catch (error) {
+                console.warn('Error preparando splash:', error);
+            }
         };
 
         prepare();

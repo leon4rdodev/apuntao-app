@@ -1,11 +1,8 @@
-import { Tabs } from 'expo-router';
-
 import CustomTabBar from '@/components/tabbar/MyCustomTabBar';
-import { ClientProvider } from '@/context/ClientContext';
+import { Tabs } from 'expo-router';
 
 export default function TabLayout() {
     return (
-        <ClientProvider>
             <Tabs
                 screenOptions={{
                     headerShown: false,
@@ -19,6 +16,5 @@ export default function TabLayout() {
                 <Tabs.Screen name="cuenta" />
                 <Tabs.Screen name="ayuda" />
             </Tabs>
-        </ClientProvider>
     );
 }
