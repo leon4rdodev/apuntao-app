@@ -1,24 +1,26 @@
-// apuntao-app-master/components/clientsScreen/ActionModal.tsx
-
 import CustomButton from '@/components/ui/CustomButton';
 import CustomText from '@/components/ui/CustomText';
 import { Colors } from '@/constants/Colors';
 import React, { useEffect } from 'react';
 import {
     BackHandler,
+    Keyboard,
     ScrollView,
     StyleSheet,
     TouchableWithoutFeedback,
     View,
     useColorScheme,
 } from 'react-native';
-import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
+import Animated, {
+    FadeIn,
+    FadeOut,
+    runOnJS,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+    withTiming,
+} from 'react-native-reanimated';
 
-/**
- * @component ActionModal
- * @description Un modal "bottom sheet" personalizado, construido con Views y Animated API.
- * Está específicamente optimizado para Android.
- */
 const ActionModal = ({
     isVisible,
     onClose,
@@ -33,33 +35,70 @@ const ActionModal = ({
     actions: any[];
 }) => {
     const theme = Colors[useColorScheme() || 'light'];
+    const translateY = useSharedValue(500); // Empieza fuera de pantalla
 
-    // Maneja el botón de "atrás" de Android para cerrar el modal
+    // Función para cerrar el modal
+    const closeModal = () => {
+        translateY.value = withTiming(500, { duration: 200 }, (finished) => {
+            if (finished) {
+                runOnJS(onClose)();
+            }
+        });
+    };
+
+    // Animación de entrada/salida
+    useEffect(() => {
+        if (isVisible) {
+            translateY.value = withSpring(0, {
+                damping: 14,
+                stiffness: 150,
+            });
+        } else {
+            translateY.value = withTiming(500, { duration: 200 }, (finished) => {
+                if (finished) {
+                    runOnJS(onClose)();
+                }
+            });
+        }
+    }, [isVisible, onClose, translateY]);
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [{ translateY: translateY.value }],
+    }));
+
+    // Manejo del botón "atrás" de Android
     useEffect(() => {
         const backAction = () => {
             if (isVisible) {
-                onClose();
-                return true; // Previene que la app se cierre o navegue hacia atrás
+                closeModal();
+                return true;
             }
-            return false; // Permite el comportamiento por defecto si el modal no está visible
+            return false;
         };
 
         const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
-
-        // Función de limpieza que se ejecuta cuando el componente se desmonta
         return () => backHandler.remove();
-    }, [isVisible, onClose]);
+    }, [isVisible]);
 
-    // Si no es visible, no renderizamos nada para optimizar el rendimiento
-    if (!isVisible) {
-        return null;
-    }
+    // Listener para cerrar modal cuando se cierre el teclado
+    useEffect(() => {
+        const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+            if (isVisible) {
+                closeModal();
+            }
+        });
+
+        return () => {
+            keyboardDidHideListener?.remove();
+        };
+    }, [isVisible]);
+
+    // No renderizar si no es visible (ya lo animamos para salir)
+    if (!isVisible) return null;
 
     return (
-        // Contenedor principal que se posiciona sobre toda la app
         <View style={styles.container}>
-            {/* Overlay oscuro con animación de fade y que cierra el modal al tocarlo */}
-            <TouchableWithoutFeedback onPress={onClose}>
+            <TouchableWithoutFeedback onPress={closeModal}>
                 <Animated.View
                     style={styles.modalOverlay}
                     entering={FadeIn.duration(250)}
@@ -67,22 +106,16 @@ const ActionModal = ({
                 />
             </TouchableWithoutFeedback>
 
-            {/* Contenedor que empuja el modal hacia la parte inferior de la pantalla */}
             <View style={styles.modalPositioner} pointerEvents="box-none">
                 <Animated.View
-                    // Evita que los toques en el modal se propaguen al overlay
+                    style={[styles.modalContent, { backgroundColor: theme.surface }, animatedStyle]}
                     onTouchStart={(e) => e.stopPropagation()}
-                    // Animación de entrada y salida del modal
-                    entering={SlideInDown.duration(300).springify().damping(20).stiffness(150)}
-                    exiting={SlideOutDown.duration(200)}
-                    style={[styles.modalContent, { backgroundColor: theme.surface }]}
                 >
-                    {/* El ScrollView permite que el contenido se desplace si el teclado lo empuja */}
                     <ScrollView
                         showsVerticalScrollIndicator={false}
                         bounces={false}
                         contentContainerStyle={styles.scrollContentContainer}
-                        keyboardShouldPersistTaps="handled" // Mejora la interacción con los inputs dentro del scroll
+                        keyboardShouldPersistTaps="always"
                     >
                         <View style={styles.handleContainer}>
                             <View style={[styles.handle, { backgroundColor: theme.border }]} />
@@ -92,10 +125,8 @@ const ActionModal = ({
                             {title}
                         </CustomText>
 
-                        {/* Contenido dinámico (inputs, etc.) */}
                         <View>{children}</View>
 
-                        {/* Botones de acción apilados verticalmente */}
                         <View style={styles.modalActions}>
                             {actions.map((action, index) => (
                                 <CustomButton key={action.title || index} {...action} />
@@ -111,7 +142,7 @@ const ActionModal = ({
 const styles = StyleSheet.create({
     container: {
         ...StyleSheet.absoluteFillObject,
-        zIndex: 1000, // Un zIndex alto para asegurar que esté por encima de todo
+        zIndex: 1000,
     },
     modalOverlay: {
         ...StyleSheet.absoluteFillObject,
@@ -123,7 +154,7 @@ const styles = StyleSheet.create({
     },
     modalContent: {
         width: '100%',
-        maxHeight: '100%', // Límite para que no cubra toda la pantalla
+        maxHeight: '100%',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         shadowColor: '#000',
@@ -131,12 +162,11 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 10,
         elevation: 10,
-        overflow: 'hidden', // Esencial para que el ScrollView respete los bordes redondeados
+        overflow: 'hidden',
     },
     scrollContentContainer: {
-        // El padding se aplica aquí, dentro del ScrollView
         paddingHorizontal: 24,
-        paddingBottom: 370, // Espacio de seguridad en la parte inferior
+        paddingBottom: 370,
     },
     handleContainer: {
         alignItems: 'center',
