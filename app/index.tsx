@@ -4,7 +4,7 @@ import { AntDesign, Entypo, FontAwesome, Ionicons, MaterialIcons } from '@expo/v
 import * as Font from 'expo-font';
 import { useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { StyleSheet, Text, useColorScheme, View } from 'react-native';
 import Animated, {
     Easing,
@@ -27,16 +27,16 @@ export default function CustomSplashScreen() {
     const opacity = useSharedValue(1); // <-- 1. Añadimos un valor para la opacidad
 
     // Función que decide a dónde navegar
-    const navigateToApp = () => {
+    const navigateToApp = useCallback(() => {
         if (user) {
             router.replace('/(app)/(tabs)');
         } else {
             router.replace('/(auth)/onboarding');
         }
-    };
+    }, [user, router]);
 
     // <-- 2. Nueva función que anima la salida y luego navega
-    const navigateWithFadeOut = () => {
+    const navigateWithFadeOut = useCallback(() => {
         opacity.value = withTiming(
             0,
             {
@@ -50,7 +50,7 @@ export default function CustomSplashScreen() {
                 }
             }
         );
-    };
+    }, [opacity, navigateToApp]);
 
     useEffect(() => {
         if (!isInitialized) {
@@ -97,7 +97,7 @@ export default function CustomSplashScreen() {
         return () => {
             isMounted = false;
         };
-    }, [isInitialized, user, router]);
+    }, [isInitialized, user, router, progress, navigateWithFadeOut, navigateToApp]);
 
     const animatedStyle = useAnimatedStyle(() => ({
         width: `${progress.value * 100}%`,

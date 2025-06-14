@@ -1,4 +1,5 @@
 import CustomInput from '@/components/input/CustomInput';
+import Notification from '@/components/ui/Notification';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/constants';
 import { Colors } from '@/constants/Colors';
 import { useClientContext } from '@/context/ClientContext';
@@ -52,8 +53,13 @@ export default function AgregarClienteScreen() {
     const [initialDebt, setInitialDebt] = useState('');
     const [focusedField, setFocusedField] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [showNotification, setShowNotification] = useState(false);
 
     const isFormValid = name.trim().length >= 3;
+
+    const closeNt = () => {
+        setShowNotification(!showNotification);
+    };
 
     const handleSave = () => {
         Keyboard.dismiss();
@@ -64,8 +70,8 @@ export default function AgregarClienteScreen() {
         const formattedPhone = phone.trim();
 
         if (clients.some((client) => client.name.toLowerCase() === formattedName.toLowerCase())) {
-            Alert.alert('Error', ERROR_MESSAGES.DUPLICATE_CLIENT);
             setIsSaving(false);
+            setShowNotification(true)
             return;
         }
 
@@ -102,12 +108,16 @@ export default function AgregarClienteScreen() {
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-            {/* 
-              --- CORRECCIÓN AQUÍ ---
-              Se eliminó KeyboardAvoidingView. 
-              En Android, el comportamiento nativo "adjustResize" junto con un ScrollView 
-              suele ser suficiente y más estable.
-            */}
+            {showNotification ? (
+                <Notification
+                    message={ERROR_MESSAGES.DUPLICATE_CLIENT}
+                    type={'error'}
+                    onClose={closeNt}
+                />
+            ) : (
+                ''
+            )}
+
             <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
                 <ScrollView
                     contentContainerStyle={styles.scrollContainer}

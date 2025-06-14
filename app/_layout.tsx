@@ -1,7 +1,6 @@
 // apuntao-app-master/app/_layout.tsx
 
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { AuthService } from '@/services/authService';
 import { useSessionStore } from '@/store/sessionStore';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
@@ -22,17 +21,12 @@ GoogleSignin.configure({
     offlineAccess: true,
 });
 
-// ✅ Evita que el splash nativo se oculte hasta que se lo indiquemos
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
     const colorScheme = useColorScheme();
     const initializeSession = useSessionStore((state) => state.initializeSession);
     
-    if (androidClientId) {
-        AuthService.checkAndRefreshToken(androidClientId);
-    }
-
     useEffect(() => {
         initializeSession();
     }, [initializeSession]);
