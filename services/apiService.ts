@@ -132,7 +132,8 @@ export const syncAndStoreSession = async (googleIdToken: string, googleAccessTok
         user: googleUser.user,
         accessToken: googleAccessToken,
     };
-    await saveToStorage(STORAGE_KEYS.AUTH_DATA, googleAuthData);
+
+    await saveToStorage(STORAGE_KEYS.AUTH_DATA_API, googleAuthData);
 
     return {
         ...googleUser.user,

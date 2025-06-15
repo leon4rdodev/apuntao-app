@@ -10,9 +10,10 @@ import CustomButton from '@/components/ui/CustomButton';
 import CustomText from '@/components/ui/CustomText';
 
 // --- Imports de Lógica y Hooks ---
-import { ERROR_MESSAGES } from '@/constants';
+import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/constants';
 import { Colors } from '@/constants/Colors';
 import { useClientContext } from '@/context/ClientContext';
+import { useNotification } from '@/store/notificationStore';
 import { Transaction, TransactionType } from '@/types';
 import {
     formatMoney,
@@ -38,8 +39,11 @@ export default function ClientDetailScreen() {
     const theme = Colors[useColorScheme() || 'light'];
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
+
+    // Hooks de contexto y notificación
     const { getClientById, addTransaction, deleteTransaction, updateClient, deleteClient } =
         useClientContext();
+    const showNotification = useNotification();
 
     const client = useMemo(() => (id ? getClientById(id) : undefined), [id, getClientById]);
 
@@ -48,49 +52,61 @@ export default function ClientDetailScreen() {
     const [amount, setAmount] = useState('');
     const [editName, setEditName] = useState('');
     const [editPhone, setEditPhone] = useState('');
-    const [modalError, setModalError] = useState<string | null>(null);
 
     // --- Handlers (Lógica de la pantalla) ---
+
     const handleSaveTransaction = useCallback(() => {
         if (!client || modalConfig?.type !== 'transaction') return;
+
         const numericAmount = parseFormattedNumber(amount);
+
+        // Validaciones con notificaciones
         if (!numericAmount || numericAmount <= 0) {
-            setModalError(ERROR_MESSAGES.INVALID_AMOUNT);
+            showNotification({ message: ERROR_MESSAGES.INVALID_AMOUNT, type: 'error' });
             return;
         }
         if (modalConfig.payload === 'Pago' && numericAmount > client.debt) {
-            setModalError(ERROR_MESSAGES.PAYMENT_EXCEEDS_DEBT);
+            showNotification({ message: ERROR_MESSAGES.PAYMENT_EXCEEDS_DEBT, type: 'error' });
             return;
         }
+
         addTransaction(client.id, {
             amount: numericAmount,
             type: modalConfig.payload,
             date: Date.now(),
         });
+
+        showNotification({ message: SUCCESS_MESSAGES.TRANSACTION_ADDED, type: 'success' });
         setModalConfig(null);
-    }, [client, amount, modalConfig, addTransaction]);
+    }, [client, amount, modalConfig, addTransaction, showNotification]);
 
     const handleUpdateClient = useCallback(() => {
         if (!client) return;
+
         const formattedName = formatName(editName);
         const validation = validateClientData(formattedName, 0, editPhone);
+
         if (!validation.isValid) {
-            setModalError(validation.error || 'Por favor, revisa los datos.');
+            showNotification({ message: validation.error || 'Revise los datos', type: 'error' });
             return;
         }
+
         updateClient(client.id, { name: formattedName, phone: editPhone });
+        showNotification({ message: SUCCESS_MESSAGES.CLIENT_UPDATED, type: 'success' });
         setModalConfig(null);
-    }, [client, editName, editPhone, updateClient]);
+    }, [client, editName, editPhone, updateClient, showNotification]);
 
     const handleDeleteClient = useCallback(() => {
         if (!client) return;
+
         if (client.debt > 0) {
-            Alert.alert(
-                'Acción no permitida',
-                'No puedes eliminar un cliente con una deuda pendiente.'
-            );
+            showNotification({
+                message: 'No puedes eliminar un cliente con deuda pendiente.',
+                type: 'error',
+            });
             return;
         }
+
         Alert.alert(
             'Eliminar Cliente',
             `¿Estás seguro de que deseas eliminar a ${client.name}? Esta acción no se puede deshacer.`,
@@ -101,34 +117,42 @@ export default function ClientDetailScreen() {
                     style: 'destructive',
                     onPress: () => {
                         deleteClient(client.id);
+                        showNotification({
+                            message: `${client.name} fue eliminado.`,
+                            type: 'success',
+                        });
                         router.back();
                     },
                 },
             ]
         );
-    }, [client, deleteClient, router]);
+    }, [client, deleteClient, router, showNotification]);
 
     const handleSettleDebt = useCallback(() => {
         if (!client || client.debt <= 0) return;
+
         Alert.alert(
             'Saldar Deuda',
-            `¿Confirmas que ${client.name} pagó su deuda total de: $${formatMoney(
-                client.debt
-            )}?`,
+            `¿Confirmas que ${client.name} pagó su deuda total de $${formatMoney(client.debt)}?`,
             [
                 { text: 'Cancelar', style: 'cancel' },
                 {
                     text: 'Confirmar Pago',
-                    onPress: () =>
+                    onPress: () => {
                         addTransaction(client.id, {
                             amount: client.debt,
                             type: 'Pago',
                             date: Date.now(),
-                        }),
+                        });
+                        showNotification({
+                            message: SUCCESS_MESSAGES.DEBT_CLEARED,
+                            type: 'success',
+                        });
+                    },
                 },
             ]
         );
-    }, [client, addTransaction]);
+    }, [client, addTransaction, showNotification]);
 
     const handleDeleteTransaction = useCallback(
         (tx: Transaction) => {
@@ -141,17 +165,22 @@ export default function ClientDetailScreen() {
                     {
                         text: 'Eliminar',
                         style: 'destructive',
-                        onPress: () => deleteTransaction(client.id, tx.id),
+                        onPress: () => {
+                            deleteTransaction(client.id, tx.id);
+                            showNotification({
+                                message: SUCCESS_MESSAGES.TRANSACTION_DELETED,
+                                type: 'success',
+                            });
+                        },
                     },
                 ]
             );
         },
-        [client, deleteTransaction]
+        [client, deleteTransaction, showNotification]
     );
 
-    // --- Lógica del Modal (Define el contenido y las acciones del modal) ---
+    // --- Lógica del Modal ---
     const openModal = (config: ModalConfig) => {
-        setModalError(null);
         if (config?.type === 'edit' && client) {
             setEditName(client.name);
             setEditPhone(client.phone || '');
@@ -189,7 +218,7 @@ export default function ClientDetailScreen() {
                         >
                             Nombre del Cliente
                         </CustomText>
-                        <CustomInput value={editName} onChangeText={setEditName}  autoFocus/>
+                        <CustomInput value={editName} onChangeText={setEditName} autoFocus />
                     </View>
                     <View style={styles.inputGroup}>
                         <CustomText
@@ -204,7 +233,7 @@ export default function ClientDetailScreen() {
                             value={editPhone}
                             onChangeText={(text) => setEditPhone(formatPhoneNumber(text))}
                             keyboardType="phone-pad"
-                            placeholder='000-000-0000'
+                            placeholder="000-000-0000"
                             maxLength={12}
                         />
                     </View>
@@ -255,7 +284,6 @@ export default function ClientDetailScreen() {
                         onPress: handleUpdateClient,
                         buttonStyle: { backgroundColor: theme.primary, flex: 1 },
                         textStyle: { color: theme.textOnPrimary },
-
                     },
                 ],
             };
@@ -305,49 +333,26 @@ export default function ClientDetailScreen() {
                     onDelete={handleDeleteTransaction}
                 />
             </ScrollView>
+
             <ActionModal
-                paddingBottom={modalConfig?.type === 'transaction' ? 350 : 430 }
+                paddingBottom={modalConfig?.type === 'transaction' ? 350 : 430}
                 isVisible={!!modalConfig}
                 onClose={() => setModalConfig(null)}
                 title={title}
                 actions={actions}
             >
                 {renderModalContent()}
-                {modalError && (
-                    <CustomText color={theme.error} style={styles.modalError}>
-                        {modalError}
-                    </CustomText>
-                )}
+                {/* El estado de error local y su renderizado ya no son necesarios */}
             </ActionModal>
         </SafeAreaView>
     );
 }
 
-// Estilos que pertenecen únicamente a la maquetación de esta pantalla
+// Estilos
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    scrollContent: {
-        paddingTop: 110, // Espacio para el botón de atrás
-        padding: 16,
-        paddingBottom: 40,
-    },
-    // Estilos para el contenido del modal
-    inputGroup: {
-        marginBottom: 16,
-    },
-    label: {
-        marginBottom: 8,
-    },
-    modalError: {
-        marginTop: 10,
-        textAlign: 'center',
-        fontSize: 14,
-    },
-    // Estilos para la pantalla de "No encontrado"
-    notFoundContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-    },
+    scrollContent: { paddingTop: 110, padding: 16, paddingBottom: 40 },
+    inputGroup: { marginBottom: 16 },
+    label: { marginBottom: 8 },
+    notFoundContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
 });

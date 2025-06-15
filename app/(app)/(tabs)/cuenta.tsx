@@ -51,9 +51,7 @@ export default function CuentaScreen() {
                     style: 'destructive',
                     onPress: () => {
                         setIsSigningOut(true);
-                        // 1. Limpiar los datos de clientes y transacciones
                         clearClients();
-                        // 2. Limpiar la sesión de autenticación y redirigir
                         logoutAction();
                     },
                 },

@@ -15,6 +15,7 @@ export const TOKEN_CONFIG = {
 export const STORAGE_KEYS = {
     /** Clave para datos de autenticación */
     AUTH_DATA: '@auth_data',
+    AUTH_DATA_API: '@auth_data_api',
     /** Clave para datos de clientes */
     CLIENTS: 'clients',
     /** Clave para estado de onboarding */
@@ -41,38 +42,6 @@ export const APP_LIMITS = {
     /** Número máximo de reintentos para requests */
     MAX_RETRIES: 3,
 } as const;
-/** Colores del tema */
-export const COLORS = {
-    /** Color primario */
-    primary: '#16a34a',
-    /** Color primario claro */
-    primaryLight: '#dcfce7',
-    /** Color primario oscuro */
-    primaryDark: '#166534',
-    /** Color de texto principal */
-    text: '#1f2937',
-    /** Color de texto secundario */
-    textSecondary: '#6b7280',
-    /** Color blanco */
-    white: '#ffffff',
-    /** Color de fondo */
-    background: '#f0fdf4',
-    /** Color de éxito */
-    success: '#22c55e',
-    /** Color de error */
-    error: '#ef4444',
-    /** Color de advertencia */
-    warning: '#f59e0b',
-    /** Color de información */
-    info: '#3b82f6',
-    danger: '#ef4444',
-    dangerLight: '#fef2f2',
-    warningLight: '#fef3c7',
-    accent: '#42A5F5', // Azul para variedad
-    textLight: '#666666',
-    cardBg: '#FFFFFF',
-    gold: '#FFB300', // Dorado para estrellas
-} as const;
 
 /** Configuración de animaciones */
 export const ANIMATIONS = {
@@ -82,7 +51,7 @@ export const ANIMATIONS = {
     /** Duración de salida de notificaciones */
     NOTIFICATION_EXIT_DURATION: 300,
     /** Tiempo de auto-cierre de notificaciones */
-    NOTIFICATION_AUTO_CLOSE: 3000,
+    NOTIFICATION_AUTO_CLOSE: 5000,
 } as const;
 
 /** Expresiones regulares */
@@ -97,42 +66,59 @@ export const REGEX = {
     NUMBER_FORMAT: /\B(?=(\d{3})+(?!\d))/g,
 } as const;
 
-/** Mensajes de error */
+/** Mensajes de error (Tono "Apunta'o") */
 export const ERROR_MESSAGES = {
     /** Error de nombre requerido */
-    NAME_REQUIRED: 'El nombre es obligatorio',
+    NAME_REQUIRED: '¡Epa! ¿Y a quién apunto si no pones el nombre?',
+
     /** Error de longitud mínima de nombre */
-    NAME_MIN_LENGTH: 'El nombre debe tener al menos 3 caracteres',
+    NAME_MIN_LENGTH: 'Ese nombre está muy corto, ¡dale un poco más de letra!',
+
     /** Error de deuda inválida */
-    INVALID_DEBT: 'La deuda debe ser un número válido y no negativa',
-    /** Error de deuda máxima */
-    INVALID_PHONE: 'El número de teléfono debe estar en el formato 000-000-0000',
+    INVALID_DEBT: 'Esa deuda no cuadra. Tiene que ser un número, y que no sea negativo.',
+
+    /** Error de teléfono inválido */
+    INVALID_PHONE: 'Revisa ese teléfono, que parece que le faltan números.',
+
     /** Error de cliente duplicado */
-    DUPLICATE_CLIENT: 'No se pueden agregar dos clientes con el mismo nombre',
+    DUPLICATE_CLIENT: '¡Ojo! A ese cliente ya lo tenemos Apunta\'o. Búscalo en la lista.',
+
     /** Error de monto inválido */
-    INVALID_AMOUNT: 'Por favor, ingrese un monto válido.',
+    INVALID_AMOUNT: 'El monto no es válido. Por favor, pon una cantidad real.',
+
     /** Error de abono mayor a deuda */
-    PAYMENT_EXCEEDS_DEBT: 'El abono no puede ser mayor a la deuda pendiente.',
+    PAYMENT_EXCEEDS_DEBT: '¡Te pasaste! El abono es más grande que la deuda. ¡No regales tu dinero!',
+
     /** Error de conexión */
-    NO_CONNECTION: 'No hay conexión a internet',
-    /** Error de token */
-    TOKEN_UNAVAILABLE: 'Token de acceso no disponible',
+    NO_CONNECTION: 'No hay internet, mi pana. Conéctate para poder seguir.',
+
+    /** Error de token (para el usuario) */
+    TOKEN_UNAVAILABLE: 'Hubo un problemita para conectar. Intenta de nuevo, por si acaso.',
+
+    /** Error de app de correo */
+    EMAIL_APP_UNAVAILABLE: 'No se pudo abrir la app de email. ¿Estás seguro que tienes una instalada?',
 } as const;
 
-/** Mensajes de éxito */
+
+/** Mensajes de éxito (Tono "Apunta'o") */
 export const SUCCESS_MESSAGES = {
     /** Cliente agregado */
-    CLIENT_ADDED: 'Cliente agregado con éxito',
+    CLIENT_ADDED: '¡Listo! Ese cliente ya está Apunta\'o.',
+
     /** Cliente actualizado */
-    CLIENT_UPDATED: 'Cliente actualizado correctamente.',
+    CLIENT_UPDATED: '¡Nítido! La información de ese cliente está al día.',
+
     /** Transacción agregada */
-    TRANSACTION_ADDED: 'Transacción agregada correctamente.',
+    TRANSACTION_ADDED: '¡Listo! Ese movimiento ahora está Apunta\'o.',
+
     /** Transacción eliminada */
-    TRANSACTION_DELETED: 'Transacción eliminada correctamente.',
+    TRANSACTION_DELETED: '¡Eliminado! Ya ese movimiento no existe.',
+
     /** Deuda saldada */
-    DEBT_CLEARED: 'Deuda saldada completamente.',
+    DEBT_CLEARED: '¡Se saldó! Ya no te deben nada. ¡Estamos al día!',
+
     /** Datos restaurados */
-    DATA_RESTORED: 'Tus datos han sido restaurados correctamente.',
+    DATA_RESTORED: '¡Resuelto! Tus datos están de vuelta, sanos y salvos.',
 } as const;
 
 /** Configuración de Google Drive */

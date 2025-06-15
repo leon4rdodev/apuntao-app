@@ -86,8 +86,6 @@ export class AuthService {
             return newAuthData;
         } catch (error) {
             handleError(error, 'AuthService.refreshToken');
-            // Si el refresco falla, es probable que la sesión haya expirado permanentemente.
-            // La lógica que llama a esta función deberá manejar este error (ej: haciendo logout).
             throw error;
         }
     }
@@ -107,6 +105,7 @@ export class AuthService {
             const storedAuthData = await this.loadStoredAuthData();
             if (!storedAuthData?.refreshToken) {
                 console.warn('No hay datos de autenticación o refresh token para verificar.');
+                console.log(storedAuthData);
                 return false;
             }
 
@@ -114,12 +113,13 @@ export class AuthService {
                 console.log('Token de Google cerca de expirar, intentando refrescar...');
                 await this.refreshToken(storedAuthData.refreshToken, clientId);
                 console.log('Token de Google refrescado exitosamente.');
+            } else {
+                console.log('Token de Google aún es válido, no es necesario refrescar.');
             }
 
             return true;
         } catch (error) {
             handleError(error, 'AuthService.checkAndRefreshToken');
-            // Si checkAndRefreshToken falla, probablemente el usuario necesite volver a iniciar sesión.
             return false;
         }
     }

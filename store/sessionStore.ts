@@ -52,7 +52,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
      */
     initializeSession: async () => {
         try {
-            const authData = await getFromStorage<StoredAuthData>(STORAGE_KEYS.AUTH_DATA);
+            const authData = await getFromStorage<StoredAuthData>(STORAGE_KEYS.AUTH_DATA_API);
             if (authData?.user) {
                 set({
                     user: authData.user,
@@ -88,11 +88,11 @@ export const useSessionStore = create<SessionState>((set, get) => ({
             const newSubscriptionData = await fetchSubscriptionStatus();
             set({ subscription: newSubscriptionData });
 
-            const authData = await getFromStorage<StoredAuthData>(STORAGE_KEYS.AUTH_DATA);
+            const authData = await getFromStorage<StoredAuthData>(STORAGE_KEYS.AUTH_DATA_API);
             if (authData) {
                 const updatedUser = { ...authData.user, subscription: newSubscriptionData };
                 const updatedAuthData = { ...authData, user: updatedUser };
-                await saveToStorage(STORAGE_KEYS.AUTH_DATA, updatedAuthData);
+                await saveToStorage(STORAGE_KEYS.AUTH_DATA_API, updatedAuthData);
                 set({ user: updatedUser });
             }
         } catch (error: any) {
@@ -110,7 +110,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     logout: async () => {
         try {
             await GoogleSignin.signOut();
-            await removeFromStorage(STORAGE_KEYS.AUTH_DATA);
+            await removeFromStorage(STORAGE_KEYS.AUTH_DATA_API);
             await removeFromStorage(APP_SESSION_KEY);
         } catch (error) {
             console.error('Error durante el cierre de sesión:', error);

@@ -1,8 +1,8 @@
 import CustomInput from '@/components/input/CustomInput';
-import Notification from '@/components/ui/Notification';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/constants';
 import { Colors } from '@/constants/Colors';
 import { useClientContext } from '@/context/ClientContext';
+import { useNotification } from '@/store/notificationStore';
 import {
     formatName,
     formatNumberWithCommas,
@@ -13,7 +13,6 @@ import { validateClientData } from '@/utils/validation';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-    Alert,
     Keyboard,
     SafeAreaView,
     ScrollView,
@@ -25,8 +24,7 @@ import {
     View,
 } from 'react-native';
 
-// --- Sub-componentes (sin cambios) ---
-
+// --- Sub-componente de la Cabecera (sin cambios) ---
 const HeaderSection = () => {
     const theme = Colors[useColorScheme() || 'light'];
     return (
@@ -42,25 +40,25 @@ const HeaderSection = () => {
     );
 };
 
-// --- Componente Principal (CORREGIDO) ---
-
+// --- Componente Principal (Refactorizado) ---
 export default function AgregarClienteScreen() {
     const theme = Colors[useColorScheme() || 'light'];
     const { clients, addClient, addTransaction } = useClientContext();
+    const showNotification = useNotification(); // Hook para mostrar notificaciones
 
+    // Estados del formulario
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
     const [initialDebt, setInitialDebt] = useState('');
     const [focusedField, setFocusedField] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
-    const [showNotification, setShowNotification] = useState(false);
 
+    // Deshabilita el botón si el nombre es muy corto
     const isFormValid = name.trim().length >= 3;
 
-    const closeNt = () => {
-        setShowNotification(!showNotification);
-    };
-
+    /**
+     * Maneja la lógica de validación y guardado del cliente.
+     */
     const handleSave = () => {
         Keyboard.dismiss();
         setIsSaving(true);
@@ -69,24 +67,31 @@ export default function AgregarClienteScreen() {
         const debtAmount = initialDebt ? parseFormattedNumber(initialDebt) : 0;
         const formattedPhone = phone.trim();
 
+        // 1. Validar que el cliente no exista ya
         if (clients.some((client) => client.name.toLowerCase() === formattedName.toLowerCase())) {
+            showNotification({
+                message: ERROR_MESSAGES.DUPLICATE_CLIENT,
+                type: 'error', // Corregido a 'error'
+            });
             setIsSaving(false);
-            setShowNotification(true)
             return;
         }
 
+        // 2. Validar todos los datos del formulario
         const validation = validateClientData(formattedName, debtAmount, formattedPhone);
         if (!validation.isValid) {
-            Alert.alert(
-                'Datos Inválidos',
-                validation.error || 'Por favor, revisa los datos ingresados.'
-            );
+            showNotification({
+                message: validation.error || 'Por favor, revisa los datos ingresados.',
+                type: 'error',
+            });
             setIsSaving(false);
             return;
         }
 
+        // 3. Intentar guardar el cliente
         try {
             const newClient = addClient({ name: formattedName, phone: formattedPhone });
+            // Si hay deuda inicial, se añade como una transacción
             if (debtAmount > 0) {
                 addTransaction(newClient.id, {
                     amount: debtAmount,
@@ -95,39 +100,38 @@ export default function AgregarClienteScreen() {
                 });
             }
 
-            Alert.alert('¡Éxito!', SUCCESS_MESSAGES.CLIENT_ADDED, [{ text: 'OK' }]);
+            // Mostrar notificación de éxito y limpiar el formulario
+            showNotification({
+                message: SUCCESS_MESSAGES.CLIENT_ADDED,
+                type: 'success',
+            });
             setName('');
             setPhone('');
             setInitialDebt('');
         } catch (e: any) {
-            Alert.alert('Error', e.message || 'Ocurrió un error inesperado.');
+            // Manejar errores inesperados del contexto o almacenamiento
+            showNotification({
+                message: e.message || 'Ocurrió un error inesperado al guardar.',
+                type: 'error',
+            });
         } finally {
+            // Asegurarse de que el estado de guardado se desactive
             setIsSaving(false);
         }
     };
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-            {showNotification ? (
-                <Notification
-                    message={ERROR_MESSAGES.DUPLICATE_CLIENT}
-                    type={'error'}
-                    onClose={closeNt}
-                />
-            ) : (
-                ''
-            )}
-
             <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
                 <ScrollView
                     contentContainerStyle={styles.scrollContainer}
-                    keyboardShouldPersistTaps="handled"
+                    keyboardShouldPersistTaps="handled" // Permite presionar botones mientras el teclado está abierto
                     showsVerticalScrollIndicator={false}
                 >
                     <HeaderSection />
 
                     <View style={[styles.formContainer, { backgroundColor: theme.surface }]}>
-                        {/* Nombre */}
+                        {/* Campo de Nombre */}
                         <View style={styles.inputGroup}>
                             <Text style={[styles.label, { color: theme.textSecondary }]}>
                                 Nombre del Cliente <Text style={{ color: theme.error }}>*</Text>
@@ -140,12 +144,12 @@ export default function AgregarClienteScreen() {
                                 onFocus={() => setFocusedField('name')}
                                 onBlur={() => setFocusedField(null)}
                                 containerStyle={
-                                    focusedField === 'name' && { borderColor: theme.primary }
+                                    focusedField === 'name' ? { borderColor: theme.primary } : {}
                                 }
                             />
                         </View>
 
-                        {/* Deuda Inicial */}
+                        {/* Campo de Deuda Inicial */}
                         <View style={styles.inputGroup}>
                             <Text style={[styles.label, { color: theme.textSecondary }]}>
                                 Deuda Inicial
@@ -161,7 +165,7 @@ export default function AgregarClienteScreen() {
                                 onFocus={() => setFocusedField('debt')}
                                 onBlur={() => setFocusedField(null)}
                                 containerStyle={
-                                    focusedField === 'debt' && { borderColor: theme.primary }
+                                    focusedField === 'debt' ? { borderColor: theme.primary } : {}
                                 }
                             />
                             <Text style={[styles.helperText, { color: theme.textSecondary }]}>
@@ -169,7 +173,7 @@ export default function AgregarClienteScreen() {
                             </Text>
                         </View>
 
-                        {/* Teléfono */}
+                        {/* Campo de Teléfono */}
                         <View style={styles.inputGroup}>
                             <Text style={[styles.label, { color: theme.textSecondary }]}>
                                 Número de Teléfono
@@ -184,7 +188,7 @@ export default function AgregarClienteScreen() {
                                 onFocus={() => setFocusedField('phone')}
                                 onBlur={() => setFocusedField(null)}
                                 containerStyle={
-                                    focusedField === 'phone' && { borderColor: theme.primary }
+                                    focusedField === 'phone' ? { borderColor: theme.primary } : {}
                                 }
                             />
                             <Text style={[styles.helperText, { color: theme.textSecondary }]}>
@@ -192,7 +196,7 @@ export default function AgregarClienteScreen() {
                             </Text>
                         </View>
 
-                        {/* Botón */}
+                        {/* Botón de Guardar */}
                         <TouchableOpacity
                             style={[
                                 styles.button,
@@ -203,7 +207,7 @@ export default function AgregarClienteScreen() {
                             activeOpacity={0.8}
                         >
                             <Ionicons
-                                name="checkmark-circle-outline"
+                                name={isSaving ? 'hourglass-outline' : 'checkmark-circle-outline'}
                                 size={20}
                                 color={isFormValid ? theme.textOnPrimary : theme.textSecondary}
                             />
@@ -227,13 +231,13 @@ export default function AgregarClienteScreen() {
     );
 }
 
-// Estilos (se eliminó `flex` que ya no es necesario)
+// Estilos (sin cambios)
 const styles = StyleSheet.create({
     safeArea: { flex: 1 },
     scrollContainer: {
         flexGrow: 1,
         padding: 24,
-        paddingTop: 100, // Ajusta este padding si necesitas más o menos espacio arriba
+        paddingTop: 100,
     },
     headerContainer: {
         alignItems: 'center',

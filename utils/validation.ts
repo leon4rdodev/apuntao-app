@@ -3,7 +3,7 @@
  * Contiene funciones para validar datos de entrada
  */
 
-import { REGEX, APP_LIMITS } from "../constants"
+import { REGEX, APP_LIMITS, ERROR_MESSAGES } from "../constants"
 
 /**
  * Valida si un número de teléfono tiene el formato correcto
@@ -59,7 +59,7 @@ export const validateClientData = (
       isValid: false,
       error:
         name.trim().length < APP_LIMITS.MIN_NAME_LENGTH
-          ? "El nombre debe tener al menos 3 caracteres"
+          ? ERROR_MESSAGES.NAME_MIN_LENGTH
           : "El nombre contiene caracteres no válidos",
     }
   }
@@ -67,14 +67,14 @@ export const validateClientData = (
   if (debt > 0 && !isValidDebt(debt)) {
     return {
       isValid: false,
-      error: "La deuda debe ser un número válido"
+      error: ERROR_MESSAGES.INVALID_AMOUNT
     }
   }
 
   if (phone && phone.trim() !== "" && !isValidPhoneNumber(phone)) {
     return {
       isValid: false,
-      error: "El número de teléfono debe estar en el formato 000-000-0000",
+      error: ERROR_MESSAGES.INVALID_PHONE,
     }
   }
 

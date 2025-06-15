@@ -16,6 +16,8 @@ import {
 import ActionRow from '@/components/ui/ActionRow';
 import CustomText from '@/components/ui/CustomText';
 import { Colors } from '@/constants/Colors';
+import { useNotification } from '@/store/notificationStore';
+import { ERROR_MESSAGES } from '@/constants';
 
 // Un pequeño componente local para renderizar cada pregunta y respuesta
 const FAQItem = ({ question, answer }: { question: string; answer: string }) => {
@@ -34,6 +36,7 @@ const FAQItem = ({ question, answer }: { question: string; answer: string }) => 
 
 export default function AyudaScreen() {
     const theme = Colors[useColorScheme() || 'light'];
+    const showNotification = useNotification(); // Hook para mostrar notificaciones
 
     // --- Datos para las Preguntas Frecuentes ---
     const faqs = [
@@ -62,7 +65,7 @@ export default function AyudaScreen() {
     // --- Funciones para Contactar a Soporte ---
     const handleWhatsAppPress = () => {
         // Reemplaza este número con tu número de soporte oficial
-        const phoneNumber = '18091234567';
+        const phoneNumber = '18096654820';
         const message = "Hola, necesito ayuda con la aplicación Apunta'o.";
         const url = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
 
@@ -78,7 +81,10 @@ export default function AyudaScreen() {
         const url = `mailto:${email}?subject=${subject}`;
 
         Linking.openURL(url).catch(() => {
-            Alert.alert('Error', 'No se pudo abrir la aplicación de correo.');
+            showNotification({
+                message: ERROR_MESSAGES.EMAIL_APP_UNAVAILABLE,
+                type: 'error',
+            });
         });
     };
 
@@ -157,8 +163,8 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     scrollContainer: {
-        padding: 24,
-        paddingTop: Constants.statusBarHeight + 16,
+        padding: 18,
+        paddingTop: Constants.statusBarHeight + 18,
     },
     header: {
         alignItems: 'center',
