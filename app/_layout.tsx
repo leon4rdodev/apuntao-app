@@ -1,83 +1,69 @@
-// Archivo: app/_layout.tsx
-
-import { AntDesign, Entypo, FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
+/**
+ * @file app/_layout.tsx
+ * @description Layout raíz de la aplicación. Configura proveedores de contexto, carga de fuentes
+ * y la estructura de navegación principal. La lógica de redirección se maneja en los layouts de grupo.
+ */
 import { GlobalNotification } from '@/components/ui/GlobalNotification';
+import { Colors } from '@/constants/Colors';
 import { ClientProvider } from '@/context/ClientContext';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useSessionStore } from '@/store/sessionStore';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { AntDesign, Entypo, FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import * as Font from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { View } from 'react-native';
 import 'react-native-reanimated';
 
-GoogleSignin.configure({
-    webClientId: process.env.EXPO_PUBLIC_WEB_CLIENT_ID,
-    scopes: ['https://www.googleapis.com/auth/drive.file', 'openid', 'profile', 'email'],
-    offlineAccess: true,
-});
-
-// Mantenemos la pantalla de bienvenida nativa visible
+// Mantenemos la pantalla de bienvenida nativa visible mientras preparamos la app.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
     const colorScheme = useColorScheme();
-    const initializeSession = useSessionStore((state) => state.initializeSession);
-    const [appIsReady, setAppIsReady] = useState(false);
+    const { initializeSession, isInitialized } = useSessionStore();
 
     useEffect(() => {
-        async function prepareApp() {
-            try {
-                await Promise.all([
-                    initializeSession(),
-                    Font.loadAsync({
-                        ...Ionicons.font,
-                        ...MaterialIcons.font,
-                        ...Entypo.font,
-                        ...AntDesign.font,
-                        ...FontAwesome.font,
-                    }),
-                ]);
-            } catch (e) {
-                console.warn('Error durante la preparación de la app:', e);
-            } finally {
-                setAppIsReady(true);
-            }
-        }
-
-        prepareApp();
+        // Ejecutamos la carga de fuentes y la inicialización de la sesión en paralelo.
+        Font.loadAsync({
+            ...Ionicons.font,
+            ...MaterialIcons.font,
+            ...Entypo.font,
+            ...AntDesign.font,
+            ...FontAwesome.font,
+        });
+        initializeSession();
     }, [initializeSession]);
 
     const onLayoutRootView = useCallback(async () => {
-        if (appIsReady) {
+        // Ocultamos la pantalla de bienvenida solo cuando la sesión esté inicializada.
+        if (isInitialized) {
             await SplashScreen.hideAsync();
         }
-    }, [appIsReady]);
+    }, [isInitialized]);
 
-    if (!appIsReady) {
+    // No renderizamos nada hasta que la sesión esté inicializada para evitar flashes.
+    if (!isInitialized) {
         return null;
     }
 
-    const backgroundColor = colorScheme === 'dark' ? '#0f0f0f' : '#f8fafc';
+    const theme = Colors[colorScheme || 'light'];
+    const navigationTheme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
 
     return (
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <ThemeProvider value={navigationTheme}>
             <GlobalNotification />
-            <View style={{ flex: 1, backgroundColor }} onLayout={onLayoutRootView}>
-                <ClientProvider>
-                    <Stack
-                        screenOptions={{
-                            animation: 'fade_from_bottom',
-                            headerShown: false,
-                        }}
-                    />
-                </ClientProvider>
-                <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-            </View>
+            <ClientProvider>
+                <View
+                    style={{ flex: 1, backgroundColor: theme.background }}
+                    onLayout={onLayoutRootView}
+                >
+                    <Stack screenOptions={{ headerShown: false, animation: 'fade_from_bottom' }} />
+                </View>
+            </ClientProvider>
+            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
         </ThemeProvider>
     );
 }

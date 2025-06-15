@@ -1,23 +1,21 @@
 /**
- * @file app/(auth)/login.tsx
- * @description Pantalla de inicio de sesión para que los dueños de colmados accedan a su cuenta.
+ * @file app/(auth)/register.tsx
+ * @description Pantalla de registro para nuevos dueños de colmados.
  * Corregida para un manejo de estado y navegación robustos.
  */
 import CustomButton from '@/components/ui/CustomButton';
 import CustomInput from '@/components/input/CustomInput';
 import CustomText from '@/components/ui/CustomText';
-import { API_URLS, ERROR_MESSAGES, STORAGE_KEYS } from '@/constants';
+import { API_URLS, ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/constants';
 import { Colors } from '@/constants/Colors';
 import { useNotification } from '@/store/notificationStore';
-import { useSessionStore } from '@/store/sessionStore';
-import type { AppSessionData } from '@/types';
 import { formatPhoneNumber } from '@/utils/formatters';
 import { apiFetch } from '@/services/apiService';
-import { saveToStorage } from '@/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+    Alert,
     Keyboard,
     KeyboardAvoidingView,
     Platform,
@@ -29,48 +27,38 @@ import {
     View,
 } from 'react-native';
 
-export default function LoginScreen() {
+export default function RegisterScreen() {
     const theme = Colors[useColorScheme() || 'light'];
     const router = useRouter();
     const showNotification = useNotification();
-    const { syncAccountData } = useSessionStore.getState();
 
+    const [colmadoName, setColmadoName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [pin, setPin] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
     /**
-     * @function handleLogin
-     * @description Maneja el proceso de inicio de sesión, llamando a la API y guardando la sesión.
+     * @function handleRegister
+     * @description Valida los datos y envía la petición de registro al backend.
      */
-    const handleLogin = async () => {
+    const handleRegister = async () => {
         Keyboard.dismiss();
-        if (!phoneNumber || !pin) {
-            showNotification({
-                message: 'Por favor, completa todos los campos.',
-                type: 'error',
-            });
+        if (!colmadoName || !phoneNumber || !pin) {
+            showNotification({ message: 'Todos los campos son obligatorios.', type: 'error' });
             return;
         }
         setIsLoading(true);
 
         try {
             const cleanedPhone = phoneNumber.replace(/-/g, '');
-            // 1. Autenticar y obtener tokens
-            const sessionData: AppSessionData = await apiFetch(API_URLS.LOGIN, {
+            await apiFetch(API_URLS.REGISTER, {
                 method: 'POST',
-                body: JSON.stringify({ phoneNumber: cleanedPhone, pin }),
+                body: JSON.stringify({ colmadoName, phoneNumber: cleanedPhone, pin }),
             });
 
-            // 2. Guardar tokens de sesión
-            await saveToStorage(STORAGE_KEYS.APP_SESSION, sessionData);
-
-            // 3. Sincronizar todos los datos de la cuenta. Esta función ahora es la fuente de verdad.
-            await syncAccountData();
-
-            // 4. Redirigir a la pantalla principal.
-            // La ruta a la raíz del grupo (app) es simplemente '/'.
-            router.replace('/(app)/(tabs)');
+            Alert.alert('¡Registro Exitoso!', SUCCESS_MESSAGES.ACCOUNT_CREATED, [
+                { text: 'OK', onPress: () => router.replace('/login') },
+            ]);
         } catch (error: any) {
             showNotification({
                 message: error.message || ERROR_MESSAGES.GENERIC_ERROR,
@@ -93,19 +81,26 @@ export default function LoginScreen() {
                         keyboardShouldPersistTaps="handled"
                     >
                         <View style={styles.header}>
-                            <Ionicons name="key-outline" size={60} color={theme.primary} />
+                            <Ionicons name="person-add-outline" size={60} color={theme.primary} />
                             <CustomText size="xlarge" weight="bold" style={styles.title}>
-                                ¡Qué bueno verte!
+                                Crea tu Cuenta
                             </CustomText>
                             <CustomText color={theme.textSecondary} style={styles.subtitle}>
-                                Ingresa tus datos para acceder a tu negocio.
+                                Empieza a digitalizar tu negocio en menos de un minuto.
                             </CustomText>
                         </View>
 
                         <View style={styles.form}>
                             <CustomInput
+                                icon="storefront-outline"
+                                placeholder="Nombre de tu Colmado"
+                                value={colmadoName}
+                                onChangeText={setColmadoName}
+                                editable={!isLoading}
+                            />
+                            <CustomInput
                                 icon="call-outline"
-                                placeholder="Número de Teléfono"
+                                placeholder="Tu Número de Teléfono (será tu usuario)"
                                 value={phoneNumber}
                                 onChangeText={(text) => setPhoneNumber(formatPhoneNumber(text))}
                                 keyboardType="phone-pad"
@@ -114,7 +109,7 @@ export default function LoginScreen() {
                             />
                             <CustomInput
                                 icon="lock-closed-outline"
-                                placeholder="PIN de 6 dígitos"
+                                placeholder="Crea un PIN de 6 dígitos"
                                 value={pin}
                                 onChangeText={setPin}
                                 keyboardType="number-pad"
@@ -125,16 +120,17 @@ export default function LoginScreen() {
                         </View>
 
                         <View style={styles.footer}>
+                            {/* ✅ CORRECCIÓN APLICADA AQUÍ */}
                             <CustomButton
-                                title="Iniciar Sesión"
-                                onPress={handleLogin}
-                                isLoading={isLoading} // Le pasamos el estado de carga
-                                iconName="log-in-outline"
+                                title="Crear Cuenta"
+                                onPress={handleRegister}
+                                isLoading={isLoading}
+                                iconName="person-add-outline"
                             />
                             <CustomButton
-                                title="No tengo cuenta, quiero registrarme"
-                                onPress={() => router.replace('/register')}
-                                disabled={isLoading} // ✅ Se deshabilita, pero no muestra spinner
+                                title="Ya tengo una cuenta"
+                                onPress={() => router.replace('/login')}
+                                disabled={isLoading}
                                 buttonStyle={{
                                     backgroundColor: 'transparent',
                                     marginTop: 16,

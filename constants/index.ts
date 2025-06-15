@@ -1,135 +1,71 @@
 /**
- * Constantes de la aplicación
- * Centraliza todos los valores constantes utilizados en la app
+ * @file constants/index.ts
+ * @description Centraliza todos los valores constantes utilizados en la aplicación Apunta'o.
  */
 
-/** Configuración de tokens */
-export const TOKEN_CONFIG = {
-    /** Tiempo en minutos antes de la expiración para refrescar el token */
-    REFRESH_THRESHOLD_MINUTES: 10,
-    /** Tiempo de vida por defecto del token en segundos */
-    DEFAULT_EXPIRES_IN: 3599,
-} as const;
-
-/** Claves de almacenamiento local */
+/** Claves de almacenamiento local seguro (AsyncStorage) */
 export const STORAGE_KEYS = {
-    /** Clave para datos de autenticación */
-    AUTH_DATA: '@auth_data',
-    AUTH_DATA_API: '@auth_data_api',
-    /** Clave para datos de clientes */
+    /** Clave para los datos de sesión de la app (accessToken, refreshToken) */
+    APP_SESSION: '@app_session',
+    /** Clave para la información del usuario (cuenta del colmado) */
+    ACCOUNT_INFO: '@account_info',
+    /** Clave para la lista de clientes (cache local) */
     CLIENTS: 'clients',
-    /** Clave para estado de onboarding */
-    ONBOARDING_COMPLETED: 'onboardingCompleted',
 } as const;
 
-/** URLs de la API */
+/** URLs de la API del backend */
 export const API_URLS = {
-    /** URL base de Google Drive API */
-    GOOGLE_DRIVE_BASE: 'https://www.googleapis.com/drive/v3/',
-    /** URL para obtener información del usuario */
-    GOOGLE_USER_INFO: 'https://www.googleapis.com/userinfo/v2/me',
-    /** URL para refrescar tokens */
-    GOOGLE_TOKEN_REFRESH: 'https://www.googleapis.com/oauth2/v4/token',
-    /** URL para subir archivos a Drive */
-    GOOGLE_DRIVE_UPLOAD_FILES: 'https://www.googleapis.com/upload/drive/v3/files',
+    REGISTER: '/api/auth/register',
+    LOGIN: '/api/auth/login',
+    REFRESH_TOKEN: '/api/auth/refresh-token',
+    DATA_SYNC: '/api/data/sync',
 } as const;
 
-/** Límites de la aplicación */
-export const APP_LIMITS = {
-    /** Deuda máxima permitida */
-    /** Longitud mínima del nombre */
+/** Límites y configuraciones de la aplicación */
+export const APP_CONFIG = {
+    /** Longitud mínima del nombre de un cliente */
     MIN_NAME_LENGTH: 3,
-    /** Número máximo de reintentos para requests */
+    /** Longitud exacta del PIN de la cuenta */
+    PIN_LENGTH: 6,
+    /** Número máximo de reintentos para peticiones de red */
     MAX_RETRIES: 3,
+    /** Tiempo de auto-cierre para notificaciones en milisegundos */
+    NOTIFICATION_AUTO_CLOSE: 4000,
 } as const;
 
-/** Configuración de animaciones */
-export const ANIMATIONS = {
-    /** Duración de entrada de notificaciones */
-    // ✅ VELOCIDAD AJUSTADA
-    NOTIFICATION_ENTER_DURATION: 300,
-    /** Duración de salida de notificaciones */
-    NOTIFICATION_EXIT_DURATION: 300,
-    /** Tiempo de auto-cierre de notificaciones */
-    NOTIFICATION_AUTO_CLOSE: 5000,
-} as const;
-
-/** Expresiones regulares */
+/** Expresiones regulares para validación */
 export const REGEX = {
-    /** Validación de número de teléfono */
-    PHONE: /^[0-9]{3}-[0-9]{3}-[0-9]{4}$/,
+    /** Validación de número de teléfono de RD (10 dígitos) */
+    PHONE: /^(809|829|849)\d{7}$/,
     /** Caracteres permitidos en nombres */
     NAME_ALLOWED_CHARS: /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]*$/,
-    /** Solo números */
+    /** Solo dígitos numéricos */
     NUMBERS_ONLY: /\D+/g,
-    /** Formato de números con comas */
+    /** Formato de números con comas para separación de miles */
     NUMBER_FORMAT: /\B(?=(\d{3})+(?!\d))/g,
 } as const;
 
-/** Mensajes de error (Tono "Apunta'o") */
+/** Mensajes de error para el usuario */
 export const ERROR_MESSAGES = {
-    /** Error de nombre requerido */
-    NAME_REQUIRED: '¡Epa! ¿Y a quién apunto si no pones el nombre?',
+    NAME_REQUIRED: 'El nombre del cliente es obligatorio.',
+    NAME_MIN_LENGTH: `El nombre debe tener al menos ${APP_CONFIG.MIN_NAME_LENGTH} letras.`,
+    INVALID_PHONE: 'El teléfono debe ser un número válido de 10 dígitos (ej. 8091234567).',
+    INVALID_PIN: `El PIN debe tener exactamente ${APP_CONFIG.PIN_LENGTH} números.`,
+    DUPLICATE_CLIENT: '¡Ojo! Ya tienes un cliente con ese mismo nombre.',
+    INVALID_AMOUNT: 'El monto debe ser un número mayor que cero.',
+    PAYMENT_EXCEEDS_DEBT: '¡Te pasaste! El pago es mayor que la deuda actual.',
+    NO_CONNECTION: 'Parece que no hay internet. Revisa tu conexión.',
+    SESSION_EXPIRED: 'Tu sesión ha expirado. Por favor, inicia sesión de nuevo.',
+    GENERIC_ERROR: '¡Ups! Algo salió mal. Inténtalo de nuevo en un momento.',
+};
 
-    /** Error de longitud mínima de nombre */
-    NAME_MIN_LENGTH: 'Ese nombre está muy corto, ¡dale un poco más de letra!',
-
-    /** Error de deuda inválida */
-    INVALID_DEBT: 'Esa deuda no cuadra. Tiene que ser un número, y que no sea negativo.',
-
-    /** Error de teléfono inválido */
-    INVALID_PHONE: 'Revisa ese teléfono, que parece que le faltan números.',
-
-    /** Error de cliente duplicado */
-    DUPLICATE_CLIENT: '¡Ojo! A ese cliente ya lo tenemos Apunta\'o. Búscalo en la lista.',
-
-    /** Error de monto inválido */
-    INVALID_AMOUNT: 'El monto no es válido. Por favor, pon una cantidad real.',
-
-    /** Error de abono mayor a deuda */
-    PAYMENT_EXCEEDS_DEBT: '¡Te pasaste! El abono es más grande que la deuda. ¡No regales tu dinero!',
-
-    /** Error de conexión */
-    NO_CONNECTION: 'No hay internet, mi pana. Conéctate para poder seguir.',
-
-    /** Error de token (para el usuario) */
-    TOKEN_UNAVAILABLE: 'Hubo un problemita para conectar. Intenta de nuevo, por si acaso.',
-
-    /** Error de app de correo */
-    EMAIL_APP_UNAVAILABLE: 'No se pudo abrir la app de email. ¿Estás seguro que tienes una instalada?',
-} as const;
-
-
-/** Mensajes de éxito (Tono "Apunta'o") */
+/** Mensajes de éxito para el usuario */
 export const SUCCESS_MESSAGES = {
-    /** Cliente agregado */
-    CLIENT_ADDED: '¡Listo! Ese cliente ya está Apunta\'o.',
-
-    /** Cliente actualizado */
-    CLIENT_UPDATED: '¡Nítido! La información de ese cliente está al día.',
-
-    /** Transacción agregada */
-    TRANSACTION_ADDED: '¡Listo! Ese movimiento ahora está Apunta\'o.',
-
-    /** Transacción eliminada */
-    TRANSACTION_DELETED: '¡Eliminado! Ya ese movimiento no existe.',
-
-    /** Deuda saldada */
-    DEBT_CLEARED: '¡Se saldó! Ya no te deben nada. ¡Estamos al día!',
-
-    /** Datos restaurados */
-    DATA_RESTORED: '¡Resuelto! Tus datos están de vuelta, sanos y salvos.',
-} as const;
-
-/** Configuración de Google Drive */
-export const DRIVE_CONFIG = {
-    /** Nombre de la carpeta de respaldos */
-    BACKUP_FOLDER_NAME: 'Apuntao Backups',
-    /** Tipo MIME para carpetas */
-    FOLDER_MIME_TYPE: 'application/vnd.google-apps.folder',
-    /** Tipo MIME para archivos JSON */
-    JSON_MIME_TYPE: 'application/json',
-    BACKUP_FILENAME: 'apuntao_backup.json',
-    LAST_BACKUP_HASH_KEY: 'last_backup_hash',
-    LAST_SYNC_TIME_KEY: 'last_sync_time',
-} as const;
+    CLIENT_ADDED: '¡Cliente agregado! Ya puedes apuntarle.',
+    CLIENT_UPDATED: '¡Listo! La información del cliente fue actualizada.',
+    TRANSACTION_ADDED: 'Movimiento registrado correctamente.',
+    TRANSACTION_DELETED: 'El movimiento fue eliminado.',
+    DEBT_CLEARED: '¡Deuda saldada! Cliente al día.',
+    DATA_SYNCED: 'Tus datos se han sincronizado con la nube.',
+    ACCOUNT_CREATED: '¡Tu cuenta ha sido creada! Ahora puedes iniciar sesión.',
+};

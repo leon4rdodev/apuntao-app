@@ -1,4 +1,7 @@
-// apuntao-app-master/context/ClientContext.tsx
+/**
+ * @file ClientContext.tsx
+ * @description Proveedor de contexto para gestionar el estado de los clientes en toda la aplicación.
+ */
 
 import React, {
     createContext,
@@ -11,11 +14,15 @@ import React, {
 } from 'react';
 import { STORAGE_KEYS } from '../constants';
 import type { Client, ClientContextType, Transaction } from '../types';
-import { handleError } from '../utils/network';
 import { getFromStorage, saveToStorage } from '../utils/storage';
 
 const ClientContext = createContext<ClientContextType | null>(null);
 
+/**
+ * Normaliza un objeto de cliente para asegurar que todos sus campos requeridos existan y tengan valores por defecto válidos.
+ * @param {Partial<Client>} client - El objeto de cliente parcial.
+ * @returns {Client} El objeto de cliente completo y normalizado.
+ */
 const normalizeClient = (client: Partial<Client>): Client => ({
     id: client.id || `client_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
     name: client.name || 'Cliente sin nombre',
@@ -29,15 +36,20 @@ export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const [clients, setClients] = useState<Client[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    /**
+     * Guarda la lista de clientes actual en el almacenamiento local.
+     * Esta función se ejecuta con un debounce implícito gracias a useEffect.
+     * @param {Client[]} clientsToSave - La lista de clientes a guardar.
+     */
     const saveClientsToStorage = useCallback(async (clientsToSave: Client[]) => {
         try {
             await saveToStorage(STORAGE_KEYS.CLIENTS, clientsToSave);
         } catch (error) {
             console.error('Error al guardar clientes en el almacenamiento:', error);
-            handleError(error, 'ClientContext.saveClientsToStorage');
         }
     }, []);
 
+    // Efecto para persistir los clientes en AsyncStorage 500ms después de cualquier cambio.
     useEffect(() => {
         if (!isLoading) {
             const handler = setTimeout(() => {
@@ -47,6 +59,7 @@ export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         }
     }, [clients, isLoading, saveClientsToStorage]);
 
+    // Efecto para cargar los clientes desde AsyncStorage al iniciar la app.
     useEffect(() => {
         const loadClientsFromStorage = async () => {
             setIsLoading(true);
@@ -57,7 +70,6 @@ export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 }
             } catch (error) {
                 console.error('Error al cargar clientes del almacenamiento:', error);
-                handleError(error, 'ClientContext.loadClients');
                 setClients([]);
             } finally {
                 setIsLoading(false);
@@ -66,29 +78,33 @@ export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         loadClientsFromStorage();
     }, []);
 
+    /** Limpia el estado de clientes, útil al cerrar sesión. */
     const clearClients = useCallback(() => {
         setClients([]);
-        saveToStorage(STORAGE_KEYS.CLIENTS, []);
+        // La limpieza del storage se hace en la función logout del apiService.
     }, []);
 
-    const restoreClients = useCallback((newClientsData: Client[] | string) => {
+    /**
+     * Reemplaza la lista actual de clientes con datos nuevos.
+     * @param {Client[]} newClientsData - El nuevo array de clientes.
+     */
+    const setAllClients = useCallback((newClientsData: Client[]) => {
         try {
-            let parsedClients: any[] =
-                typeof newClientsData === 'string'
-                    ? JSON.parse(newClientsData).data || JSON.parse(newClientsData)
-                    : newClientsData;
-
-            if (!Array.isArray(parsedClients)) {
+            if (!Array.isArray(newClientsData)) {
                 throw new Error('Los datos proporcionados para restaurar no son un array válido.');
             }
-            const normalizedClients = parsedClients.map(normalizeClient);
+            const normalizedClients = newClientsData.map(normalizeClient);
             setClients(normalizedClients);
         } catch (error) {
-            console.error('Error al restaurar clientes desde backup:', error);
-            handleError(error, 'ClientContext.restoreClients');
+            console.error('Error al establecer todos los clientes:', error);
         }
     }, []);
 
+    /**
+     * Agrega un nuevo cliente a la lista.
+     * @param {Omit<Client, 'id' | 'debt' | 'transactions' | 'lastModified'>} clientData - Datos del nuevo cliente.
+     * @returns {Client} El cliente recién creado.
+     */
     const addClient = useCallback(
         (clientData: Omit<Client, 'id' | 'debt' | 'transactions' | 'lastModified'>): Client => {
             const newClient = normalizeClient(clientData);
@@ -98,6 +114,11 @@ export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         []
     );
 
+    /**
+     * Actualiza el nombre y/o teléfono de un cliente existente.
+     * @param {string} clientId - ID del cliente a actualizar.
+     * @param {Pick<Client, 'name' | 'phone'>} updatedData - Nuevos datos para el cliente.
+     */
     const updateClient = useCallback(
         (clientId: string, updatedData: Pick<Client, 'name' | 'phone'>) => {
             setClients((prevClients) =>
@@ -111,11 +132,19 @@ export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         []
     );
 
+    /**
+     * Elimina un cliente de la lista.
+     * @param {string} clientId - ID del cliente a eliminar.
+     */
     const deleteClient = useCallback((clientId: string) => {
         setClients((prevClients) => prevClients.filter((c) => c.id !== clientId));
     }, []);
 
-    // ✅ --- IMPLEMENTACIÓN COMPLETA Y CORREGIDA ---
+    /**
+     * Agrega una transacción a un cliente y recalcula su deuda.
+     * @param {string} clientId - ID del cliente.
+     * @param {Omit<Transaction, 'id'>} transaction - La nueva transacción.
+     */
     const addTransaction = useCallback((clientId: string, transaction: Omit<Transaction, 'id'>) => {
         setClients((prevClients) =>
             prevClients.map((client) => {
@@ -132,16 +161,18 @@ export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 return {
                     ...client,
                     debt: newDebt,
-                    // Mantenemos tu lógica de optimización, pero asegurando que la nueva transacción se añade.
-                    transactions:
-                        newDebt === 0 ? [] : [newTransactionWithId, ...client.transactions],
+                    transactions: [newTransactionWithId, ...client.transactions],
                     lastModified: Date.now(),
                 };
             })
         );
     }, []);
 
-    // ✅ --- IMPLEMENTACIÓN COMPLETA Y CORREGIDA ---
+    /**
+     * Elimina una transacción de un cliente y recalcula su deuda.
+     * @param {string} clientId - ID del cliente.
+     * @param {string} transactionId - ID de la transacción a eliminar.
+     */
     const deleteTransaction = useCallback((clientId: string, transactionId: string) => {
         setClients((prevClients) =>
             prevClients.map((client) => {
@@ -162,8 +193,7 @@ export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 return {
                     ...client,
                     debt: newDebt,
-                    // Mantenemos tu lógica de optimización.
-                    transactions: newDebt === 0 ? [] : updatedTransactions,
+                    transactions: updatedTransactions,
                     lastModified: Date.now(),
                 };
             })
@@ -174,24 +204,24 @@ export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         () => ({
             clients,
             isLoading,
+            setClients: setAllClients,
             addClient,
             updateClient,
             deleteClient,
             addTransaction,
             deleteTransaction,
-            restoreClients,
             getClientById: (id: string) => clients.find((c) => c.id === id),
             clearClients,
         }),
         [
             clients,
             isLoading,
+            setAllClients,
             addClient,
             updateClient,
             deleteClient,
             addTransaction,
             deleteTransaction,
-            restoreClients,
             clearClients,
         ]
     );
