@@ -1,6 +1,6 @@
 // store/notificationStore.ts
 
-import { ANIMATIONS } from '@/constants';
+import { APP_CONFIG  } from '@/constants/index';
 import { create } from 'zustand';
 
 // 1. Definimos los tipos para el estado y las acciones
@@ -30,7 +30,7 @@ const initialState: NotificationState = {
 export const useNotificationStore = create<NotificationState & NotificationActions>((set, get) => ({
     ...initialState,
 
-    show: ({ message, type = 'info', duration = ANIMATIONS.NOTIFICATION_AUTO_CLOSE }) => {
+    show: ({ message, type = 'info', duration = APP_CONFIG.NOTIFICATION_AUTO_CLOSE_DURATION }) => {
         const { timerId } = get();
         if (timerId) {
             clearTimeout(timerId);

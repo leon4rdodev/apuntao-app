@@ -56,20 +56,15 @@ export default function LoginScreen() {
 
         try {
             const cleanedPhone = phoneNumber.replace(/-/g, '');
-            // 1. Autenticar y obtener tokens
             const sessionData: AppSessionData = await apiFetch(API_URLS.LOGIN, {
                 method: 'POST',
                 body: JSON.stringify({ phoneNumber: cleanedPhone, pin }),
             });
 
-            // 2. Guardar tokens de sesión
             await saveToStorage(STORAGE_KEYS.APP_SESSION, sessionData);
 
-            // 3. Sincronizar todos los datos de la cuenta. Esta función ahora es la fuente de verdad.
             await syncAccountData();
 
-            // 4. Redirigir a la pantalla principal.
-            // La ruta a la raíz del grupo (app) es simplemente '/'.
             router.replace('/(app)/(tabs)');
         } catch (error: any) {
             showNotification({

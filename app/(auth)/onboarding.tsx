@@ -4,15 +4,9 @@ import { Colors } from '@/constants/Colors';
 import { ONBOARDING_STEPS } from '@/constants/FeatureItems';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, useColorScheme, View } from 'react-native';
-import {
-    runOnJS,
-    useAnimatedStyle,
-    useSharedValue,
-    withTiming,
-} from 'react-native-reanimated';
-
+import { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 export default function OnboardingScreen() {
     const [step, setStep] = useState(0);
@@ -39,9 +33,14 @@ export default function OnboardingScreen() {
         }
     };
 
-    const handleLogin = () => {
+    // ✅ CORRECCIÓN: Funciones de navegación claras y específicas
+    const handleLoginPress = useCallback(() => {
         router.replace('/(auth)/login');
-    };
+    }, [router]);
+
+    const handleRegisterPress = useCallback(() => {
+        router.replace('/(auth)/register');
+    }, [router]);
 
     return (
         <View
@@ -62,12 +61,14 @@ export default function OnboardingScreen() {
                 />
             </ScrollView>
 
+            {/* ✅ CORRECCIÓN: Pasamos las funciones correctas al footer */}
             <OnboardingFooter
                 step={step}
                 totalSteps={ONBOARDING_STEPS.length}
                 theme={theme}
                 onNext={handleNext}
-                onLogin={handleLogin}
+                onLoginPress={handleLoginPress}
+                onRegisterPress={handleRegisterPress}
             />
         </View>
     );

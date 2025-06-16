@@ -9,10 +9,18 @@ interface Props {
     totalSteps: number;
     theme: any;
     onNext: () => void;
-    onLogin: () => void;
+    onLoginPress: () => void;
+    onRegisterPress: () => void;
 }
 
-export default function OnboardingFooter({ step, totalSteps, theme, onNext, onLogin }: Props) {
+export default function OnboardingFooter({
+    step,
+    totalSteps,
+    theme,
+    onNext,
+    onLoginPress,
+    onRegisterPress,
+}: Props) {
     const isLast = step === totalSteps - 1;
 
     return (
@@ -30,38 +38,41 @@ export default function OnboardingFooter({ step, totalSteps, theme, onNext, onLo
 
             <CustomButton
                 title={isLast ? 'EMPEZAR PRUEBA GRATIS' : 'Siguiente'}
-                onPress={isLast ? onLogin : onNext}
-                iconName={isLast ? 'rocket' : 'arrow-forward'}
-                iconPosition={isLast ? 'left' : 'right'}
+                onPress={isLast ? onRegisterPress : onNext}
+                iconName={isLast ? 'rocket-outline' : 'arrow-forward'}
                 buttonStyle={[styles.primaryButton, { backgroundColor: theme.primary }]}
                 textStyle={{ color: theme.textOnPrimary }}
                 iconColor={theme.textOnPrimary}
             />
 
             <CustomButton
-                title="¿Ya tienes una cuenta?"
-                onPress={onLogin}
+                title="¿Ya tienes una cuenta? Inicia Sesión"
+                onPress={onLoginPress}
                 activeOpacity={0.7}
-                buttonStyle={styles.secondaryButton}
+                // ✅ CORRECCIÓN: Añadimos 'backgroundColor: "transparent"' para anular el fondo por defecto.
+                buttonStyle={[styles.secondaryButton, { backgroundColor: 'transparent' }]}
                 textStyle={[styles.secondaryButtonText, { color: theme.primary }]}
             />
         </SafeAreaView>
     );
 }
 
+// ... tus estilos permanecen igual
 const styles = StyleSheet.create({
     container: {
         paddingHorizontal: 24,
+        paddingBottom: 16,
         borderTopWidth: 1,
     },
     dotsContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 20,
+        height: 40,
+        marginBottom: 10,
     },
     primaryButton: {
-        paddingVertical: 18,
+        paddingVertical: 16,
         borderRadius: 12,
         alignItems: 'center',
         flexDirection: 'row',
@@ -74,7 +85,7 @@ const styles = StyleSheet.create({
     },
     secondaryButton: {
         paddingVertical: 12,
-        marginTop: 12,
+        marginTop: 8,
         alignItems: 'center',
     },
     secondaryButtonText: {

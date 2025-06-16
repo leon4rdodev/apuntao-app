@@ -1,7 +1,7 @@
 /**
  * @file app/(auth)/_layout.tsx
  * @description Layout para las pantallas de autenticación.
- * Redirige a la app principal si ya existe una sesión activa.
+ * La lógica de redirección ahora es manejada por el layout raíz.
  */
 import { useSessionStore } from '@/store/sessionStore';
 import { router, Stack } from 'expo-router';
@@ -10,16 +10,17 @@ import React from 'react';
 export default function AuthLayout() {
     const { account, isInitialized } = useSessionStore();
 
-    // Mientras el store se inicializa, no renderizamos nada para evitar flashes.
+    // ✅ CORRECCIÓN: Hemos eliminado la lógica de redirección de aquí.
+    // Si la sesión ya existe, el guardia en el RootLayout se encargará de redirigir.
     if (!isInitialized) {
         return null;
     }
 
-    // Si la sesión ya se inicializó y SÍ hay una cuenta, redirigimos a la app.
-    if (isInitialized && account) {
-        router.replace('/(app)/(tabs)')
+    // Si el usuario ya está logueado, lo redirigimos a la app.
+    if (account) {
+        return router.replace('/(app)/(tabs)');
     }
 
-    // Si no hay sesión, permitimos el acceso a las pantallas de login y registro.
-    return <Stack screenOptions={{ headerShown: false, animation: 'fade_from_bottom' }} />;
+    // Simplemente renderizamos el Stack para las pantallas de este grupo.
+    return <Stack screenOptions={{ headerShown: false, animation: 'fade' }} />;
 }

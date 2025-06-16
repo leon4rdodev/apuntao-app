@@ -34,6 +34,11 @@ type CustomButtonProps = {
     isLoading?: boolean;
     /** Si el botón está deshabilitado por una razón externa (además de isLoading). */
     disabled?: boolean;
+    // ✅ CORRECCIÓN: Añadimos las props que faltaban para resolver los errores de TypeScript.
+    /** Controla la opacidad del botón cuando se presiona. */
+    activeOpacity?: number;
+    /** Permite sobreescribir el color del ícono. Si no se provee, usa el color del texto. */
+    iconColor?: string;
 };
 
 export default function CustomButton({
@@ -44,13 +49,13 @@ export default function CustomButton({
     iconName,
     isLoading = false,
     disabled = false,
+    // ✅ CORRECCIÓN: Recibimos las nuevas props.
+    activeOpacity = 0.8, // Valor por defecto de TouchableOpacity.
+    iconColor,
 }: CustomButtonProps) {
     const theme = Colors[useColorScheme() || 'light'];
-
-    // El botón está deshabilitado si la prop 'disabled' es true O si está cargando.
     const isActuallyDisabled = disabled || isLoading;
 
-    // Estilos por defecto para el botón principal.
     const defaultButtonStyle: ViewStyle = {
         backgroundColor: isActuallyDisabled ? theme.border : theme.primary,
         ...styles.button,
@@ -61,24 +66,31 @@ export default function CustomButton({
         ...styles.text,
     };
 
+    // ✅ CORRECCIÓN: El color del ícono ahora es más inteligente.
+    // Prioridad: 1. `iconColor` prop, 2. `textStyle` color, 3. `defaultTextStyle` color.
+    const finalIconColor =
+        iconColor ||
+        (Array.isArray(textStyle) ? textStyle[0]?.color : textStyle?.color) ||
+        defaultTextStyle.color;
+
     return (
         <TouchableOpacity
             style={[defaultButtonStyle, buttonStyle]}
             onPress={onPress}
-            activeOpacity={0.8}
+            // ✅ CORRECCIÓN: Usamos la prop activeOpacity.
+            activeOpacity={activeOpacity}
             disabled={isActuallyDisabled}
         >
             {isLoading ? (
-                // ✅ ESTADO DE CARGA: Muestra solo el spinner.
                 <ActivityIndicator size="small" color={theme.textOnPrimary} />
             ) : (
-                // ✅ ESTADO NORMAL: Muestra el ícono y el texto.
                 <View style={styles.content}>
                     {iconName && (
                         <Ionicons
                             name={iconName}
                             size={22}
-                            color={(Array.isArray(textStyle) ? textStyle[0]?.color : textStyle?.color) || defaultTextStyle.color}
+                            // ✅ CORRECCIÓN: Usamos el color final calculado.
+                            color={finalIconColor as string}
                         />
                     )}
                     <Text style={[defaultTextStyle, textStyle]}>{title}</Text>
@@ -107,8 +119,6 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     disabled: {
-        // El color ya se maneja en la lógica de 'defaultButtonStyle'
-        // pero mantenemos la opacidad para un efecto extra.
         opacity: 0.8,
     },
 });

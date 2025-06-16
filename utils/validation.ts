@@ -3,7 +3,7 @@
  * Contiene funciones para validar datos de entrada
  */
 
-import { REGEX, APP_LIMITS, ERROR_MESSAGES } from "../constants"
+import { REGEX, APP_CONFIG, ERROR_MESSAGES } from "../constants"
 
 /**
  * Valida si un número de teléfono tiene el formato correcto
@@ -21,7 +21,7 @@ export const isValidPhoneNumber = (phone: string): boolean => {
  */
 export const isValidName = (name: string): boolean => {
   const trimmedName = name.trim()
-  return trimmedName.length >= APP_LIMITS.MIN_NAME_LENGTH && REGEX.NAME_ALLOWED_CHARS.test(trimmedName)
+  return trimmedName.length >= APP_CONFIG.MIN_NAME_LENGTH && REGEX.NAME_ALLOWED_CHARS.test(trimmedName)
 }
 
 /**
@@ -58,7 +58,7 @@ export const validateClientData = (
     return {
       isValid: false,
       error:
-        name.trim().length < APP_LIMITS.MIN_NAME_LENGTH
+        name.trim().length < APP_CONFIG.MIN_NAME_LENGTH
           ? ERROR_MESSAGES.NAME_MIN_LENGTH
           : "El nombre contiene caracteres no válidos",
     }
