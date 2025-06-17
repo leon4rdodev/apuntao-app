@@ -1,28 +1,20 @@
-/**
- * @file ClientContext.tsx
- * @description Proveedor de contexto para gestionar el estado de los clientes en toda la aplicación.
- */
-
 import React, {
     createContext,
     useCallback,
     useContext,
     useEffect,
     useMemo,
+    useRef,
     useState,
     type ReactNode,
 } from 'react';
-import { STORAGE_KEYS } from '../constants';
+import { API_URLS, STORAGE_KEYS } from '../constants';
+import { apiFetch } from '@/services/apiService';
 import type { Client, ClientContextType, Transaction } from '../types';
 import { getFromStorage, saveToStorage } from '../utils/storage';
 
 const ClientContext = createContext<ClientContextType | null>(null);
 
-/**
- * Normaliza un objeto de cliente para asegurar que todos sus campos requeridos existan y tengan valores por defecto válidos.
- * @param {Partial<Client>} client - El objeto de cliente parcial.
- * @returns {Client} El objeto de cliente completo y normalizado.
- */
 const normalizeClient = (client: Partial<Client>): Client => ({
     id: client.id || `client_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
     name: client.name || 'Cliente sin nombre',
@@ -35,31 +27,30 @@ const normalizeClient = (client: Partial<Client>): Client => ({
 export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [clients, setClients] = useState<Client[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const hasLoadedOnce = useRef(false);
 
-    /**
-     * Guarda la lista de clientes actual en el almacenamiento local.
-     * Esta función se ejecuta con un debounce implícito gracias a useEffect.
-     * @param {Client[]} clientsToSave - La lista de clientes a guardar.
-     */
-    const saveClientsToStorage = useCallback(async (clientsToSave: Client[]) => {
-        try {
-            await saveToStorage(STORAGE_KEYS.CLIENTS, clientsToSave);
-        } catch (error) {
-            console.error('Error al guardar clientes en el almacenamiento:', error);
-        }
-    }, []);
+    const syncClientsToBackend = useCallback(
+        async (clientsToSync: Client[]) => {
+            if (isSyncing || isLoading || !hasLoadedOnce.current) return;
 
-    // Efecto para persistir los clientes en AsyncStorage 500ms después de cualquier cambio.
-    useEffect(() => {
-        if (!isLoading) {
-            const handler = setTimeout(() => {
-                saveClientsToStorage(clients);
-            }, 500);
-            return () => clearTimeout(handler);
-        }
-    }, [clients, isLoading, saveClientsToStorage]);
+            setIsSyncing(true);
+            console.log('Sincronizando con backend...');
+            try {
+                await apiFetch(API_URLS.DATA_SYNC, {
+                    method: 'POST',
+                    body: JSON.stringify({ clients: clientsToSync }),
+                });
+                console.log('Datos sincronizados con el backend.');
+            } catch (error) {
+                console.error('Error al sincronizar con el backend:', error);
+            } finally {
+                setIsSyncing(false);
+            }
+        },
+        [isSyncing, isLoading]
+    );
 
-    // Efecto para cargar los clientes desde AsyncStorage al iniciar la app.
     useEffect(() => {
         const loadClientsFromStorage = async () => {
             setIsLoading(true);
@@ -69,141 +60,118 @@ export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                     setClients(storedData.map(normalizeClient));
                 }
             } catch (error) {
-                console.error('Error al cargar clientes del almacenamiento:', error);
+                console.error('Error al cargar clientes:', error);
                 setClients([]);
             } finally {
                 setIsLoading(false);
+                hasLoadedOnce.current = true; // Marca que ya cargamos y podemos sincronizar después
             }
         };
         loadClientsFromStorage();
     }, []);
 
-    /** Limpia el estado de clientes, útil al cerrar sesión. */
-    const clearClients = useCallback(() => {
-        setClients([]);
-        // La limpieza del storage se hace en la función logout del apiService.
-    }, []);
+    const clearClients = useCallback(() => setClients([]), []);
 
-    /**
-     * Reemplaza la lista actual de clientes con datos nuevos.
-     * @param {Client[]} newClientsData - El nuevo array de clientes.
-     */
     const setAllClients = useCallback((newClientsData: Client[]) => {
         try {
-            if (!Array.isArray(newClientsData)) {
-                throw new Error('Los datos proporcionados para restaurar no son un array válido.');
-            }
+            if (!Array.isArray(newClientsData)) throw new Error('Los datos no son válidos.');
             const normalizedClients = newClientsData.map(normalizeClient);
             setClients(normalizedClients);
         } catch (error) {
-            console.error('Error al establecer todos los clientes:', error);
+            console.error('Error al establecer los clientes:', error);
         }
     }, []);
 
-    /**
-     * Agrega un nuevo cliente a la lista.
-     * @param {Omit<Client, 'id' | 'debt' | 'transactions' | 'lastModified'>} clientData - Datos del nuevo cliente.
-     * @returns {Client} El cliente recién creado.
-     */
     const addClient = useCallback(
         (clientData: Omit<Client, 'id' | 'debt' | 'transactions' | 'lastModified'>): Client => {
             const newClient = normalizeClient(clientData);
-            setClients((prevClients) => [...prevClients, newClient]);
+            setClients((prevClients) => {
+                const updatedClients = [...prevClients, newClient];
+                saveToStorage(STORAGE_KEYS.CLIENTS, updatedClients);
+                syncClientsToBackend(updatedClients);
+                return updatedClients;
+            });
             return newClient;
         },
-        []
+        [syncClientsToBackend]
     );
 
-    /**
-     * Actualiza el nombre y/o teléfono de un cliente existente.
-     * @param {string} clientId - ID del cliente a actualizar.
-     * @param {Pick<Client, 'name' | 'phone'>} updatedData - Nuevos datos para el cliente.
-     */
     const updateClient = useCallback(
         (clientId: string, updatedData: Pick<Client, 'name' | 'phone'>) => {
-            setClients((prevClients) =>
-                prevClients.map((client) =>
+            setClients((prevClients) => {
+                const updatedClients = prevClients.map((client) =>
                     client.id === clientId
                         ? { ...client, ...updatedData, lastModified: Date.now() }
                         : client
-                )
-            );
+                );
+                saveToStorage(STORAGE_KEYS.CLIENTS, updatedClients);
+                return updatedClients;
+            });
         },
         []
     );
 
-    /**
-     * Elimina un cliente de la lista.
-     * @param {string} clientId - ID del cliente a eliminar.
-     */
     const deleteClient = useCallback((clientId: string) => {
-        setClients((prevClients) => prevClients.filter((c) => c.id !== clientId));
+        setClients((prevClients) => {
+            const updatedClients = prevClients.filter((c) => c.id !== clientId);
+            saveToStorage(STORAGE_KEYS.CLIENTS, updatedClients);
+            return updatedClients;
+        });
     }, []);
 
-    /**
-     * Agrega una transacción a un cliente y recalcula su deuda.
-     * @param {string} clientId - ID del cliente.
-     * @param {Omit<Transaction, 'id'>} transaction - La nueva transacción.
-     */
-    const addTransaction = useCallback((clientId: string, transaction: Omit<Transaction, 'id'>) => {
-        setClients((prevClients) =>
-            prevClients.map((client) => {
-                if (client.id !== clientId) return client;
+    const addTransaction = useCallback(
+        (clientId: string, transaction: Omit<Transaction, 'id'>) => {
+            setClients((prevClients) => {
+                const updatedClients = prevClients.map((client) => {
+                    if (client.id !== clientId) return client;
+                    const debtChange =
+                        transaction.type === 'Deuda' ? transaction.amount : -transaction.amount;
+                    const newDebt = Math.max(0, client.debt + debtChange);
+                    const newTransactionWithId: Transaction = {
+                        ...transaction,
+                        id: `txn_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                    };
+                    return {
+                        ...client,
+                        debt: newDebt,
+                        transactions: [newTransactionWithId, ...client.transactions],
+                        lastModified: Date.now(),
+                    };
+                });
+                saveToStorage(STORAGE_KEYS.CLIENTS, updatedClients);
+                syncClientsToBackend(updatedClients);
+                return updatedClients;
+            });
+        },
+        [syncClientsToBackend]
+    );
 
-                const debtChange =
-                    transaction.type === 'Deuda' ? transaction.amount : -transaction.amount;
-                const newDebt = Math.max(0, client.debt + debtChange);
-                const newTransactionWithId: Transaction = {
-                    ...transaction,
-                    id: `txn_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-                };
-
-                return {
-                    ...client,
-                    debt: newDebt,
-                    transactions: [newTransactionWithId, ...client.transactions],
-                    lastModified: Date.now(),
-                };
-            })
-        );
-    }, []);
-
-    /**
-     * Elimina una transacción de un cliente y recalcula su deuda.
-     * @param {string} clientId - ID del cliente.
-     * @param {string} transactionId - ID de la transacción a eliminar.
-     */
     const deleteTransaction = useCallback((clientId: string, transactionId: string) => {
-        setClients((prevClients) =>
-            prevClients.map((client) => {
+        setClients((prevClients) => {
+            const updatedClients = prevClients.map((client) => {
                 if (client.id !== clientId) return client;
-
-                const transactionToDelete = client.transactions.find((t) => t.id === transactionId);
-                if (!transactionToDelete) return client;
-
+                const txToDelete = client.transactions.find((t) => t.id === transactionId);
+                if (!txToDelete) return client;
                 const debtChange =
-                    transactionToDelete.type === 'Deuda'
-                        ? -transactionToDelete.amount
-                        : transactionToDelete.amount;
+                    txToDelete.type === 'Deuda' ? -txToDelete.amount : txToDelete.amount;
                 const newDebt = Math.max(0, client.debt + debtChange);
-                const updatedTransactions = client.transactions.filter(
-                    (t) => t.id !== transactionId
-                );
-
                 return {
                     ...client,
                     debt: newDebt,
-                    transactions: updatedTransactions,
+                    transactions: client.transactions.filter((t) => t.id !== transactionId),
                     lastModified: Date.now(),
                 };
-            })
-        );
+            });
+            saveToStorage(STORAGE_KEYS.CLIENTS, updatedClients);
+            return updatedClients;
+        });
     }, []);
 
     const contextValue = useMemo<ClientContextType>(
         () => ({
             clients,
             isLoading,
+            isSyncing,
             setClients: setAllClients,
             addClient,
             updateClient,
@@ -216,6 +184,7 @@ export const ClientProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         [
             clients,
             isLoading,
+            isSyncing,
             setAllClients,
             addClient,
             updateClient,

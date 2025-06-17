@@ -1,19 +1,17 @@
 /**
  * @file app/(auth)/login.tsx
- * @description Pantalla de inicio de sesión para que los dueños de colmados accedan a su cuenta.
- * Corregida para un manejo de estado y navegación robustos.
+ * @description Pantalla de inicio de sesión.
  */
 import CustomButton from '@/components/ui/CustomButton';
 import CustomInput from '@/components/input/CustomInput';
 import CustomText from '@/components/ui/CustomText';
 import { API_URLS, ERROR_MESSAGES, STORAGE_KEYS } from '@/constants';
 import { Colors } from '@/constants/Colors';
+import { useClientContext } from '@/context/ClientContext'; // ✅ Importamos el contexto del cliente
 import { useNotification } from '@/store/notificationStore';
-import { useSessionStore } from '@/store/sessionStore';
 import type { AppSessionData } from '@/types';
 import { formatPhoneNumber } from '@/utils/formatters';
 import { apiFetch } from '@/services/apiService';
-import { saveToStorage } from '@/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -28,34 +26,41 @@ import {
     useColorScheme,
     View,
 } from 'react-native';
+import { saveToStorage } from '@/utils/storage';
 
 export default function LoginScreen() {
     const theme = Colors[useColorScheme() || 'light'];
     const router = useRouter();
     const showNotification = useNotification();
-    const { syncAccountData } = useSessionStore.getState();
+    const { setClients } = useClientContext(); // ✅ Obtenemos la función para actualizar los clientes
 
     const [phoneNumber, setPhoneNumber] = useState('');
     const [pin, setPin] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    /**
-     * @function handleLogin
-     * @description Maneja el proceso de inicio de sesión, llamando a la API y guardando la sesión.
-     */
     const handleLogin = async () => {
         Keyboard.dismiss();
         if (!phoneNumber || !pin) {
-            showNotification({
-                message: 'Por favor, completa todos los campos.',
-                type: 'error',
-            });
+            showNotification({ message: 'Por favor, completa todos los campos.', type: 'error' });
             return;
         }
+
+        if (pin.length <6) {
+            showNotification(
+                {
+                    message: 'Ingresa un pin de 6 digitos',
+                    type: 'error'
+                }
+            )
+            return
+        }
+
         setIsLoading(true);
+
 
         try {
             const cleanedPhone = phoneNumber.replace(/-/g, '');
+
             const sessionData: AppSessionData = await apiFetch(API_URLS.LOGIN, {
                 method: 'POST',
                 body: JSON.stringify({ phoneNumber: cleanedPhone, pin }),
@@ -63,7 +68,16 @@ export default function LoginScreen() {
 
             await saveToStorage(STORAGE_KEYS.APP_SESSION, sessionData);
 
-            await syncAccountData();
+            const { clients } = await apiFetch(API_URLS.DATA_SYNC, {
+                method: 'GET',
+            });
+
+            if (clients) {
+                console.log(clients);
+                setClients(clients);
+            } else {
+                console.log('Parece que ha ocurrido un error al obtener los clientes');
+            }
 
             router.replace('/(app)/(tabs)');
         } catch (error: any) {
@@ -123,13 +137,13 @@ export default function LoginScreen() {
                             <CustomButton
                                 title="Iniciar Sesión"
                                 onPress={handleLogin}
-                                isLoading={isLoading} // Le pasamos el estado de carga
+                                isLoading={isLoading}
                                 iconName="log-in-outline"
                             />
                             <CustomButton
                                 title="No tengo cuenta, quiero registrarme"
                                 onPress={() => router.replace('/register')}
-                                disabled={isLoading} // ✅ Se deshabilita, pero no muestra spinner
+                                disabled={isLoading}
                                 buttonStyle={{
                                     backgroundColor: 'transparent',
                                     marginTop: 16,
