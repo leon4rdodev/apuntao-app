@@ -43,7 +43,7 @@ export interface Subscription {
 }
 
 /** Datos de una cuenta de Colmado, que es el "usuario" de nuestra app. */
-export interface ColmadoAccountInfo {
+export interface ColmadoAccountInfo { 
     _id: string;
     colmadoName: string;
     phoneNumber: string;

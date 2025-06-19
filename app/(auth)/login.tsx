@@ -9,7 +9,7 @@ import { API_URLS, ERROR_MESSAGES, STORAGE_KEYS } from '@/constants';
 import { Colors } from '@/constants/Colors';
 import { useClientContext } from '@/context/ClientContext'; // ✅ Importamos el contexto del cliente
 import { useNotification } from '@/store/notificationStore';
-import type { AppSessionData } from '@/types';
+import type { AppSessionData, ColmadoAccountInfo } from '@/types';
 import { formatPhoneNumber } from '@/utils/formatters';
 import { apiFetch } from '@/services/apiService';
 import { Ionicons } from '@expo/vector-icons';
@@ -68,13 +68,19 @@ export default function LoginScreen() {
 
             await saveToStorage(STORAGE_KEYS.APP_SESSION, sessionData);
 
-            const { clients } = await apiFetch(API_URLS.DATA_SYNC, {
+            const ColmadoAccountInfo: ColmadoAccountInfo = await apiFetch(API_URLS.ACCOUNT_PROFILE, {
                 method: 'GET',
             });
 
-            if (clients) {
-                console.log(clients);
+            await saveToStorage(STORAGE_KEYS.ACCOUNT_INFO, ColmadoAccountInfo);
+
+            const { clients, subscription } = await apiFetch(API_URLS.DATA_SYNC, {
+                method: 'GET',
+            });
+
+            if (clients && subscription) {
                 setClients(clients);
+                console.log(subscription)
             } else {
                 console.log('Parece que ha ocurrido un error al obtener los clientes');
             }

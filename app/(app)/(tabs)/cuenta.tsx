@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -24,16 +24,29 @@ import SubscriptionCard from '@/components/cards/SubscriptionCard';
 import ActionRow from '@/components/ui/ActionRow';
 import CustomButton from '@/components/ui/CustomButton';
 import CustomText from '@/components/ui/CustomText';
+import { getFromStorage, removeFromStorage } from '@/utils/storage';
+import { STORAGE_KEYS } from '@/constants';
 
 
 // --- Componente Principal de la Pantalla ---
 export default function CuentaScreen() {
     const theme = Colors[useColorScheme() || 'light'];
     const router = useRouter();
-    const [isSigningOut, setIsSigningOut] = useState(false);
+    const [isSigningOut, setIsSigningOut] = useState(false); 
+    const [user, setUser] = useState(null)
+    const [isInitialized, setIsInitialized] = useState(true);
 
-    const { clients, clearClients } = useClientContext(); // ✅ Obtener la función de limpieza
-    const { user, isInitialized, logout: logoutAction } = useSessionStore(); // ✅ Obtener la acción de logout
+    const { clients, clearClients } = useClientContext(); 
+
+    useEffect(() => {
+        async function getUser() {
+            const usr = await getFromStorage(STORAGE_KEYS.ACCOUNT_INFO)
+            setUser(usr);
+            setIsInitialized(true)
+        }
+
+        getUser();
+    }, [])
 
     const summaryData = useMemo(() => {
         const totalDebt = clients.reduce((sum, client) => sum + client.debt, 0);
@@ -52,7 +65,9 @@ export default function CuentaScreen() {
                     onPress: () => {
                         setIsSigningOut(true);
                         clearClients();
-                        logoutAction();
+                        removeFromStorage(STORAGE_KEYS.APP_SESSION)
+                        removeFromStorage(STORAGE_KEYS.ACCOUNT_INFO);
+                        router.replace('/(auth)/login')
                     },
                 },
             ]
@@ -75,15 +90,11 @@ export default function CuentaScreen() {
             >
                 {user && (
                     <View style={styles.profileHeader}>
-                        <Image
-                            source={{ uri: user.photo || undefined }}
-                            style={[styles.avatar, { borderColor: theme.primary }]}
-                        />
                         <CustomText size="xlarge" weight="bold" style={styles.userName}>
-                            {user.name}
+                            {user.colmadoName}
                         </CustomText>
                         <CustomText size="medium" color={theme.textSecondary}>
-                            {user.email}
+                            {user.phoneNumber}
                         </CustomText>
                     </View>
                 )}

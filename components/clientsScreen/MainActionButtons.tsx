@@ -15,7 +15,10 @@ const MainActionButtons = ({ onPay, onAddDebt }: { onPay: () => void; onAddDebt:
                 title="Añadir Pago"
                 onPress={onPay}
                 iconName="arrow-down-circle-outline"
-                buttonStyle={[styles.mainActionButton, { backgroundColor: theme.successLight }]}
+                buttonStyle={[
+                    styles.mainActionButton,
+                    { backgroundColor: theme.successLight, height: 90 },
+                ]}
                 textStyle={{ color: theme.success }}
                 iconColor={theme.success}
             />
@@ -23,7 +26,10 @@ const MainActionButtons = ({ onPay, onAddDebt }: { onPay: () => void; onAddDebt:
                 title="Añadir Deuda"
                 onPress={onAddDebt}
                 iconName="arrow-up-circle-outline"
-                buttonStyle={[styles.mainActionButton, { backgroundColor: theme.errorLight, }]}
+                buttonStyle={[
+                    styles.mainActionButton,
+                    { backgroundColor: theme.errorLight, height: 90 },
+                ]}
                 textStyle={{ color: theme.error }}
                 iconColor={theme.error}
             />

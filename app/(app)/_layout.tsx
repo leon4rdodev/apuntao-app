@@ -9,7 +9,7 @@ import React from 'react';
 export default function AppStackLayout() {
     // Simplemente renderizamos el Stack para las pantallas de este grupo.
     return (
-        <Stack screenOptions={{ animation: 'fade' }}>
+        <Stack screenOptions={{ animation: 'fade_from_bottom' }}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="clients/[id]" options={{ headerShown: false }} />
         </Stack>
