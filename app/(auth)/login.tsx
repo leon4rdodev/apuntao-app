@@ -7,9 +7,10 @@ import CustomInput from '@/components/input/CustomInput';
 import CustomText from '@/components/ui/CustomText';
 import { API_URLS, ERROR_MESSAGES, STORAGE_KEYS } from '@/constants';
 import { Colors } from '@/constants/Colors';
-import { useClientContext } from '@/context/ClientContext'; // ✅ Importamos el contexto del cliente
+import { useClientContext } from '@/context/ClientContext';
 import { useNotification } from '@/store/notificationStore';
-import type { AppSessionData, ColmadoAccountInfo } from '@/types';
+import { useSessionStore } from '@/store/sessionStore';
+import type { AppSessionData } from '@/types';
 import { formatPhoneNumber } from '@/utils/formatters';
 import { apiFetch } from '@/services/apiService';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,7 +33,8 @@ export default function LoginScreen() {
     const theme = Colors[useColorScheme() || 'light'];
     const router = useRouter();
     const showNotification = useNotification();
-    const { setClients } = useClientContext(); // ✅ Obtenemos la función para actualizar los clientes
+    const { setClients } = useClientContext();
+    const { syncAccountData } = useSessionStore();
 
     const [phoneNumber, setPhoneNumber] = useState('');
     const [pin, setPin] = useState('');
@@ -40,52 +42,36 @@ export default function LoginScreen() {
 
     const handleLogin = async () => {
         Keyboard.dismiss();
-        if (!phoneNumber || !pin) {
-            showNotification({ message: 'Por favor, completa todos los campos.', type: 'error' });
+        if (!phoneNumber || !pin || pin.length < 6) {
+            showNotification({ message: 'Por favor, completa todos los campos correctamente.', type: 'error' });
             return;
-        }
-
-        if (pin.length <6) {
-            showNotification(
-                {
-                    message: 'Ingresa un pin de 6 digitos',
-                    type: 'error'
-                }
-            )
-            return
         }
 
         setIsLoading(true);
 
-
         try {
             const cleanedPhone = phoneNumber.replace(/-/g, '');
 
-            const sessionData: AppSessionData = await apiFetch(API_URLS.LOGIN, {
-                method: 'POST',
-                body: JSON.stringify({ phoneNumber: cleanedPhone, pin }),
-            });
+            const sessionData: AppSessionData = await apiFetch(
+                API_URLS.LOGIN,
+                {
+                    method: 'POST',
+                    body: JSON.stringify({ phoneNumber: cleanedPhone, pin }),
+                },
+                true // Marcar como ruta pública
+            );
 
             await saveToStorage(STORAGE_KEYS.APP_SESSION, sessionData);
 
-            const ColmadoAccountInfo: ColmadoAccountInfo = await apiFetch(API_URLS.ACCOUNT_PROFILE, {
-                method: 'GET',
-            });
+            const syncedData = await syncAccountData();
 
-            await saveToStorage(STORAGE_KEYS.ACCOUNT_INFO, ColmadoAccountInfo);
-
-            const { clients, subscription } = await apiFetch(API_URLS.DATA_SYNC, {
-                method: 'GET',
-            });
-
-            if (clients && subscription) {
-                setClients(clients);
-                console.log(subscription)
+            if (syncedData?.clients) {
+                setClients(syncedData.clients);
+                router.replace('/(app)/(tabs)');
             } else {
-                console.log('Parece que ha ocurrido un error al obtener los clientes');
+                 throw new Error("No se pudieron cargar los datos de la cuenta.");
             }
 
-            router.replace('/(app)/(tabs)');
         } catch (error: any) {
             showNotification({
                 message: error.message || ERROR_MESSAGES.GENERIC_ERROR,
@@ -141,14 +127,14 @@ export default function LoginScreen() {
 
                         <View style={styles.footer}>
                             <CustomButton
-                                title="Iniciar Sesión"
+                                title={isLoading ? "Iniciando..." : "Iniciar Sesión"}
                                 onPress={handleLogin}
                                 isLoading={isLoading}
                                 iconName="log-in-outline"
                             />
                             <CustomButton
                                 title="No tengo cuenta, quiero registrarme"
-                                onPress={() => router.replace('/register')}
+                                onPress={() => router.replace('/(auth)/register')}
                                 disabled={isLoading}
                                 buttonStyle={{
                                     backgroundColor: 'transparent',

@@ -11,5 +11,5 @@ export default function AuthLayout() {
     // Si, tras inicializar, resulta que SÍ hay una cuenta,
    
     // Si no hay cuenta, este es el layout correcto. Mostramos las pantallas de auth.
-    return <Stack screenOptions={{ headerShown: false, animation: 'fade' }} />;
+    return <Stack screenOptions={{ headerShown: false, animation: 'fade_from_bottom' }} />;
 }

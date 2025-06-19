@@ -84,11 +84,12 @@ export const ERROR_MESSAGES = {
     DELETE_CLIENT_WITH_DEBT:
         'No puedes eliminar un cliente con deuda pendiente. Salda la deuda primero.',
     CLIENT_NOT_FOUND: 'No se pudo encontrar la información de este cliente.',
+    INVALID_CREDENTIALS: 'El número de teléfono o el PIN son incorrectos.',
 
     // Errores de Red y Sesión
     NO_CONNECTION: 'Parece que no hay internet. Revisa tu conexión e inténtalo de nuevo.',
     SESSION_EXPIRED: 'Tu sesión ha expirado. Por favor, inicia sesión de nuevo para continuar.',
-    GENERIC_ERROR: '¡Ups! Algo salió mal. Inténtalo de nuevo en un momento.',
+    GENERIC_ERROR: '¡Ups! Algo no salió bien. Por favor, inténtalo de nuevo.',
     UNEXPECTED_SAVE_ERROR: 'Ocurrió un error inesperado al intentar guardar.',
 
     // Errores de Interacción con el Dispositivo

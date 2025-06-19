@@ -8,10 +8,11 @@ import CustomText from "../ui/CustomText";
 
 const SubscriptionCard = () => {
     const theme = Colors[useColorScheme() || 'light'];
+    // Obtenemos el estado de la suscripción desde el store
     const { subscription } = useSessionStore();
 
     const getStatusInfo = () => {
-        switch (subscription.status) {
+        switch (subscription?.status) {
             case 'active':
                 return {
                     icon: 'shield-checkmark-outline' as const,
@@ -53,7 +54,7 @@ const SubscriptionCard = () => {
 
     const statusInfo = getStatusInfo();
     const dateToShow =
-        subscription.status === 'trial' ? subscription.trialEndDate : subscription.endDate;
+        subscription?.status === 'trial' ? subscription.trialEndDate : subscription.endDate;
 
     return (
         <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -75,7 +76,7 @@ const SubscriptionCard = () => {
                 >
                     {statusInfo.text}
                 </CustomText>
-                {subscription.plan && subscription.plan !== 'none' && (
+                {subscription?.plan && subscription.plan !== 'none' && (
                     <CustomText size="medium" color={theme.textSecondary}>
                         Plan:{' '}
                         {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}
@@ -87,7 +88,7 @@ const SubscriptionCard = () => {
                     </CustomText>
                 )}
             </View>
-            {(subscription.status === 'expired' || subscription.status === 'cancelled') && (
+            {(subscription?.status === 'expired' || subscription?.status === 'cancelled') && (
                 <CustomButton
                     title="Renovar Suscripción"
                     onPress={() =>

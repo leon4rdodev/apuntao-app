@@ -2,9 +2,8 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -24,29 +23,15 @@ import SubscriptionCard from '@/components/cards/SubscriptionCard';
 import ActionRow from '@/components/ui/ActionRow';
 import CustomButton from '@/components/ui/CustomButton';
 import CustomText from '@/components/ui/CustomText';
-import { getFromStorage, removeFromStorage } from '@/utils/storage';
-import { STORAGE_KEYS } from '@/constants';
-
 
 // --- Componente Principal de la Pantalla ---
 export default function CuentaScreen() {
     const theme = Colors[useColorScheme() || 'light'];
     const router = useRouter();
-    const [isSigningOut, setIsSigningOut] = useState(false); 
-    const [user, setUser] = useState(null)
-    const [isInitialized, setIsInitialized] = useState(true);
-
+    
+    // Obtenemos el estado de la sesión y los datos del cliente de nuestros hooks centralizados
+    const { account, logout, isInitialized } = useSessionStore();
     const { clients, clearClients } = useClientContext(); 
-
-    useEffect(() => {
-        async function getUser() {
-            const usr = await getFromStorage(STORAGE_KEYS.ACCOUNT_INFO)
-            setUser(usr);
-            setIsInitialized(true)
-        }
-
-        getUser();
-    }, [])
 
     const summaryData = useMemo(() => {
         const totalDebt = clients.reduce((sum, client) => sum + client.debt, 0);
@@ -56,24 +41,22 @@ export default function CuentaScreen() {
     const handleSignOut = () => {
         Alert.alert(
             'Cerrar Sesión',
-            '¿Estás seguro? Se borrarán los datos locales de esta sesión.',
+            '¿Estás seguro? Se cerrarán tu sesión en este dispositivo.',
             [
                 { text: 'Cancelar', style: 'cancel' },
                 {
                     text: 'Confirmar',
                     style: 'destructive',
-                    onPress: () => {
-                        setIsSigningOut(true);
-                        clearClients();
-                        removeFromStorage(STORAGE_KEYS.APP_SESSION)
-                        removeFromStorage(STORAGE_KEYS.ACCOUNT_INFO);
-                        router.replace('/(auth)/login')
+                    onPress: async () => {
+                        await clearClients(); // Limpia el contexto de clientes
+                        await logout();       // Llama a la función de logout del store de sesión
                     },
                 },
             ]
         );
     };
 
+    // Muestra un indicador de carga mientras se inicializa la sesión
     if (!isInitialized) {
         return (
             <View style={[styles.container, styles.center, { backgroundColor: theme.background }]}>
@@ -88,13 +71,13 @@ export default function CuentaScreen() {
                 contentContainerStyle={styles.scrollContainer}
                 showsVerticalScrollIndicator={false}
             >
-                {user && (
+                {account && (
                     <View style={styles.profileHeader}>
                         <CustomText size="xlarge" weight="bold" style={styles.userName}>
-                            {user.colmadoName}
+                            {account.colmadoName}
                         </CustomText>
                         <CustomText size="medium" color={theme.textSecondary}>
-                            {user.phoneNumber}
+                            {account.phoneNumber}
                         </CustomText>
                     </View>
                 )}
@@ -152,17 +135,6 @@ export default function CuentaScreen() {
                         Ajustes y Soporte
                     </CustomText>
                     <ActionRow
-                        icon="sync-outline"
-                        text="Sincronizar Datos con Drive"
-                        onPress={() =>
-                            Alert.alert(
-                                'Próximamente',
-                                'La sincronización con Google Drive está en desarrollo.'
-                            )
-                        }
-                        theme={theme}
-                    />
-                    <ActionRow
                         icon="help-buoy-outline"
                         text="Centro de Ayuda"
                         onPress={() => router.push('/(app)/(tabs)/ayuda')}
@@ -180,9 +152,8 @@ export default function CuentaScreen() {
 
                 <View style={{ marginTop: 24 }}>
                     <CustomButton
-                        title={isSigningOut ? 'Cerrando sesión...' : 'Cerrar Sesión'}
+                        title={'Cerrar Sesión'}
                         onPress={handleSignOut}
-                        disabled={isSigningOut}
                         buttonStyle={{ backgroundColor: theme.errorLight }}
                         textStyle={{ color: theme.error }}
                         iconName="log-out-outline"
@@ -203,7 +174,6 @@ const styles = StyleSheet.create({
     center: { justifyContent: 'center', alignItems: 'center' },
     scrollContainer: { padding: 24, paddingTop: Constants.statusBarHeight + 24, paddingBottom: 50 },
     profileHeader: { alignItems: 'center', marginBottom: 24 },
-    avatar: { width: 100, height: 100, borderRadius: 50, borderWidth: 3, marginBottom: 16 },
     userName: { marginBottom: 4 },
     card: { borderRadius: 16, padding: 18, marginBottom: 18, borderWidth: 1 },
     cardTitle: { textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 16 },

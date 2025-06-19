@@ -9,7 +9,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { AntDesign, Entypo, FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import * as Font from 'expo-font';
-import { Slot, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
@@ -44,7 +44,7 @@ function RootLayoutNav() {
     return (
         <ThemeProvider value={navigationTheme}>
             <GlobalNotification />
-                <Slot />
+                <Stack screenOptions={{animation: 'fade_from_bottom', headerShown: false}}/>
             <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
         </ThemeProvider>
     );

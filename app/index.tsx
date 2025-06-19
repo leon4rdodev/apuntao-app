@@ -1,47 +1,52 @@
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { existsInStorage } from '@/utils/storage'; // Asumo que esta función devuelve Promise<boolean>
-import { STORAGE_KEYS } from '@/constants';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { useSessionStore } from '@/store/sessionStore';
+import { useClientContext } from '@/context/ClientContext';
+import { STORAGE_KEYS } from '@/constants';
+import { getFromStorage } from '@/utils/storage';
 
 export default function Index() {
     const router = useRouter();
+    const { syncAccountData } = useSessionStore();
+    const { setClients } = useClientContext();
 
     useEffect(() => {
-        // 1. Define una función 'async' dentro del useEffect.
-        const verificarSesion = async () => {
-            console.log('Verificando sesión...');
-
+        const checkSessionAndSync = async () => {
             try {
-                // 2. USA 'await' para esperar el resultado booleano de la promesa.
-                //    Ahora 'yaHizoLogin' contendrá 'true' o 'false', no una promesa.
-                const yaHizoLogin = await existsInStorage(STORAGE_KEYS.APP_SESSION);
+                // Verificamos si existe un token de sesión
+                const session = await getFromStorage(STORAGE_KEYS.APP_SESSION);
 
-                console.log(`Resultado de la verificación: ${yaHizoLogin}`);
+                if (session?.accessToken) {
+                    console.log('Sesión encontrada, sincronizando datos...');
+                    // Si hay sesión, intentamos sincronizar todos los datos
+                    const syncedData = await syncAccountData();
 
-                // 3. Ahora tu lógica 'if/else' funcionará como esperas.
-                if (yaHizoLogin) {
-                    console.log('Sesión encontrada, redirigiendo a /home...');
-                    router.replace('/(app)/(tabs)'); // O la ruta principal de tu app
+                    if (syncedData?.clients) {
+                        setClients(syncedData.clients);
+                        router.replace('/(app)/(tabs)');
+                    } else {
+                        // Si la sincronización falla (ej. token inválido), irá a login por el manejador de errores
+                        console.log('Sincronización fallida, redirigiendo a login...');
+                        router.replace('/(auth)/login');
+                    }
                 } else {
-                    console.log('No hay sesión, redirigiendo a /auth...');
-                    router.replace('/(auth)/onboarding'); // O la pantalla de login
+                    console.log('No hay sesión, redirigiendo a onboarding...');
+                    router.replace('/(auth)/onboarding');
                 }
             } catch (error) {
                 console.error('Error al verificar la sesión:', error);
-                // En caso de error, probablemente quieras ir al login.
                 router.replace('/(auth)/login');
             }
         };
 
-        // 4. Llama a la función asíncrona.
-        verificarSesion();
-    }, []); // <-- Array vacío para que solo se ejecute una vez al montar el componente.
+        checkSessionAndSync();
+    }, []); // Se ejecuta solo una vez
 
-    // Es una buena práctica mostrar algo mientras se verifica la sesión.
+    // Muestra un indicador de carga mientras se verifica la sesión
     return (
         <View style={styles.container}>
-            <ActivityIndicator size="large" color="#0000ff" />
+            <ActivityIndicator size="large" color="#16a34a" />
         </View>
     );
 }

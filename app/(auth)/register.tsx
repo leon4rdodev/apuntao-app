@@ -1,7 +1,6 @@
 /**
  * @file app/(auth)/register.tsx
  * @description Pantalla de registro para nuevos dueños de colmados.
- * Corregida para un manejo de estado y navegación robustos.
  */
 import CustomButton from '@/components/ui/CustomButton';
 import CustomInput from '@/components/input/CustomInput';
@@ -43,21 +42,25 @@ export default function RegisterScreen() {
      */
     const handleRegister = async () => {
         Keyboard.dismiss();
-        if (!colmadoName || !phoneNumber || !pin) {
-            showNotification({ message: 'Todos los campos son obligatorios.', type: 'error' });
+        if (!colmadoName.trim() || !phoneNumber || pin.length < 6) {
+            showNotification({ message: 'Todos los campos son obligatorios y el PIN debe tener 6 dígitos.', type: 'error' });
             return;
         }
         setIsLoading(true);
 
         try {
             const cleanedPhone = phoneNumber.replace(/-/g, '');
-            await apiFetch(API_URLS.REGISTER, {
-                method: 'POST',
-                body: JSON.stringify({ colmadoName, phoneNumber: cleanedPhone, pin }),
-            });
+            await apiFetch(
+                API_URLS.REGISTER,
+                {
+                    method: 'POST',
+                    body: JSON.stringify({ colmadoName: colmadoName.trim(), phoneNumber: cleanedPhone, pin }),
+                },
+                true // Marcar como ruta pública
+            );
 
-            Alert.alert('¡Registro Exitoso!', SUCCESS_MESSAGES.ACCOUNT_CREATED, [
-                { text: 'OK', onPress: () => router.replace('/login') },
+            Alert.alert(SUCCESS_MESSAGES.REGISTRATION_SUCCESS_TITLE, SUCCESS_MESSAGES.ACCOUNT_CREATED, [
+                { text: 'Ir a Iniciar Sesión', onPress: () => router.replace('/(auth)/login') },
             ]);
         } catch (error: any) {
             showNotification({
@@ -120,7 +123,6 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.footer}>
-                            {/* ✅ CORRECCIÓN APLICADA AQUÍ */}
                             <CustomButton
                                 title="Crear Cuenta"
                                 onPress={handleRegister}
@@ -129,7 +131,7 @@ export default function RegisterScreen() {
                             />
                             <CustomButton
                                 title="Ya tengo una cuenta"
-                                onPress={() => router.replace('/login')}
+                                onPress={() => router.replace('/(auth)/login')}
                                 disabled={isLoading}
                                 buttonStyle={{
                                     backgroundColor: 'transparent',
