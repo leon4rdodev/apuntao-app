@@ -1,9 +1,8 @@
 // apuntao-app-master/app/(app)/(tabs)/cuenta.tsx
 
-import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import React, { useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -15,28 +14,28 @@ import {
 } from 'react-native';
 
 import { Colors } from '@/constants/Colors';
-import { useClientContext } from '@/context/ClientContext';
 import { useSessionStore } from '@/store/sessionStore';
-import { formatMoney } from '@/utils/formatters';
 
 import SubscriptionCard from '@/components/cards/SubscriptionCard';
 import ActionRow from '@/components/ui/ActionRow';
 import CustomButton from '@/components/ui/CustomButton';
 import CustomText from '@/components/ui/CustomText';
+import { formatPhoneNumber } from '@/utils/formatters';
+import { ColmadoAccountInfo } from '@/types';
 
-// --- Componente Principal de la Pantalla ---
 export default function CuentaScreen() {
     const theme = Colors[useColorScheme() || 'light'];
     const router = useRouter();
-    
-    // Obtenemos el estado de la sesión y los datos del cliente de nuestros hooks centralizados
-    const { account, logout, isInitialized } = useSessionStore();
-    const { clients, clearClients } = useClientContext(); 
 
-    const summaryData = useMemo(() => {
-        const totalDebt = clients.reduce((sum, client) => sum + client.debt, 0);
-        return { clientCount: clients.length, totalDebt };
-    }, [clients]);
+    const logout = useSessionStore(state => state.logout);
+    const isInitialized = useSessionStore(state => state.isInitialized);
+
+    const [account, setAccount] = useState<Omit<ColmadoAccountInfo, 'clients'> | null>();
+
+    useEffect(() => {
+        const snapshot = useSessionStore.getState();
+        setAccount(snapshot.account); // solo una vez, al montar
+    }, []);
 
     const handleSignOut = () => {
         Alert.alert(
@@ -48,15 +47,14 @@ export default function CuentaScreen() {
                     text: 'Confirmar',
                     style: 'destructive',
                     onPress: async () => {
-                        await clearClients(); // Limpia el contexto de clientes
-                        await logout();       // Llama a la función de logout del store de sesión
+                        await logout(); // limpia el store, pero no afecta el estado local
+                        router.replace('/login'); // navegar después del logout
                     },
                 },
             ]
         );
     };
 
-    // Muestra un indicador de carga mientras se inicializa la sesión
     if (!isInitialized) {
         return (
             <View style={[styles.container, styles.center, { backgroundColor: theme.background }]}>
@@ -73,52 +71,16 @@ export default function CuentaScreen() {
             >
                 {account && (
                     <View style={styles.profileHeader}>
-                        <CustomText size="xlarge" weight="bold" style={styles.userName}>
+                        <CustomText size="xxlarge" weight="bold" style={styles.userName}>
                             {account.colmadoName}
                         </CustomText>
-                        <CustomText size="medium" color={theme.textSecondary}>
-                            {account.phoneNumber}
+                        <CustomText size="large" color={theme.textSecondary}>
+                            {formatPhoneNumber(account.phoneNumber)}
                         </CustomText>
                     </View>
                 )}
 
                 <SubscriptionCard />
-
-                <View
-                    style={[
-                        styles.card,
-                        { backgroundColor: theme.surface, borderColor: theme.border },
-                    ]}
-                >
-                    <CustomText
-                        size="small"
-                        weight="bold"
-                        color={theme.textSecondary}
-                        style={styles.cardTitle}
-                    >
-                        Resumen de tu Negocio
-                    </CustomText>
-                    <View style={styles.statsContainer}>
-                        <View style={styles.statItem}>
-                            <Ionicons name="people-outline" size={28} color={theme.primary} />
-                            <CustomText size="large" weight="bold">
-                                {summaryData.clientCount}
-                            </CustomText>
-                            <CustomText size="small" color={theme.textSecondary}>
-                                Clientes
-                            </CustomText>
-                        </View>
-                        <View style={styles.statItem}>
-                            <Ionicons name="cash-outline" size={28} color={theme.primary} />
-                            <CustomText size="large" weight="bold">
-                                ${formatMoney(summaryData.totalDebt)}
-                            </CustomText>
-                            <CustomText size="small" color={theme.textSecondary}>
-                                Por Cobrar
-                            </CustomText>
-                        </View>
-                    </View>
-                </View>
 
                 <View
                     style={[

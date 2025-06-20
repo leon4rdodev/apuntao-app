@@ -1,7 +1,7 @@
 import CustomText from '@/components/ui/CustomText';
 import { Colors } from '@/constants/Colors';
 import { Client } from '@/types';
-import { formatMoney } from '@/utils/formatters';
+import { formatMoney, formatPhoneNumber } from '@/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Linking, StyleSheet, TouchableOpacity, View, useColorScheme } from 'react-native';
@@ -49,7 +49,7 @@ const ClientSummaryCard = ({ client, onEdit }: { client: Client; onEdit: () => v
                     <View style={styles.infoRow}>
                         <Ionicons name="call-outline" size={20} color={theme.textSecondary} />
                         <CustomText size="medium" weight="medium">
-                            {client.phone}
+                            {formatPhoneNumber(client.phone)}
                         </CustomText>
                     </View>
                     <View style={styles.contactActions}>

@@ -4,7 +4,7 @@
  */
 
 // --- Tipos de Datos del Backend ---
-
+export type TransactionType = 'Pago' | 'Deuda';
 /** Representa una única transacción financiera asociada a un cliente. */
 export interface Transaction {
     /** ID único de la transacción, generado internamente. */
@@ -14,7 +14,7 @@ export interface Transaction {
     /** Monto monetario de la transacción. */
     amount: number;
     /** El tipo de transacción: si aumenta la deuda ('Deuda') o la disminuye ('Pago'). */
-    type: 'Deuda' | 'Pago';
+    type: TransactionType;
 }
 
 /** Representa la entidad de un cliente dentro de una cuenta de colmado. */

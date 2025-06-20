@@ -40,7 +40,6 @@ const HeaderSection = () => {
     );
 };
 
-// --- Componente Principal (Refactorizado) ---
 export default function AgregarClienteScreen() {
     const theme = Colors[useColorScheme() || 'light'];
     const { clients, addClient, addTransaction } = useClientContext();
@@ -65,7 +64,9 @@ export default function AgregarClienteScreen() {
 
         const formattedName = formatName(name);
         const debtAmount = initialDebt ? parseFormattedNumber(initialDebt) : 0;
-        const formattedPhone = phone.trim();
+        const formattedPhone = phone.replaceAll('-', '');
+
+        console.log(formattedPhone)
 
         // 1. Validar que el cliente no exista ya
         if (clients.some((client) => client.name.toLowerCase() === formattedName.toLowerCase())) {

@@ -5,6 +5,7 @@ import { useSessionStore } from '@/store/sessionStore';
 import { useClientContext } from '@/context/ClientContext';
 import { STORAGE_KEYS } from '@/constants';
 import { getFromStorage } from '@/utils/storage';
+import { AppSessionData } from '@/types';
 
 export default function Index() {
     const router = useRouter();
@@ -15,8 +16,8 @@ export default function Index() {
         const checkSessionAndSync = async () => {
             try {
                 // Verificamos si existe un token de sesión
-                const session = await getFromStorage(STORAGE_KEYS.APP_SESSION);
-
+                const session = await getFromStorage<AppSessionData>(STORAGE_KEYS.APP_SESSION);
+                
                 if (session?.accessToken) {
                     console.log('Sesión encontrada, sincronizando datos...');
                     // Si hay sesión, intentamos sincronizar todos los datos

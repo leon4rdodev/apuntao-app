@@ -84,7 +84,8 @@ export default function ClientDetailScreen() {
         if (!client) return;
 
         const formattedName = formatName(editName);
-        const validation = validateClientData(formattedName, 0, editPhone);
+        const formattedPhone = editPhone.replaceAll('-', '')
+        const validation = validateClientData(formattedName, 0, formattedPhone);
 
         if (!validation.isValid) {
             showNotification({ message: validation.error || 'Revise los datos', type: 'error' });
@@ -230,7 +231,7 @@ export default function ClientDetailScreen() {
                             Teléfono (Opcional)
                         </CustomText>
                         <CustomInput
-                            value={editPhone}
+                            value={formatPhoneNumber(editPhone)}
                             onChangeText={(text) => setEditPhone(formatPhoneNumber(text))}
                             keyboardType="phone-pad"
                             placeholder="000-000-0000"

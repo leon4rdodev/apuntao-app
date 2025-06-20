@@ -114,10 +114,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     listContent: {
-        paddingHorizontal: 18,
-        paddingVertical: 18,
-        // Agrega un paddingBottom para que el último elemento no quede pegado al final
-        paddingBottom: 100,
+        padding: 18
     },
     emptyContainer: {
         flex: 1,

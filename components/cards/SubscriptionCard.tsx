@@ -2,14 +2,33 @@ import { Colors } from "@/constants/Colors";
 import { useSessionStore } from "@/store/sessionStore";
 import { formatDate } from "@/utils/formatters";
 import { Ionicons } from "@expo/vector-icons";
-import { Alert, StyleSheet, useColorScheme, View } from "react-native";
+import { Alert, StyleSheet, useColorScheme, View, Linking } from "react-native"; // <-- 1. Importar Linking
 import CustomButton from "../ui/CustomButton";
 import CustomText from "../ui/CustomText";
+import { Subscription } from "@/types";
+import { SUPPORT_CONTACT } from "@/constants"; // <-- 2. Importar constantes de soporte
+
+const planNames: Record<Subscription['plan'], string> = {
+    none: 'Ninguno',
+    monthly: 'Mensual',
+    quarterly: 'Trimestral',
+    yearly: 'Anual',
+};
 
 const SubscriptionCard = () => {
     const theme = Colors[useColorScheme() || 'light'];
-    // Obtenemos el estado de la suscripción desde el store
     const { subscription } = useSessionStore();
+
+    // --- 3. Crear función para manejar el contacto por WhatsApp ---
+    const handleGetSubscription = () => {
+        const { WHATSAPP_NUMBER } = SUPPORT_CONTACT;
+        const message = `Hola, estoy interesado en obtener una suscripción para Apunta'o.`;
+        const url = `whatsapp://send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(message)}`;
+
+        Linking.openURL(url).catch(() => {
+            Alert.alert('Error', 'Asegúrate de tener WhatsApp instalado en tu dispositivo.');
+        });
+    };
 
     const getStatusInfo = () => {
         switch (subscription?.status) {
@@ -56,6 +75,8 @@ const SubscriptionCard = () => {
     const dateToShow =
         subscription?.status === 'trial' ? subscription.trialEndDate : subscription.endDate;
 
+    const translatedPlanName = subscription?.plan ? planNames[subscription.plan] : '';
+
     return (
         <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
             <CustomText
@@ -79,15 +100,27 @@ const SubscriptionCard = () => {
                 {subscription?.plan && subscription.plan !== 'none' && (
                     <CustomText size="medium" color={theme.textSecondary}>
                         Plan:{' '}
-                        {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}
+                        {translatedPlanName}
                     </CustomText>
                 )}
                 {dateToShow && (
                     <CustomText size="small" color={theme.textSecondary} style={{ marginTop: 2 }}>
-                        Vence: {formatDate(dateToShow)}
+                        {statusInfo.text === 'Prueba Gratuita' ? 'Termina el:' : 'Vence:'} {formatDate(dateToShow)}
                     </CustomText>
                 )}
             </View>
+
+            {/* --- 4. Lógica para mostrar los botones condicionalmente --- */}
+            {subscription?.status === 'trial' && (
+                <CustomButton
+                    title="Obtener Suscripción"
+                    onPress={handleGetSubscription}
+                    buttonStyle={{ marginTop: 16, backgroundColor: theme.primary }}
+                    textStyle={{ color: theme.textOnPrimary }}
+                    iconName="logo-whatsapp"
+                />
+            )}
+            
             {(subscription?.status === 'expired' || subscription?.status === 'cancelled') && (
                 <CustomButton
                     title="Renovar Suscripción"
