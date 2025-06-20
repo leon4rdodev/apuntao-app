@@ -47,8 +47,7 @@ export default function CuentaScreen() {
                     text: 'Confirmar',
                     style: 'destructive',
                     onPress: async () => {
-                        await logout(); // limpia el store, pero no afecta el estado local
-                        router.replace('/login'); // navegar después del logout
+                        await logout();
                     },
                 },
             ]

@@ -9,7 +9,7 @@ import { API_URLS, ERROR_MESSAGES, STORAGE_KEYS } from '@/constants';
 import type { AppSessionData } from '@/types';
 import { getFromStorage, removeFromStorage, saveToStorage } from '@/utils/storage';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+const API_BASE_URL = 'https://apuntao-admin.vercel.app';
 
 let isRefreshing = false;
 let failedQueue: { resolve: (token: string) => void; reject: (reason?: any) => void }[] = [];

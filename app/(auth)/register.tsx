@@ -73,7 +73,8 @@ export default function RegisterScreen() {
     };
 
     return (
-        <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+        <SafeAreaView 
+        style={[styles.safeArea, { backgroundColor: theme.background }]}>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.container}
@@ -82,6 +83,7 @@ export default function RegisterScreen() {
                     <ScrollView
                         contentContainerStyle={styles.scrollContent}
                         keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={false}
                     >
                         <View style={styles.header}>
                             <Ionicons name="person-add-outline" size={60} color={theme.primary} />
@@ -96,7 +98,7 @@ export default function RegisterScreen() {
                         <View style={styles.form}>
                             <CustomInput
                                 icon="storefront-outline"
-                                placeholder="Nombre de tu Colmado"
+                                placeholder="Nombre de tu Negocio"
                                 value={colmadoName}
                                 onChangeText={setColmadoName}
                                 editable={!isLoading}
@@ -127,7 +129,7 @@ export default function RegisterScreen() {
                                 title="Crear Cuenta"
                                 onPress={handleRegister}
                                 isLoading={isLoading}
-                                iconName="person-add-outline"
+                                iconName="checkmark-circle-outline"
                             />
                             <CustomButton
                                 title="Ya tengo una cuenta"
