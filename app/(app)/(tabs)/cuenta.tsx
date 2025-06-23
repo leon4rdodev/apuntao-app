@@ -1,8 +1,13 @@
-// apuntao-app-master/app/(app)/(tabs)/cuenta.tsx
-
+import SubscriptionCard from '@/components/cards/SubscriptionCard';
+import ActionRow from '@/components/ui/ActionRow';
+import CustomButton from '@/components/ui/CustomButton';
+import CustomText from '@/components/ui/CustomText';
+import { Colors } from '@/constants/Colors';
+import { useAuth } from '@/context/AuthContext'; // Usamos el nuevo hook de Auth
+import { formatPhoneNumber } from '@/utils/formatters';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import React from 'react'; // Eliminados useState y useEffect
+import React from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -13,35 +18,20 @@ import {
     View,
 } from 'react-native';
 
-import { Colors } from '@/constants/Colors';
-import { useSessionStore } from '@/store/sessionStore';
-
-import SubscriptionCard from '@/components/cards/SubscriptionCard';
-import ActionRow from '@/components/ui/ActionRow';
-import CustomButton from '@/components/ui/CustomButton';
-import CustomText from '@/components/ui/CustomText';
-import { formatPhoneNumber } from '@/utils/formatters';
-
 export default function CuentaScreen() {
     const theme = Colors[useColorScheme() || 'light'];
     const router = useRouter();
 
-    // ✅ --- SOLUCIÓN AL BUCLE INFINITO ---
-    // Seleccionamos cada pieza del estado de forma individual.
-    // Zustand solo re-renderizará si uno de estos valores específicos cambia.
-    const account = useSessionStore((state) => state.account);
-    const isInitialized = useSessionStore((state) => state.isInitialized);
-    const logout = useSessionStore((state) => state.logout);
+    // Obtenemos la sesión y la función de logout desde nuestro contexto de autenticación
+    const { session: account, signOut } = useAuth();
 
     const handleSignOut = () => {
-        Alert.alert('Cerrar Sesión', '¿Estás seguro? Se cerrarán tu sesión en este dispositivo.', [
+        Alert.alert('Cerrar Sesión', '¿Estás seguro? Se cerrará tu sesión en este dispositivo.', [
             { text: 'Cancelar', style: 'cancel' },
             {
                 text: 'Confirmar',
                 style: 'destructive',
-                onPress: async () => {
-                    await logout();
-                },
+                onPress: signOut, // Llamamos a la función signOut del contexto
             },
         ]);
     };
@@ -62,11 +52,10 @@ export default function CuentaScreen() {
                         </CustomText>
                     </View>
                 ) : (
-                    // Se muestra mientras se sincronizan los datos por primera vez tras el login.
                     <View style={styles.profileHeader}>
                         <ActivityIndicator color={theme.primary} />
                         <CustomText style={{ marginTop: 8, color: theme.textSecondary }}>
-                            Cargando perfil...
+                            Sincronizando perfil...
                         </CustomText>
                     </View>
                 )}
@@ -128,7 +117,6 @@ export default function CuentaScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    center: { justifyContent: 'center', alignItems: 'center' },
     scrollContainer: { padding: 24, paddingTop: Constants.statusBarHeight + 24, paddingBottom: 50 },
     profileHeader: { alignItems: 'center', marginBottom: 24, minHeight: 70 },
     userName: { marginBottom: 4 },

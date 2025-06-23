@@ -2,6 +2,20 @@
  * @file app/(auth)/login.tsx
  * @description Pantalla de inicio de sesión para que los usuarios accedan a su cuenta.
  */
+import CustomButton from '@/components/ui/CustomButton';
+import CustomInput from '@/components/input/CustomInput';
+import CustomText from '@/components/ui/CustomText';
+import { API_URLS, ERROR_MESSAGES, STORAGE_KEYS } from '@/constants';
+import { Colors } from '@/constants/Colors';
+import { useClientContext } from '@/context/ClientContext';
+import { useNotification } from '@/store/notificationStore';
+import { useSessionStore } from '@/store/sessionStore';
+import { AppSessionData } from '@/types';
+import { formatPhoneNumber } from '@/utils/formatters';
+import { apiFetch } from '@/services/apiService';
+import { saveToStorage } from '@/utils/storage';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
     Keyboard,
@@ -14,21 +28,6 @@ import {
     useColorScheme,
     View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-
-import CustomButton from '@/components/ui/CustomButton';
-import CustomInput from '@/components/input/CustomInput';
-import CustomText from '@/components/ui/CustomText';
-import { API_URLS, ERROR_MESSAGES, STORAGE_KEYS } from '@/constants';
-import { Colors } from '@/constants/Colors';
-import { useClientContext } from '@/context/ClientContext';
-import { useNotification } from '@/store/notificationStore';
-import { useSessionStore } from '@/store/sessionStore';
-import type { AppSessionData } from '@/types';
-import { formatPhoneNumber } from '@/utils/formatters';
-import { apiFetch } from '@/services/apiService';
-import { saveToStorage } from '@/utils/storage';
 
 export default function LoginScreen() {
     const theme = Colors[useColorScheme() || 'light'];
@@ -56,43 +55,31 @@ export default function LoginScreen() {
         try {
             const cleanedPhone = phoneNumber.replace(/-/g, '');
 
-            // 1. Autenticar y obtener los tokens de sesión de nuestra API.
+            // 1. Autenticar y obtener los tokens de sesión.
             const sessionData: AppSessionData = await apiFetch(
                 API_URLS.LOGIN,
                 {
                     method: 'POST',
                     body: JSON.stringify({ phoneNumber: cleanedPhone, pin }),
                 },
-                true // Marcar como ruta pública para que no se requiera token.
+                true
             );
 
-            // 2. Guardar los tokens de sesión. Esto es crucial para futuras peticiones.
+            // 2. Guardar los tokens de sesión.
             await saveToStorage(STORAGE_KEYS.APP_SESSION, sessionData);
 
-            // 3. Mostrar una notificación de éxito mientras se cargan los datos.
-            showNotification({
-                message: '¡Login exitoso! Cargando los datos de tu negocio...',
-                type: 'info',
-                duration: 4000, // Duración más larga
-            });
-
-            // 4. Llamar a syncAccountData. Esta función ahora es la única responsable
-            //    de obtener los datos del perfil Y los clientes, además de actualizar
-            //    el estado global (Zustand) y el almacenamiento persistente.
+            // 3. Sincronizar los datos de la cuenta.
+            // Esta función ahora actualiza el store de Zustand (`sessionStore`).
             const syncedData = await syncAccountData();
 
-            // 5. Poblar el ClientContext con los clientes recibidos.
+            // 4. Poblar el ClientContext con los clientes recibidos.
             if (syncedData?.clients) {
                 setClients(syncedData.clients);
-                // 6. Una vez que todo está cargado y en su lugar, redirigir.
-                router.replace('/(app)/(tabs)');
-            } else {
-                // Este caso puede ocurrir si syncAccountData falla internamente.
-                // El logout ya se manejaría dentro del store.
-                throw new Error('No se pudieron cargar los datos de la cuenta.');
             }
+
+            // 5. NO es necesario navegar. El hook `useProtectedRoute` detectará
+            //    el cambio en la sesión y redirigirá automáticamente.
         } catch (error: any) {
-            // El usuario ve un error claro si el login o la sincronización fallan.
             showNotification({
                 message: error.message || ERROR_MESSAGES.GENERIC_ERROR,
                 type: 'error',
@@ -142,7 +129,6 @@ export default function LoginScreen() {
                                 secureTextEntry
                                 maxLength={6}
                                 editable={!isLoading}
-                                // ✅ Permite enviar el formulario desde el teclado
                                 returnKeyType="done"
                                 onSubmitEditing={handleLogin}
                             />

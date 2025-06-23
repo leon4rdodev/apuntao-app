@@ -12,6 +12,7 @@ export const STORAGE_KEYS = {
     ACCOUNT_INFO: '@account_info',
     /** Lista de clientes del colmado (cache local). */
     CLIENTS: '@clients',
+    HAS_ONBOARDED: '@has_onboarded',
 } as const;
 
 // --- Endpoints de la API del Backend ---

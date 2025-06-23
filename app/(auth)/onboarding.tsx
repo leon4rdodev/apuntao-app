@@ -2,11 +2,18 @@ import OnboardingContent from '@/components/onboarding/OnboardingContent';
 import OnboardingFooter from '@/components/onboarding/OnboardingFooter';
 import { Colors } from '@/constants/Colors';
 import { ONBOARDING_STEPS } from '@/constants/FeatureItems';
+import { STORAGE_KEYS } from '@/constants';
+import { saveToStorage } from '@/utils/storage';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, useColorScheme, View } from 'react-native';
-import { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, {
+    runOnJS,
+    useAnimatedStyle,
+    useSharedValue,
+    withTiming,
+} from 'react-native-reanimated';
 
 export default function OnboardingScreen() {
     const [step, setStep] = useState(0);
@@ -17,7 +24,7 @@ export default function OnboardingScreen() {
 
     useEffect(() => {
         opacity.value = withTiming(1, { duration: 500 });
-    }, [opacity, step]);
+    }, [step]);
 
     const contentAnimatedStyle = useAnimatedStyle(() => ({
         opacity: opacity.value,
@@ -33,13 +40,13 @@ export default function OnboardingScreen() {
         }
     };
 
-    // ✅ CORRECCIÓN: Funciones de navegación claras y específicas
-    const handleLoginPress = useCallback(() => {
+    /**
+     * Marca el onboarding como completado y navega a la pantalla de login.
+     * El hook de protección se encargará de que esta pantalla no se vuelva a mostrar.
+     */
+    const handleCompleteOnboarding = useCallback(async () => {
+        await saveToStorage(STORAGE_KEYS.HAS_ONBOARDED, true);
         router.replace('/(auth)/login');
-    }, [router]);
-
-    const handleRegisterPress = useCallback(() => {
-        router.replace('/(auth)/register');
     }, [router]);
 
     return (
@@ -53,7 +60,6 @@ export default function OnboardingScreen() {
                 style={{ backgroundColor: theme.background }}
                 showsVerticalScrollIndicator={false}
                 bounces={false}
-                key={step}
             >
                 <OnboardingContent
                     step={ONBOARDING_STEPS[step]}
@@ -61,14 +67,13 @@ export default function OnboardingScreen() {
                 />
             </ScrollView>
 
-            {/* ✅ CORRECCIÓN: Pasamos las funciones correctas al footer */}
             <OnboardingFooter
                 step={step}
                 totalSteps={ONBOARDING_STEPS.length}
                 theme={theme}
                 onNext={handleNext}
-                onLoginPress={handleLoginPress}
-                onRegisterPress={handleRegisterPress}
+                onLoginPress={handleCompleteOnboarding}
+                onRegisterPress={handleCompleteOnboarding}
             />
         </View>
     );

@@ -1,35 +1,73 @@
-// Archivo: app/components/SplashScreenUI.tsx
+// Archivo: components/ui/SplashScreenUI.tsx
 
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { StyleSheet, Text, View, useColorScheme } from 'react-native';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import { FontAwesome5 } from '@expo/vector-icons';
+import React, { useEffect } from 'react';
+import { StyleSheet, View, useColorScheme } from 'react-native';
+import Animated, {
+    Easing,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withSequence,
+    withTiming,
+} from 'react-native-reanimated';
 import { Colors } from '@/constants/Colors';
+import CustomText from './CustomText';
 
-interface SplashScreenUIProps {
-    progress: Animated.SharedValue<number>;
-}
+const ANIMATION_DURATION = 1500;
 
-export function SplashScreenUI({ progress }: SplashScreenUIProps) {
-    const colorScheme = useColorScheme();
-    const theme = Colors[colorScheme ?? 'light'];
+/**
+ * @description Componente visual para la pantalla de carga animada.
+ */
+export function SplashScreenUI() {
+    const theme = Colors[useColorScheme() || 'light'];
 
-    const animatedStyle = useAnimatedStyle(() => ({
-        width: `${progress.value * 100}%`,
+    // --- Lógica de Animación ---
+    const progress = useSharedValue(0);
+    const iconTranslateY = useSharedValue(0);
+
+    const progressBarAnimatedStyle = useAnimatedStyle(() => ({
+        width: `${progress.value}%`,
     }));
+
+    const iconAnimatedStyle = useAnimatedStyle(() => ({
+        transform: [{ translateY: iconTranslateY.value }],
+    }));
+
+    useEffect(() => {
+        progress.value = withTiming(100, { duration: ANIMATION_DURATION });
+        iconTranslateY.value = withRepeat(
+            withSequence(
+                withTiming(-15, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+                withTiming(0, { duration: 1000, easing: Easing.inOut(Easing.ease) })
+            ),
+            -1,
+            true
+        );
+    }, []);
 
     return (
         <View style={[styles.container, { backgroundColor: theme.background }]}>
-            <Ionicons name="book-outline" size={60} color={theme.primary} />
-            <Text style={[styles.text, { color: theme.text }]}>Apunta&apos;o</Text>
-            <View style={[styles.progressBarBackground, { backgroundColor: theme.border }]}>
+            <Animated.View style={iconAnimatedStyle}>
+                <FontAwesome5 name="store-alt" size={80} color={theme.primary} />
+            </Animated.View>
+
+            <CustomText size="xlarge" weight="bold" style={styles.loadingText}>
+                Apunta'o
+            </CustomText>
+            <CustomText size="medium" color={theme.textSecondary}>
+                Cargando tu negocio...
+            </CustomText>
+
+            <View style={[styles.progressBarContainer, { backgroundColor: theme.surface }]}>
                 <Animated.View
-                    style={[styles.progressBar, { backgroundColor: theme.primary }, animatedStyle]}
+                    style={[
+                        styles.progressBar,
+                        progressBarAnimatedStyle,
+                        { backgroundColor: theme.primary },
+                    ]}
                 />
             </View>
-            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-                Cargando tu negocio...
-            </Text>
         </View>
     );
 }
@@ -39,21 +77,18 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        gap: 20,
+        padding: 20,
     },
-    text: {
-        fontSize: 32,
-        fontWeight: '700',
+    loadingText: {
+        marginTop: 24,
+        marginBottom: 8,
     },
-    subtitle: {
-        fontSize: 16,
-        fontWeight: '500',
-    },
-    progressBarBackground: {
-        width: 200,
+    progressBarContainer: {
         height: 8,
+        width: '80%',
         borderRadius: 4,
         overflow: 'hidden',
+        marginTop: 24,
     },
     progressBar: {
         height: '100%',

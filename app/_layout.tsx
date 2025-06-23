@@ -1,62 +1,52 @@
 /**
  * @file app/_layout.tsx
- * @description Layout raíz de la aplicación. Configura proveedores, carga de fuentes y oculta el splash screen.
+ * @description Layout raíz de la aplicación. Ensambla los proveedores
+ * y utiliza un hook para manejar la navegación protegida.
  */
-import { GlobalNotification } from '@/components/ui/GlobalNotification';
 import { ClientProvider } from '@/context/ClientContext';
+import { AuthProvider, useAuth } from '@/context/AuthContext'; // Importamos el nuevo AuthProvider
+import { useProtectedRoute } from '@/hooks/useProtectedRoute'; // Importamos el nuevo hook
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { AntDesign, Entypo, FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import * as Font from 'expo-font';
-// --- Mantenemos la importación de Stack ---
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
+import { SplashScreen as ExpoSplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import 'react-native-reanimated';
+import { GlobalNotification } from '@/components/ui/GlobalNotification';
+import { SplashScreenUI } from '@/components/ui/SplashScreenUI';
 
-SplashScreen.preventAutoHideAsync();
+ExpoSplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
     const colorScheme = useColorScheme();
-    const [fontsLoaded, setFontsLoaded] = useState(false);
+
+    // 1. Usar nuestros hooks de autenticación y protección.
+    const { isLoading } = useAuth();
+    const { isReady } = useProtectedRoute();
 
     useEffect(() => {
-        async function loadResourcesAndData() {
-            try {
-                await Font.loadAsync({
-                    ...Ionicons.font,
-                    ...MaterialIcons.font,
-                    ...Entypo.font,
-                    ...AntDesign.font,
-                    ...FontAwesome.font,
-                });
-            } catch (e) {
-                console.warn('Error al cargar las fuentes:', e);
-            } finally {
-                setFontsLoaded(true);
-            }
+        // Ocultar el splash screen nativo solo cuando el hook nos diga que es seguro.
+        if (isReady) {
+            ExpoSplashScreen.hideAsync();
         }
+    }, [isReady]);
 
-        loadResourcesAndData();
-    }, []);
-
-    useEffect(() => {
-        if (fontsLoaded) {
-            SplashScreen.hideAsync();
-        }
-    }, [fontsLoaded]);
-
-    if (!fontsLoaded) {
-        return null;
+    // 2. LA GUARDA DEFINITIVA: Si isLoading (o !isReady), mostrar el splash.
+    // Esto previene CUALQUIER renderizado del Stack hasta que todo esté listo.
+    if (isLoading || !isReady) {
+        return <SplashScreenUI />;
     }
 
     const navigationTheme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
 
+    // 3. Renderizar el Stack de forma segura.
     return (
         <ThemeProvider value={navigationTheme}>
             <GlobalNotification />
-            <Stack screenOptions={{ headerShown: false, animation: 'fade_from_bottom' }} />
+            <Stack screenOptions={{ headerShown: false, animation: 'fade_from_bottom' }}>
+                <Stack.Screen name="(app)" />
+                <Stack.Screen name="(auth)" />
+            </Stack>
             <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
         </ThemeProvider>
     );
@@ -64,8 +54,11 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
     return (
-        <ClientProvider>
-            <RootLayoutNav />
-        </ClientProvider>
+        // Envolvemos toda la app en los proveedores. El orden importa.
+        <AuthProvider>
+            <ClientProvider>
+                <RootLayoutNav />
+            </ClientProvider>
+        </AuthProvider>
     );
 }

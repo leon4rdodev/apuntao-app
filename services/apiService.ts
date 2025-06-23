@@ -173,6 +173,4 @@ export async function logout() {
     await removeFromStorage(STORAGE_KEYS.APP_SESSION);
     await removeFromStorage(STORAGE_KEYS.ACCOUNT_INFO);
     await removeFromStorage(STORAGE_KEYS.CLIENTS);
-    // Usamos un pequeño timeout para asegurar que la navegación no interfiera con otros procesos.
-    setTimeout(() => router.replace('/(auth)/login'), 0);
 }
