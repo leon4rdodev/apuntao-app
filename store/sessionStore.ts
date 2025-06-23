@@ -1,6 +1,7 @@
 /**
  * @file store/sessionStore.ts
- * @description Store de Zustand para gestionar el estado de la sesión del usuario (cuenta del colmado).
+ * @description Store de Zustand para gestionar el estado de la sesión del usuario.
+ * Carga el estado inicial de la cuenta desde el almacenamiento para una experiencia de usuario más rápida.
  */
 
 import { create } from 'zustand';
@@ -20,7 +21,10 @@ interface SessionState {
     setAccount: (account: Omit<ColmadoAccountInfo, 'clients'> | null) => void;
     setSubscription: (subscription: Subscription) => void;
 
-    /** Sincroniza los datos de la cuenta y devuelve tanto el perfil como los clientes. */
+    /** ✅ Nueva acción para cargar el estado inicial desde el almacenamiento. */
+    initializeSessionFromStorage: () => Promise<void>;
+
+    /** Sincroniza los datos de la cuenta con el backend y devuelve los datos completos. */
     syncAccountData: () => Promise<
         { accountData: Omit<ColmadoAccountInfo, 'clients'>; clients: Client[] } | undefined
     >;
@@ -28,13 +32,40 @@ interface SessionState {
     logout: () => Promise<void>;
 }
 
-export const useSessionStore = create<SessionState>((set) => ({
+export const useSessionStore = create<SessionState>((set, get) => ({
     account: null,
     subscription: { status: 'loading', plan: 'none' },
     isInitialized: false,
 
     setAccount: (account) => set({ account }),
     setSubscription: (subscription) => set({ subscription }),
+
+    // ✅ --- NUEVA FUNCIÓN DE INICIALIZACIÓN ---
+    /**
+     * Carga el perfil de la cuenta desde AsyncStorage al iniciar la app.
+     * Esto permite mostrar la información del usuario inmediatamente mientras se
+     * sincronizan los datos más recientes en segundo plano.
+     */
+    initializeSessionFromStorage: async () => {
+        try {
+            const storedAccount = await getFromStorage<Omit<ColmadoAccountInfo, 'clients'>>(
+                STORAGE_KEYS.ACCOUNT_INFO
+            );
+            if (storedAccount) {
+                // Si encontramos datos guardados, los ponemos en el estado.
+                set({
+                    account: storedAccount,
+                    subscription: storedAccount.subscription,
+                });
+            }
+        } catch (error) {
+            console.error('No se pudo cargar la sesión desde el almacenamiento:', error);
+        } finally {
+            // Marcamos como inicializado independientemente del resultado.
+            // La sincronización posterior corregirá cualquier dato desactualizado.
+            set({ isInitialized: true });
+        }
+    },
 
     syncAccountData: async () => {
         try {
@@ -44,31 +75,33 @@ export const useSessionStore = create<SessionState>((set) => ({
                 apiFetch(API_URLS.DATA_SYNC),
             ]);
 
-            // Combinamos la información
             const accountData: Omit<ColmadoAccountInfo, 'clients'> = {
                 ...accountInfo,
                 subscription: syncData.subscription,
             };
 
+            // Actualizamos el estado en memoria
             set({
                 account: accountData,
                 subscription: accountData.subscription,
-                isInitialized: true,
             });
+            // ✅ Guardamos la información actualizada en el almacenamiento para la próxima vez
             await saveToStorage(STORAGE_KEYS.ACCOUNT_INFO, accountData);
 
             // Retornamos los datos completos para que los contextos los usen
             return { accountData, clients: syncData.clients || [] };
         } catch (error) {
             console.error('Fallo al sincronizar datos de la cuenta:', error);
-            // Si falla la sincronización, es probable que la sesión sea inválida
-            await apiLogout();
+            // Si falla la sincronización, cerramos la sesión para forzar un nuevo login
+            await get().logout(); // Usamos get() para llamar a otra acción del store
             return undefined;
         }
     },
 
     logout: async () => {
+        // Limpiamos tanto el estado en memoria como el almacenamiento persistente
         set({ account: null, subscription: { status: 'unknown', plan: 'none' } });
-        await apiLogout();
+        await saveToStorage(STORAGE_KEYS.ACCOUNT_INFO, null); // Borrar el perfil guardado
+        await apiLogout(); // Llama a la función de logout del apiService
     },
 }));

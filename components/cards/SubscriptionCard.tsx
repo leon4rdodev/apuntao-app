@@ -1,12 +1,14 @@
-import { Colors } from "@/constants/Colors";
-import { useSessionStore } from "@/store/sessionStore";
-import { formatDate } from "@/utils/formatters";
-import { Ionicons } from "@expo/vector-icons";
-import { Alert, StyleSheet, useColorScheme, View, Linking } from "react-native"; // <-- 1. Importar Linking
-import CustomButton from "../ui/CustomButton";
-import CustomText from "../ui/CustomText";
-import { Subscription } from "@/types";
-import { SUPPORT_CONTACT } from "@/constants"; // <-- 2. Importar constantes de soporte
+import { Colors } from '@/constants/Colors';
+import { useSessionStore } from '@/store/sessionStore';
+import { formatDate } from '@/utils/formatters';
+import { Ionicons } from '@expo/vector-icons';
+import { Alert, StyleSheet, useColorScheme, View, Linking } from 'react-native';
+// 1. Importamos React para usar useState y useEffect
+import React, { useState, useEffect } from 'react';
+import CustomButton from '../ui/CustomButton';
+import CustomText from '../ui/CustomText';
+import { Subscription } from '@/types';
+import { SUPPORT_CONTACT } from '@/constants';
 
 const planNames: Record<Subscription['plan'], string> = {
     none: 'Ninguno',
@@ -17,9 +19,18 @@ const planNames: Record<Subscription['plan'], string> = {
 
 const SubscriptionCard = () => {
     const theme = Colors[useColorScheme() || 'light'];
-    const { subscription } = useSessionStore();
 
-    // --- 3. Crear función para manejar el contacto por WhatsApp ---
+    // 2. Creamos un estado local para "congelar" la información de la suscripción
+    const [localSubscription, setLocalSubscription] = useState<Subscription | null>(null);
+
+    // 3. Usamos un efecto para cargar los datos del store al estado local UNA SOLA VEZ
+    useEffect(() => {
+        // Obtenemos el estado actual del store al montar el componente
+        const initialSubscription = useSessionStore.getState().subscription;
+        // Lo guardamos en nuestro estado local
+        setLocalSubscription(initialSubscription);
+    }, []); // El array vacío [] asegura que esto se ejecute solo al montar.
+
     const handleGetSubscription = () => {
         const { WHATSAPP_NUMBER } = SUPPORT_CONTACT;
         const message = `Hola, estoy interesado en obtener una suscripción para Apunta'o.`;
@@ -30,8 +41,18 @@ const SubscriptionCard = () => {
         });
     };
 
+    // 4. TODA LA LÓGICA AHORA USA `localSubscription` EN LUGAR DE LEER DEL STORE
     const getStatusInfo = () => {
-        switch (subscription?.status) {
+        // Si el estado local aún no se ha cargado, mostramos 'Cargando...'
+        if (!localSubscription) {
+            return {
+                icon: 'hourglass-outline' as const,
+                color: theme.textSecondary,
+                text: 'Cargando...',
+            };
+        }
+
+        switch (localSubscription.status) {
             case 'active':
                 return {
                     icon: 'shield-checkmark-outline' as const,
@@ -56,12 +77,7 @@ const SubscriptionCard = () => {
                     color: theme.error,
                     text: 'Cancelada',
                 };
-            case 'loading':
-                return {
-                    icon: 'hourglass-outline' as const,
-                    color: theme.textSecondary,
-                    text: 'Cargando...',
-                };
+            // El caso 'loading' se maneja con la comprobación de !localSubscription
             default:
                 return {
                     icon: 'help-circle-outline' as const,
@@ -73,9 +89,11 @@ const SubscriptionCard = () => {
 
     const statusInfo = getStatusInfo();
     const dateToShow =
-        subscription?.status === 'trial' ? subscription.trialEndDate : subscription.endDate;
+        localSubscription?.status === 'trial'
+            ? localSubscription?.trialEndDate
+            : localSubscription?.endDate;
 
-    const translatedPlanName = subscription?.plan ? planNames[subscription.plan] : '';
+    const translatedPlanName = localSubscription?.plan ? planNames[localSubscription.plan] : '';
 
     return (
         <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -97,21 +115,20 @@ const SubscriptionCard = () => {
                 >
                     {statusInfo.text}
                 </CustomText>
-                {subscription?.plan && subscription.plan !== 'none' && (
+                {localSubscription?.plan && localSubscription.plan !== 'none' && (
                     <CustomText size="medium" color={theme.textSecondary}>
-                        Plan:{' '}
-                        {translatedPlanName}
+                        Plan: {translatedPlanName}
                     </CustomText>
                 )}
                 {dateToShow && (
                     <CustomText size="small" color={theme.textSecondary} style={{ marginTop: 2 }}>
-                        {statusInfo.text === 'Prueba Gratuita' ? 'Termina el:' : 'Vence:'} {formatDate(dateToShow)}
+                        {statusInfo.text === 'Prueba Gratuita' ? 'Termina el:' : 'Vence:'}{' '}
+                        {formatDate(dateToShow)}
                     </CustomText>
                 )}
             </View>
 
-            {/* --- 4. Lógica para mostrar los botones condicionalmente --- */}
-            {subscription?.status === 'trial' && (
+            {localSubscription?.status === 'trial' && (
                 <CustomButton
                     title="Obtener Suscripción"
                     onPress={handleGetSubscription}
@@ -120,8 +137,9 @@ const SubscriptionCard = () => {
                     iconName="logo-whatsapp"
                 />
             )}
-            
-            {(subscription?.status === 'expired' || subscription?.status === 'cancelled') && (
+
+            {(localSubscription?.status === 'expired' ||
+                localSubscription?.status === 'cancelled') && (
                 <CustomButton
                     title="Renovar Suscripción"
                     onPress={() =>

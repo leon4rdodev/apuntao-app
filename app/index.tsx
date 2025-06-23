@@ -23,8 +23,6 @@ const ANIMATION_DURATION = 3000; // Duración en milisegundos de la barra de car
 
 export default function Index() {
     const router = useRouter();
-    const { syncAccountData } = useSessionStore();
-    const { setClients } = useClientContext();
     const theme = Colors[useColorScheme() || 'light'];
 
     // 2. Configuración de los valores para las animaciones
@@ -47,7 +45,7 @@ export default function Index() {
 
     useEffect(() => {
         // 3. Iniciar las animaciones cuando el componente se monta
-        
+
         // Animación de la barra de progreso: va de 0 a 100 en ANIMATION_DURATION
         progress.value = withTiming(100, { duration: ANIMATION_DURATION });
 
@@ -65,20 +63,10 @@ export default function Index() {
         const checkSessionAndSync = async () => {
             try {
                 const session = await getFromStorage<AppSessionData>(STORAGE_KEYS.APP_SESSION);
-                
                 if (session?.accessToken) {
-                    console.log('Sesión encontrada, sincronizando datos...');
-                    const syncedData = await syncAccountData();
-                    if (syncedData?.clients) {
-                        setClients(syncedData.clients);
-                        router.replace('/(app)/(tabs)');
-                    } else {
-                        console.log('Sincronización fallida, redirigiendo a login...');
-                        router.replace('/(auth)/login');
-                    }
+                    router.replace('/(app)/(tabs)');
                 } else {
-                    console.log('No hay sesión, redirigiendo a onboarding...');
-                    router.replace('/(auth)/onboarding');
+                    router.replace('/(auth)/login');
                 }
             } catch (error) {
                 console.error('Error al verificar la sesión:', error);
@@ -92,21 +80,25 @@ export default function Index() {
 
         // Limpieza al desmontar el componente
         return () => clearTimeout(timer);
-
     }, []);
 
-    // 4. Renderizar la pantalla de carga animada
     return (
-        <View style={[styles.container, {backgroundColor: theme.background}]}>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
             <Animated.View style={[iconAnimatedStyle]}>
                 {/* El icono `file-signature` es perfecto para "cuaderno con lápiz" */}
                 <FontAwesome5 name="store-alt" size={80} color={theme.primary} />
             </Animated.View>
 
-            <Text style={[styles.loadingText, {color: theme.text}]}>Cargando tu negocio...</Text>
+            <Text style={[styles.loadingText, { color: theme.text }]}>Cargando tu negocio...</Text>
 
-            <View style={[styles.progressBarContainer, {backgroundColor: theme.surface}]}>
-                <Animated.View style={[styles.progressBar, progressBarAnimatedStyle, {backgroundColor: theme.primary}]} />
+            <View style={[styles.progressBarContainer, { backgroundColor: theme.surface }]}>
+                <Animated.View
+                    style={[
+                        styles.progressBar,
+                        progressBarAnimatedStyle,
+                        { backgroundColor: theme.primary },
+                    ]}
+                />
             </View>
         </View>
     );
