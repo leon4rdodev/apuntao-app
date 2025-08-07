@@ -4,13 +4,13 @@
  * @version 2.2 - Manejo de errores específico del backend.
  */
 
-import { router } from 'expo-router';
 import { API_URLS, ERROR_MESSAGES, STORAGE_KEYS } from '@/constants';
 import type { AppSessionData } from '@/types';
 import { getFromStorage, removeFromStorage, saveToStorage } from '@/utils/storage';
+import Constants from 'expo-constants'; // <-- 1. Importa Constants
 
-const API_BASE_URL = 'https://apuntao-admin.vercel.app';
-
+// --- 2. LEE LA VARIABLE DESDE LA CONFIGURACIÓN DE EXPO ---
+const API_BASE_URL = Constants.expoConfig?.extra?.API_URL;
 let isRefreshing = false;
 let failedQueue: { resolve: (token: string) => void; reject: (reason?: any) => void }[] = [];
 

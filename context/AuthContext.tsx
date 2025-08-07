@@ -1,16 +1,17 @@
+// context/AuthContext.tsx
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { getFromStorage, saveToStorage } from '@/utils/storage';
-import { STORAGE_KEYS } from '@/constants';
 import * as Font from 'expo-font';
 import { AntDesign, Entypo, FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useSessionStore } from '@/store/sessionStore';
+import { useClientStore } from '@/store/clientStore';
 
 const MINIMUM_SPLASH_TIME = 2000;
 
 // Definimos la forma de los datos que proveerá el contexto
 interface AuthContextData {
     signOut: () => void;
-    session: Omit<any, 'clients'> | null; // Simplificado a 'any' por brevedad, pero usa tu tipo de 'account'
+    session: Omit<any, 'clients'> | null; // Simplificado para brevedad, pero usa tu tipo de 'account'
     isLoading: boolean;
 }
 
@@ -26,21 +27,20 @@ export const useAuth = () => {
 
 /**
  * Proveedor que envuelve la aplicación y gestiona el estado de autenticación.
- * Se encarga de la carga inicial de fuentes, sesión y estado de onboarding.
+ * Se encarga de la carga inicial de fuentes y de la sesión del usuario.
  */
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { account, initializeSessionFromStorage, logout } = useSessionStore();
+    const initializeClients = useClientStore(
+            (state) => state.actions.initializeClientsFromStorage
+    );
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        async function loadDataAndRoute() {
+        async function loadInitialData() {
             try {
-                const timerPromise = new Promise((resolve) =>
-                    setTimeout(resolve, MINIMUM_SPLASH_TIME)
-                );
-
-                // Cargar todo en paralelo para máxima eficiencia
-                await Promise.all([
+                // Inicia todas las tareas de carga de datos en paralelo
+                const dataPromises = Promise.all([
                     Font.loadAsync({
                         ...Ionicons.font,
                         ...MaterialIcons.font,
@@ -48,20 +48,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         ...AntDesign.font,
                         ...FontAwesome.font,
                     }),
-                    initializeSessionFromStorage(), // Carga la sesión desde el storage al store de Zustand
-                    timerPromise,
+                    initializeSessionFromStorage(),
+                    initializeClients(),
                 ]);
+
+                // Establece un temporizador para la duración mínima del splash screen
+                const timerPromise = new Promise((resolve) =>
+                    setTimeout(resolve, MINIMUM_SPLASH_TIME)
+                );
+
+                // Espera a que tanto la carga de datos como el temporizador se completen
+                await Promise.all([dataPromises, timerPromise]);
             } catch (error) {
-                console.error('Error en la carga inicial:', error);
+                console.error('Error durante la carga inicial:', error);
+                // Es importante continuar incluso si hay un error para no bloquear la app.
+                // La lógica de redirección se encargará del estado sin sesión.
             } finally {
-                // Una vez que todo ha cargado (incluyendo la espera mínima),
-                // la app está lista para renderizar su contenido.
+                // Asegura que el estado de carga se desactive siempre,
+                // permitiendo que la app avance y el splash screen se oculte.
                 setIsLoading(false);
             }
         }
 
-        loadDataAndRoute();
-    }, []);
+        loadInitialData();
+    }, [initializeSessionFromStorage, initializeClients]); // Se añade la dependencia para seguir las reglas de los hooks
 
     return (
         <AuthContext.Provider

@@ -1,8 +1,11 @@
+// app/(app)/(tabs)/agregar.tsx
+
 import CustomInput from '@/components/input/CustomInput';
+import CustomButton from '@/components/ui/CustomButton'; // <-- Importa tu CustomButton
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/constants';
 import { Colors } from '@/constants/Colors';
-import { useClientContext } from '@/context/ClientContext';
 import { useNotification } from '@/store/notificationStore';
+import { useClientStore } from '@/store/clientStore'; // <-- Importa el nuevo store
 import {
     formatName,
     formatNumberWithCommas,
@@ -18,7 +21,6 @@ import {
     ScrollView,
     StyleSheet,
     Text,
-    TouchableOpacity,
     TouchableWithoutFeedback,
     useColorScheme,
     View,
@@ -26,6 +28,7 @@ import {
 
 // --- Sub-componente de la Cabecera (sin cambios) ---
 const HeaderSection = () => {
+    // ... (el código de HeaderSection se mantiene igual)
     const theme = Colors[useColorScheme() || 'light'];
     return (
         <View style={styles.headerContainer}>
@@ -42,10 +45,15 @@ const HeaderSection = () => {
 
 export default function AgregarClienteScreen() {
     const theme = Colors[useColorScheme() || 'light'];
-    const { clients, addClient, addTransaction } = useClientContext();
-    const showNotification = useNotification(); // Hook para mostrar notificaciones
 
-    // Estados del formulario
+    // --- CAMBIO 1: Usa el nuevo store ---
+    // Obtenemos los datos y las acciones por separado para optimizar re-renders.
+    const clients = useClientStore((state) => state.clients);
+    const { addClient, addTransaction } = useClientStore((state) => state.actions);
+
+    const showNotification = useNotification();
+
+    // Estados del formulario (sin cambios)
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
     const [initialDebt, setInitialDebt] = useState('');
@@ -60,25 +68,25 @@ export default function AgregarClienteScreen() {
      */
     const handleSave = () => {
         Keyboard.dismiss();
+        if (!isFormValid) return; // Doble validación por si se invoca de otra forma
+
         setIsSaving(true);
 
         const formattedName = formatName(name);
         const debtAmount = initialDebt ? parseFormattedNumber(initialDebt) : 0;
         const formattedPhone = phone.replaceAll('-', '');
 
-        console.log(formattedPhone)
-
-        // 1. Validar que el cliente no exista ya
+        // 1. Validar que el cliente no exista ya (lógica sin cambios)
         if (clients.some((client) => client.name.toLowerCase() === formattedName.toLowerCase())) {
             showNotification({
                 message: ERROR_MESSAGES.DUPLICATE_CLIENT,
-                type: 'error', // Corregido a 'error'
+                type: 'error',
             });
             setIsSaving(false);
             return;
         }
 
-        // 2. Validar todos los datos del formulario
+        // 2. Validar todos los datos del formulario (lógica sin cambios)
         const validation = validateClientData(formattedName, debtAmount, formattedPhone);
         if (!validation.isValid) {
             showNotification({
@@ -89,10 +97,10 @@ export default function AgregarClienteScreen() {
             return;
         }
 
-        // 3. Intentar guardar el cliente
+        // 3. Intentar guardar el cliente (lógica sin cambios)
         try {
             const newClient = addClient({ name: formattedName, phone: formattedPhone });
-            // Si hay deuda inicial, se añade como una transacción
+
             if (debtAmount > 0) {
                 addTransaction(newClient.id, {
                     amount: debtAmount,
@@ -101,22 +109,21 @@ export default function AgregarClienteScreen() {
                 });
             }
 
-            // Mostrar notificación de éxito y limpiar el formulario
             showNotification({
                 message: SUCCESS_MESSAGES.CLIENT_ADDED,
                 type: 'success',
             });
+
+            // Limpiar el formulario
             setName('');
             setPhone('');
             setInitialDebt('');
         } catch (e: any) {
-            // Manejar errores inesperados del contexto o almacenamiento
             showNotification({
                 message: e.message || 'Ocurrió un error inesperado al guardar.',
                 type: 'error',
             });
         } finally {
-            // Asegurarse de que el estado de guardado se desactive
             setIsSaving(false);
         }
     };
@@ -126,7 +133,7 @@ export default function AgregarClienteScreen() {
             <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
                 <ScrollView
                     contentContainerStyle={styles.scrollContainer}
-                    keyboardShouldPersistTaps="handled" // Permite presionar botones mientras el teclado está abierto
+                    keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
                     <HeaderSection />
@@ -197,34 +204,15 @@ export default function AgregarClienteScreen() {
                             </Text>
                         </View>
 
-                        {/* Botón de Guardar */}
-                        <TouchableOpacity
-                            style={[
-                                styles.button,
-                                { backgroundColor: isFormValid ? theme.primary : theme.border },
-                            ]}
+                        {/* --- CAMBIO 2: Reemplaza TouchableOpacity por CustomButton --- */}
+                        <CustomButton
+                            title="Agregar Cliente"
                             onPress={handleSave}
-                            disabled={!isFormValid || isSaving}
-                            activeOpacity={0.8}
-                        >
-                            <Ionicons
-                                name={isSaving ? 'hourglass-outline' : 'checkmark-circle-outline'}
-                                size={20}
-                                color={isFormValid ? theme.textOnPrimary : theme.textSecondary}
-                            />
-                            <Text
-                                style={[
-                                    styles.buttonText,
-                                    {
-                                        color: isFormValid
-                                            ? theme.textOnPrimary
-                                            : theme.textSecondary,
-                                    },
-                                ]}
-                            >
-                                {isSaving ? 'Guardando...' : 'Agregar Cliente'}
-                            </Text>
-                        </TouchableOpacity>
+                            disabled={!isFormValid}
+                            isLoading={isSaving} // Usa la prop isLoading para mostrar el spinner
+                            iconName="checkmark-circle-outline"
+                            buttonStyle={{ marginTop: 10 }}
+                        />
                     </View>
                 </ScrollView>
             </TouchableWithoutFeedback>
@@ -232,7 +220,7 @@ export default function AgregarClienteScreen() {
     );
 }
 
-// Estilos (sin cambios)
+// Estilos (se eliminan los estilos 'button' y 'buttonText' que ahora maneja CustomButton)
 const styles = StyleSheet.create({
     safeArea: { flex: 1 },
     scrollContainer: {
@@ -277,18 +265,5 @@ const styles = StyleSheet.create({
     helperText: {
         fontSize: 12,
         marginTop: 6,
-    },
-    button: {
-        marginTop: 10,
-        height: 52,
-        borderRadius: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    buttonText: {
-        fontSize: 16,
-        fontWeight: '600',
-        marginLeft: 8,
     },
 });

@@ -41,7 +41,7 @@ export default {
             eas: {
                 projectId: '862586eb-5c93-4ade-8be7-631697fedd07',
             },
-            API_URL: process.env.EXPO_PUBLIC_API_URL,
+            API_URL: process.env.EXPO_PUBLIC_API_URL || 'https://apuntao-admin.vercel.app',
         },
     },
 };

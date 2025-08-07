@@ -4,6 +4,8 @@ import ClientsSummary from '@/components/ui/ClientsSummary';
 import { Colors } from '@/constants/Colors';
 import { useClientContext } from '@/context/ClientContext';
 import { Ionicons } from '@expo/vector-icons';
+import { useClientStore } from '@/store/clientStore';
+
 // Importa useFocusEffect de expo-router
 import { useRouter, useFocusEffect } from 'expo-router';
 // Importa useCallback de react
@@ -13,7 +15,7 @@ import { BackHandler, FlatList, StyleSheet, Text, useColorScheme, View } from 'r
 export default function Index() {
     const theme = Colors[useColorScheme() || 'light'];
     const router = useRouter();
-    const { clients } = useClientContext();
+    const clients = useClientStore((state) => state.clients); 
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchOpen, setIsSearchOpen] = useState(false);
 

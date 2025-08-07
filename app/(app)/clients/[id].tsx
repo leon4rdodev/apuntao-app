@@ -1,3 +1,5 @@
+// app/(app)/clients/[id].tsx
+
 // --- Imports de Componentes UI ---
 import ActionModal from '@/components/clientsScreen/ActionModal';
 import ClientSummaryCard from '@/components/clientsScreen/ClientSummaryCard';
@@ -8,11 +10,11 @@ import CustomInput from '@/components/input/CustomInput';
 import BackButton from '@/components/ui/BackButton';
 import CustomButton from '@/components/ui/CustomButton';
 import CustomText from '@/components/ui/CustomText';
+import { useClientStore } from '@/store/clientStore';
 
 // --- Imports de Lógica y Hooks ---
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/constants';
 import { Colors } from '@/constants/Colors';
-import { useClientContext } from '@/context/ClientContext';
 import { useNotification } from '@/store/notificationStore';
 import { Transaction, TransactionType } from '@/types';
 import {
@@ -25,7 +27,7 @@ import {
 import { validateClientData } from '@/utils/validation';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Alert, SafeAreaView, ScrollView, StyleSheet, useColorScheme, View } from 'react-native';
 
 // --- Tipos para el estado del Modal ---
@@ -39,15 +41,15 @@ export default function ClientDetailScreen() {
     const theme = Colors[useColorScheme() || 'light'];
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
-
-    // Hooks de contexto y notificación
-    const { getClientById, addTransaction, deleteTransaction, updateClient, deleteClient } =
-        useClientContext();
     const showNotification = useNotification();
 
-    const client = useMemo(() => (id ? getClientById(id) : undefined), [id, getClientById]);
+    // --- Consumo del Store de Zustand ---
+    const { addTransaction, deleteTransaction, updateClient, deleteClient } = useClientStore(
+        (state) => state.actions
+    );
+    const client = useClientStore((state) => state.clients.find((c) => c.id === id));
 
-    // --- State ---
+    // --- State local del componente ---
     const [modalConfig, setModalConfig] = useState<ModalConfig>(null);
     const [amount, setAmount] = useState('');
     const [editName, setEditName] = useState('');
@@ -56,11 +58,9 @@ export default function ClientDetailScreen() {
     // --- Handlers (Lógica de la pantalla) ---
 
     const handleSaveTransaction = useCallback(() => {
+        // ... (Sin cambios aquí, esta función ya era correcta)
         if (!client || modalConfig?.type !== 'transaction') return;
-
         const numericAmount = parseFormattedNumber(amount);
-
-        // Validaciones con notificaciones
         if (!numericAmount || numericAmount <= 0) {
             showNotification({ message: ERROR_MESSAGES.INVALID_AMOUNT, type: 'error' });
             return;
@@ -69,22 +69,21 @@ export default function ClientDetailScreen() {
             showNotification({ message: ERROR_MESSAGES.PAYMENT_EXCEEDS_DEBT, type: 'error' });
             return;
         }
-
         addTransaction(client.id, {
             amount: numericAmount,
             type: modalConfig.payload,
             date: Date.now(),
         });
-
         showNotification({ message: SUCCESS_MESSAGES.TRANSACTION_ADDED, type: 'success' });
         setModalConfig(null);
+        setAmount('');
     }, [client, amount, modalConfig, addTransaction, showNotification]);
 
     const handleUpdateClient = useCallback(() => {
         if (!client) return;
 
         const formattedName = formatName(editName);
-        const formattedPhone = editPhone.replaceAll('-', '')
+        const formattedPhone = editPhone.replaceAll('-', ''); // Versión sin guiones
         const validation = validateClientData(formattedName, 0, formattedPhone);
 
         if (!validation.isValid) {
@@ -92,19 +91,19 @@ export default function ClientDetailScreen() {
             return;
         }
 
-        updateClient(client.id, { name: formattedName, phone: editPhone });
+        // --- ARREGLO 1: Pasa la versión sin guiones (`formattedPhone`) a la acción de actualizar.
+        updateClient(client.id, { name: formattedName, phone: formattedPhone });
+
         showNotification({ message: SUCCESS_MESSAGES.CLIENT_UPDATED, type: 'success' });
         setModalConfig(null);
     }, [client, editName, editPhone, updateClient, showNotification]);
 
+    // ... (El resto de los handlers: handleDeleteClient, handleSettleDebt, handleDeleteTransaction se mantienen igual)
     const handleDeleteClient = useCallback(() => {
         if (!client) return;
 
         if (client.debt > 0) {
-            showNotification({
-                message: 'No puedes eliminar un cliente con deuda pendiente.',
-                type: 'error',
-            });
+            showNotification({ message: ERROR_MESSAGES.DELETE_CLIENT_WITH_DEBT, type: 'error' });
             return;
         }
 
@@ -231,10 +230,11 @@ export default function ClientDetailScreen() {
                             Teléfono (Opcional)
                         </CustomText>
                         <CustomInput
+                            // --- ARREGLO 2: Vincula el valor al estado `editPhone`, no a `phone`.
                             value={formatPhoneNumber(editPhone)}
-                            onChangeText={(text) => setEditPhone(formatPhoneNumber(text))}
+                            onChangeText={(text) => setEditPhone(text)}
                             keyboardType="phone-pad"
-                            placeholder="000-000-0000"
+                            placeholder="809-123-4567"
                             maxLength={12}
                         />
                     </View>
@@ -244,6 +244,7 @@ export default function ClientDetailScreen() {
         return null;
     };
 
+    // ... (getModalConfig y el resto del componente se mantienen igual)
     const getModalConfig = () => {
         if (!modalConfig) return { title: '', actions: [] };
 
@@ -343,7 +344,6 @@ export default function ClientDetailScreen() {
                 actions={actions}
             >
                 {renderModalContent()}
-                {/* El estado de error local y su renderizado ya no son necesarios */}
             </ActionModal>
         </SafeAreaView>
     );

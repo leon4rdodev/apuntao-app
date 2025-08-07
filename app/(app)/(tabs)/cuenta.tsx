@@ -1,10 +1,13 @@
+// app/(app)/(tabs)/cuenta.tsx
+
 import SubscriptionCard from '@/components/cards/SubscriptionCard';
 import ActionRow from '@/components/ui/ActionRow';
 import CustomButton from '@/components/ui/CustomButton';
 import CustomText from '@/components/ui/CustomText';
 import { Colors } from '@/constants/Colors';
-import { useAuth } from '@/context/AuthContext'; // Usamos el nuevo hook de Auth
+import { useAuth } from '@/context/AuthContext';
 import { formatPhoneNumber } from '@/utils/formatters';
+import { Ionicons } from '@expo/vector-icons'; // <-- 1. Importa Ionicons
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import React from 'react';
@@ -21,8 +24,6 @@ import {
 export default function CuentaScreen() {
     const theme = Colors[useColorScheme() || 'light'];
     const router = useRouter();
-
-    // Obtenemos la sesión y la función de logout desde nuestro contexto de autenticación
     const { session: account, signOut } = useAuth();
 
     const handleSignOut = () => {
@@ -31,7 +32,7 @@ export default function CuentaScreen() {
             {
                 text: 'Confirmar',
                 style: 'destructive',
-                onPress: signOut, // Llamamos a la función signOut del contexto
+                onPress: signOut,
             },
         ]);
     };
@@ -44,6 +45,19 @@ export default function CuentaScreen() {
             >
                 {account ? (
                     <View style={styles.profileHeader}>
+                        <View
+                            style={[
+                                styles.profileIconContainer,
+                                { backgroundColor: theme.primaryLight },
+                            ]}
+                        >
+                            <Ionicons
+                                name="storefront-outline"
+                                style={styles.profileIcon}
+                                color={theme.primary}
+                            />
+                        </View>
+
                         <CustomText size="xxlarge" weight="bold" style={styles.userName}>
                             {account.colmadoName}
                         </CustomText>
@@ -53,8 +67,8 @@ export default function CuentaScreen() {
                     </View>
                 ) : (
                     <View style={styles.profileHeader}>
-                        <ActivityIndicator color={theme.primary} />
-                        <CustomText style={{ marginTop: 8, color: theme.textSecondary }}>
+                        <ActivityIndicator color={theme.primary} size="large" />
+                        <CustomText style={{ marginTop: 12, color: theme.textSecondary }}>
                             Sincronizando perfil...
                         </CustomText>
                     </View>
@@ -119,7 +133,22 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     scrollContainer: { padding: 24, paddingTop: Constants.statusBarHeight + 24, paddingBottom: 50 },
     profileHeader: { alignItems: 'center', marginBottom: 24, minHeight: 70 },
-    userName: { marginBottom: 4 },
+
+    // --- 3. AÑADE LOS ESTILOS PARA EL ÍCONO ---
+    profileIconContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: 40, // La mitad del ancho/alto para hacerlo un círculo perfecto
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16, // Espacio entre el ícono y el nombre
+    },
+    profileIcon: {
+        fontSize: 40, // Tamaño del ícono dentro del círculo
+    },
+    // --- FIN DE LOS NUEVOS ESTILOS ---
+
+    userName: { marginBottom: 4, textAlign: 'center' }, // Añadido textAlign para nombres largos
     card: {
         borderRadius: 16,
         paddingHorizontal: 18,

@@ -7,7 +7,6 @@ import CustomInput from '@/components/input/CustomInput';
 import CustomText from '@/components/ui/CustomText';
 import { API_URLS, ERROR_MESSAGES, STORAGE_KEYS } from '@/constants';
 import { Colors } from '@/constants/Colors';
-import { useClientContext } from '@/context/ClientContext';
 import { useNotification } from '@/store/notificationStore';
 import { useSessionStore } from '@/store/sessionStore';
 import { AppSessionData } from '@/types';
@@ -17,6 +16,8 @@ import { saveToStorage } from '@/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
+import { useClientStore } from '@/store/clientStore';
+
 import {
     Keyboard,
     KeyboardAvoidingView,
@@ -33,7 +34,7 @@ export default function LoginScreen() {
     const theme = Colors[useColorScheme() || 'light'];
     const router = useRouter();
     const showNotification = useNotification();
-    const { setClients } = useClientContext();
+    const setClients = useClientStore((state) => state.actions.setClients);
     const { syncAccountData } = useSessionStore();
 
     const [phoneNumber, setPhoneNumber] = useState('');

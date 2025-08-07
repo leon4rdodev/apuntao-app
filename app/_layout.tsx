@@ -56,9 +56,7 @@ export default function RootLayout() {
     return (
         // Envolvemos toda la app en los proveedores. El orden importa.
         <AuthProvider>
-            <ClientProvider>
-                <RootLayoutNav />
-            </ClientProvider>
+            <RootLayoutNav />
         </AuthProvider>
     );
 }
