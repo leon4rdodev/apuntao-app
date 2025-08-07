@@ -87,9 +87,9 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
             {
                 icon: 'cloud-upload-outline',
                 iconLib: Ionicons,
-                text: 'Respaldo en Google Drive',
+                text: 'Respaldo en la Nube',
                 description:
-                    'Toda tu data se guarda automáticamente en tu propia cuenta de Google. ¡Seguridad total!',
+                    'Toda tu data se guarda automáticamente en la nube. ¡Seguridad total!',
             },
             {
                 icon: 'phone-portrait-outline',
