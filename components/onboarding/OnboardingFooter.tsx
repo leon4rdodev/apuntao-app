@@ -49,7 +49,6 @@ export default function OnboardingFooter({
                 title="¿Ya tienes una cuenta? Inicia Sesión"
                 onPress={onLoginPress}
                 activeOpacity={0.7}
-                // ✅ CORRECCIÓN: Añadimos 'backgroundColor: "transparent"' para anular el fondo por defecto.
                 buttonStyle={[styles.secondaryButton, { backgroundColor: 'transparent' }]}
                 textStyle={[styles.secondaryButtonText, { color: theme.primary }]}
             />
@@ -57,7 +56,6 @@ export default function OnboardingFooter({
     );
 }
 
-// ... tus estilos permanecen igual
 const styles = StyleSheet.create({
     container: {
         paddingHorizontal: 24,

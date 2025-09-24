@@ -103,7 +103,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
                 iconLib: Ionicons,
                 text: 'Privacidad Garantizada',
                 description:
-                    'Tus datos son tuyos y de nadie más. Protegidos con tu cuenta de Google.',
+                    'Tus datos son tuyos y de nadie más. Protegidos en tu cuenta personal.',
             },
         ],
     },

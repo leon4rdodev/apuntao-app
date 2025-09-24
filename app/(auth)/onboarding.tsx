@@ -46,7 +46,7 @@ export default function OnboardingScreen() {
      */
     const handleCompleteOnboarding = useCallback(async () => {
         await saveToStorage(STORAGE_KEYS.HAS_ONBOARDED, true);
-        router.replace('/(auth)/login');
+        router.replace('/(auth)/register');
     }, [router]);
 
     return (
