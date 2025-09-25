@@ -10,7 +10,7 @@ import { getFromStorage, removeFromStorage, saveToStorage } from '@/utils/storag
 import Constants from 'expo-constants'; // <-- 1. Importa Constants
 
 // --- 2. LEE LA VARIABLE DESDE LA CONFIGURACIÓN DE EXPO ---
-const API_BASE_URL = Constants.expoConfig?.extra?.API_URL;
+const API_BASE_URL = 'https://apuntao-admin.vercel.app';
 let isRefreshing = false;
 let failedQueue: { resolve: (token: string) => void; reject: (reason?: any) => void }[] = [];
 
