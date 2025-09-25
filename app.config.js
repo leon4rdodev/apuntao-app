@@ -39,9 +39,9 @@ export default {
         extra: {
             router: {},
             eas: {
-                projectId: '862586eb-5c93-4ade-8be7-631697fedd07',
+                projectId: 'f72d17fc-9f66-4d0c-99d0-eb12611cd8a4',
             },
-            API_URL: process.env.EXPO_PUBLIC_API_URL || 'https://apuntao-admin.vercel.app',
+            API_URL: 'https://apuntao-admin.vercel.app',
         },
     },
 };
