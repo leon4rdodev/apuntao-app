@@ -1,11 +1,13 @@
-// app/(app)/(tabs)/agregar.tsx
+// apuntao-app-master/app/(app)/(tabs)/agregar.tsx
 
 import CustomInput from '@/components/input/CustomInput';
-import CustomButton from '@/components/ui/CustomButton'; // <-- Importa tu CustomButton
+import CustomButton from '@/components/ui/CustomButton';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/constants';
 import { Colors } from '@/constants/Colors';
 import { useNotification } from '@/store/notificationStore';
-import { useClientStore } from '@/store/clientStore'; // <-- Importa el nuevo store
+import { useClientStore } from '@/store/clientStore';
+import { useSubscriptionCheck } from '@/hooks/useSubscriptionCheck'; // <-- NUEVO
+
 import {
     formatName,
     formatNumberWithCommas,
@@ -28,7 +30,6 @@ import {
 
 // --- Sub-componente de la Cabecera (sin cambios) ---
 const HeaderSection = () => {
-    // ... (el código de HeaderSection se mantiene igual)
     const theme = Colors[useColorScheme() || 'light'];
     return (
         <View style={styles.headerContainer}>
@@ -46,10 +47,11 @@ const HeaderSection = () => {
 export default function AgregarClienteScreen() {
     const theme = Colors[useColorScheme() || 'light'];
 
-    // --- CAMBIO 1: Usa el nuevo store ---
     // Obtenemos los datos y las acciones por separado para optimizar re-renders.
     const clients = useClientStore((state) => state.clients);
     const { addClient, addTransaction } = useClientStore((state) => state.actions);
+
+    const { checkAndAlert } = useSubscriptionCheck(); // <-- USO DEL HOOK
 
     const showNotification = useNotification();
 
@@ -68,7 +70,14 @@ export default function AgregarClienteScreen() {
      */
     const handleSave = () => {
         Keyboard.dismiss();
-        if (!isFormValid) return; // Doble validación por si se invoca de otra forma
+        if (!isFormValid) return;
+
+        // =======================================================
+        // <-- LÓGICA DE RESTRICCIÓN DE SUSCRIPCIÓN IMPLEMENTADA -->
+        if (!checkAndAlert()) {
+            return;
+        }
+        // =======================================================
 
         setIsSaving(true);
 
@@ -204,12 +213,11 @@ export default function AgregarClienteScreen() {
                             </Text>
                         </View>
 
-                        {/* --- CAMBIO 2: Reemplaza TouchableOpacity por CustomButton --- */}
                         <CustomButton
                             title="Agregar Cliente"
                             onPress={handleSave}
                             disabled={!isFormValid}
-                            isLoading={isSaving} // Usa la prop isLoading para mostrar el spinner
+                            isLoading={isSaving}
                             iconName="checkmark-circle-outline"
                             buttonStyle={{ marginTop: 10 }}
                         />
@@ -220,7 +228,7 @@ export default function AgregarClienteScreen() {
     );
 }
 
-// Estilos (se eliminan los estilos 'button' y 'buttonText' que ahora maneja CustomButton)
+// Estilos (sin cambios)
 const styles = StyleSheet.create({
     safeArea: { flex: 1 },
     scrollContainer: {

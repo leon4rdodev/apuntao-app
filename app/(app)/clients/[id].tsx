@@ -16,6 +16,7 @@ import { useClientStore } from '@/store/clientStore';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/constants';
 import { Colors } from '@/constants/Colors';
 import { useNotification } from '@/store/notificationStore';
+import { useSubscriptionCheck } from '@/hooks/useSubscriptionCheck'; // <-- MANTENER IMPORTADO
 import { Transaction, TransactionType } from '@/types';
 import {
     formatMoney,
@@ -43,11 +44,13 @@ export default function ClientDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const showNotification = useNotification();
 
-    // --- Consumo del Store de Zustand ---
+    // --- Consumo de Stores y Hooks ---
     const { addTransaction, deleteTransaction, updateClient, deleteClient } = useClientStore(
         (state) => state.actions
     );
     const client = useClientStore((state) => state.clients.find((c) => c.id === id));
+
+    const { checkAndAlert } = useSubscriptionCheck(); // <-- USO DEL HOOK
 
     // --- State local del componente ---
     const [modalConfig, setModalConfig] = useState<ModalConfig>(null);
@@ -58,7 +61,6 @@ export default function ClientDetailScreen() {
     // --- Handlers (Lógica de la pantalla) ---
 
     const handleSaveTransaction = useCallback(() => {
-        // ... (Sin cambios aquí, esta función ya era correcta)
         if (!client || modalConfig?.type !== 'transaction') return;
         const numericAmount = parseFormattedNumber(amount);
         if (!numericAmount || numericAmount <= 0) {
@@ -83,7 +85,7 @@ export default function ClientDetailScreen() {
         if (!client) return;
 
         const formattedName = formatName(editName);
-        const formattedPhone = editPhone.replaceAll('-', ''); // Versión sin guiones
+        const formattedPhone = editPhone.replaceAll('-', '');
         const validation = validateClientData(formattedName, 0, formattedPhone);
 
         if (!validation.isValid) {
@@ -91,14 +93,13 @@ export default function ClientDetailScreen() {
             return;
         }
 
-        // --- ARREGLO 1: Pasa la versión sin guiones (`formattedPhone`) a la acción de actualizar.
         updateClient(client.id, { name: formattedName, phone: formattedPhone });
 
         showNotification({ message: SUCCESS_MESSAGES.CLIENT_UPDATED, type: 'success' });
         setModalConfig(null);
     }, [client, editName, editPhone, updateClient, showNotification]);
 
-    // ... (El resto de los handlers: handleDeleteClient, handleSettleDebt, handleDeleteTransaction se mantienen igual)
+    // ... (handler handleDeleteClient sin cambios)
     const handleDeleteClient = useCallback(() => {
         if (!client) return;
 
@@ -131,6 +132,13 @@ export default function ClientDetailScreen() {
     const handleSettleDebt = useCallback(() => {
         if (!client || client.debt <= 0) return;
 
+        // =======================================================
+        // <-- RESTRICCIÓN DE SUSCRIPCIÓN PARA SALDAR DEUDA TOTAL -->
+        if (!checkAndAlert()) {
+            return;
+        }
+        // =======================================================
+
         Alert.alert(
             'Saldar Deuda',
             `¿Confirmas que ${client.name} pagó su deuda total de $${formatMoney(client.debt)}?`,
@@ -152,11 +160,19 @@ export default function ClientDetailScreen() {
                 },
             ]
         );
-    }, [client, addTransaction, showNotification]);
+    }, [client, addTransaction, showNotification, checkAndAlert]);
 
     const handleDeleteTransaction = useCallback(
         (tx: Transaction) => {
             if (!client) return;
+
+            // =======================================================
+            // <-- NUEVA RESTRICCIÓN DE SUSCRIPCIÓN PARA ELIMINAR TXN -->
+            if (!checkAndAlert()) {
+                return;
+            }
+            // =======================================================
+
             Alert.alert(
                 'Eliminar Transacción',
                 `¿Seguro que quieres eliminar este movimiento de $${formatMoney(tx.amount)}?`,
@@ -176,11 +192,18 @@ export default function ClientDetailScreen() {
                 ]
             );
         },
-        [client, deleteTransaction, showNotification]
+        [client, deleteTransaction, showNotification, checkAndAlert]
     );
 
     // --- Lógica del Modal ---
     const openModal = (config: ModalConfig) => {
+        // <-- RESTRICCIÓN DE SUSCRIPCIÓN PARA AÑADIR TXN -->
+        if (config?.type === 'transaction') {
+            if (!checkAndAlert()) {
+                return; // Bloquea y muestra el modal estilizado si está inactiva
+            }
+        }
+
         if (config?.type === 'edit' && client) {
             setEditName(client.name);
             setEditPhone(client.phone || '');
@@ -230,7 +253,6 @@ export default function ClientDetailScreen() {
                             Teléfono (Opcional)
                         </CustomText>
                         <CustomInput
-                            // --- ARREGLO 2: Vincula el valor al estado `editPhone`, no a `phone`.
                             value={formatPhoneNumber(editPhone)}
                             onChangeText={(text) => setEditPhone(text)}
                             keyboardType="phone-pad"
@@ -244,7 +266,6 @@ export default function ClientDetailScreen() {
         return null;
     };
 
-    // ... (getModalConfig y el resto del componente se mantienen igual)
     const getModalConfig = () => {
         if (!modalConfig) return { title: '', actions: [] };
 
@@ -322,16 +343,19 @@ export default function ClientDetailScreen() {
             >
                 <ClientSummaryCard client={client} onEdit={() => openModal({ type: 'edit' })} />
                 <MainActionButtons
+                    // Llama a openModal (con check de suscripción)
                     onPay={() => openModal({ type: 'transaction', payload: 'Pago' })}
                     onAddDebt={() => openModal({ type: 'transaction', payload: 'Deuda' })}
                 />
                 <DangerZone
                     debt={client.debt}
+                    // Llama a handleSettleDebt (con check de suscripción)
                     onSettleDebt={handleSettleDebt}
                     onDeleteClient={handleDeleteClient}
                 />
                 <TransactionHistory
                     transactions={client.transactions}
+                    // Llama a handleDeleteTransaction (con check de suscripción)
                     onDelete={handleDeleteTransaction}
                 />
             </ScrollView>

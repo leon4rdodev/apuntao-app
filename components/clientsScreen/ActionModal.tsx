@@ -37,9 +37,8 @@ const ActionModal = ({
     paddingBottom: number;
 }) => {
     const theme = Colors[useColorScheme() || 'light'];
-    const translateY = useSharedValue(500); // Empieza fuera de pantalla
+    const translateY = useSharedValue(500);
 
-    // Función para cerrar el modal
     const closeModal = useCallback(() => {
         translateY.value = withTiming(500, { duration: 200 }, (finished) => {
             if (finished) {
@@ -48,27 +47,39 @@ const ActionModal = ({
         });
     }, [translateY, onClose]);
 
-    // Animación de entrada/salida
+    // SOLUCIÓN 1: Spring más controlado
     useEffect(() => {
         if (isVisible) {
             translateY.value = withSpring(0, {
-                damping: 14,
-                stiffness: 150,
+                damping: 20, // Aumentado para menos rebote
+                stiffness: 120, // Reducido para movimiento más suave
+                overshootClamping: true, // CLAVE: Evita que sobrepase el valor objetivo
+                restDisplacementThreshold: 0.01,
+                restSpeedThreshold: 0.01,
             });
         } else {
-            translateY.value = withTiming(500, { duration: 200 }, (finished) => {
-                if (finished) {
-                    runOnJS(onClose)();
-                }
-            });
+            translateY.value = withTiming(500, { duration: 200 });
         }
-    }, [isVisible, onClose, translateY]);
+    }, [isVisible, translateY]);
+
+    // SOLUCIÓN 2: Alternativa con timing suave (comentada)
+    /*
+    useEffect(() => {
+        if (isVisible) {
+            translateY.value = withTiming(0, { 
+                duration: 350,
+                easing: Easing.out(Easing.cubic) // Requiere: import { Easing } from 'react-native-reanimated';
+            });
+        } else {
+            translateY.value = withTiming(500, { duration: 200 });
+        }
+    }, [isVisible, translateY]);
+    */
 
     const animatedStyle = useAnimatedStyle(() => ({
-        transform: [{ translateY: translateY.value }],
+        transform: [{ translateY: Math.max(0, translateY.value) }], // CLAVE: Limita valores negativos
     }));
 
-    // Manejo del botón "atrás" de Android
     useEffect(() => {
         const backAction = () => {
             if (isVisible) {
@@ -82,7 +93,6 @@ const ActionModal = ({
         return () => backHandler.remove();
     }, [closeModal, isVisible]);
 
-    // Listener para cerrar modal cuando se cierre el teclado
     useEffect(() => {
         const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
             if (isVisible) {
@@ -95,7 +105,6 @@ const ActionModal = ({
         };
     }, [closeModal, isVisible]);
 
-    // No renderizar si no es visible (ya lo animamos para salir)
     if (!isVisible) return null;
 
     return (
@@ -108,11 +117,6 @@ const ActionModal = ({
                 />
             </TouchableWithoutFeedback>
 
-            {/* 
-              --- CORRECCIÓN ---
-              No se usa KeyboardAvoidingView. En su lugar, el ScrollView se encarga del ajuste
-              y se añade un padding inferior grande para asegurar que el contenido sea desplazable.
-            */}
             <View style={styles.modalPositioner} pointerEvents="box-none">
                 <Animated.View
                     style={[styles.modalContent, { backgroundColor: theme.surface }, animatedStyle]}
@@ -121,7 +125,10 @@ const ActionModal = ({
                     <ScrollView
                         showsVerticalScrollIndicator={false}
                         bounces={false}
-                        contentContainerStyle={[styles.scrollContentContainer, {paddingBottom: paddingBottom}]}
+                        contentContainerStyle={[
+                            styles.scrollContentContainer,
+                            { paddingBottom: paddingBottom },
+                        ]}
                         keyboardShouldPersistTaps="always"
                     >
                         <View style={styles.handleContainer}>
@@ -173,8 +180,6 @@ const styles = StyleSheet.create({
     },
     scrollContentContainer: {
         paddingHorizontal: 24,
-        // Este padding grande asegura que haya suficiente espacio para hacer scroll
-        // y ver los botones incluso cuando el teclado está abierto en Android.
     },
     handleContainer: {
         alignItems: 'center',
