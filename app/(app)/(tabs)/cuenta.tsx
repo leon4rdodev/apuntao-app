@@ -82,7 +82,7 @@ export default function CuentaScreen() {
                         {
                             backgroundColor: theme.surface,
                             borderColor: theme.border,
-                            paddingBottom: 18,
+                            paddingBottom: 0,
                         },
                     ]}
                 >
@@ -103,6 +103,7 @@ export default function CuentaScreen() {
                     <ActionRow
                         icon="star-outline"
                         text="Calificar la App"
+                        
                         onPress={() =>
                             Linking.openURL('market://details?id=com.leon4rdodev.apuntao')
                         }

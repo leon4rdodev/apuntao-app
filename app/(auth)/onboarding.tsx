@@ -49,6 +49,12 @@ export default function OnboardingScreen() {
         router.replace('/(auth)/register');
     }, [router]);
 
+    const handleCompleteOnboardingLogin = useCallback(async () => {
+        await saveToStorage(STORAGE_KEYS.HAS_ONBOARDED, true);
+        router.replace('/(auth)/login');
+    }, [router]);
+
+
     return (
         <View
             style={[
@@ -72,7 +78,7 @@ export default function OnboardingScreen() {
                 totalSteps={ONBOARDING_STEPS.length}
                 theme={theme}
                 onNext={handleNext}
-                onLoginPress={handleCompleteOnboarding}
+                onLoginPress={handleCompleteOnboardingLogin}
                 onRegisterPress={handleCompleteOnboarding}
             />
         </View>

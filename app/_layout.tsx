@@ -19,7 +19,6 @@ function RootLayoutNav() {
     const colorScheme = useColorScheme();
 
     // 1. Usar nuestros hooks de autenticación y protección.
-    const { isLoading } = useAuth();
     const { isReady } = useProtectedRoute();
 
     useEffect(() => {
