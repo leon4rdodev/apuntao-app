@@ -16,7 +16,7 @@ const getStatusText = (status: Subscription['status']) => {
         case 'cancelled':
             return 'Cancelada';
         case 'unknown':
-            return 'Inactiva (Desconocido)'; // <-- CAMBIO
+            return 'Inactiva (Desconocido)';
         case 'trial':
             return 'de Prueba';
         default:
@@ -77,10 +77,10 @@ export default function SubscriptionRenewalModal() {
             </View>
 
             <CustomButton
-                title="Renovar Ahora por WhatsApp"
+                title="Renovar Ahora"
                 onPress={() => handleWhatsAppRenewal(hideModal)}
                 iconName="logo-whatsapp"
-                buttonStyle={{ backgroundColor: theme.success, marginTop: 20 }}
+                buttonStyle={{ backgroundColor: theme.primary, marginTop: 20 }}
                 textStyle={{ color: theme.textOnPrimary }}
                 iconColor={theme.textOnPrimary}
             />

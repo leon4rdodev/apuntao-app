@@ -123,7 +123,7 @@ const SubscriptionCard = () => {
                 {dateToShow && (
                     <CustomText size="small" color={theme.textSecondary} style={{ marginTop: 2 }}>
                         {statusInfo.text === 'Prueba Gratuita' ? 'Termina el:' : 'Vence:'}{' '}
-                        {formatDate(dateToShow)}
+                        {dateToShow}
                     </CustomText>
                 )}
             </View>
