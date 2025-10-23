@@ -22,7 +22,7 @@ const DangerZone = ({
         <View style={[styles.dangerZone, { borderTopColor: theme.border }]}>
             {debt > 0 && (
                 <CustomButton
-                    title={"Saldar Deuda"}
+                    title={'Saldar Deuda'}
                     onPress={onSettleDebt}
                     buttonStyle={[styles.secondaryButton, { borderColor: theme.primary }]}
                     iconName="checkmark-circle-outline"
@@ -30,6 +30,7 @@ const DangerZone = ({
                     textStyle={{ color: theme.primary }}
                 />
             )}
+            {debt === 0 && (
             <CustomButton
                 title="Eliminar Cliente"
                 onPress={onDeleteClient}
@@ -38,6 +39,7 @@ const DangerZone = ({
                 iconColor={theme.error}
                 textStyle={{ color: theme.error }}
             />
+            )}
         </View>
     );
 };

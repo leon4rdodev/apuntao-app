@@ -19,7 +19,7 @@ const MainActionButtons = ({ onPay, onAddDebt }: { onPay: () => void; onAddDebt:
                     styles.mainActionButton,
                     { backgroundColor: theme.successLight, height: 90 },
                 ]}
-                textStyle={{ color: theme.success }}
+                textStyle={{ color: theme.success, fontSize: 20 }}
                 iconColor={theme.success}
             />
             <CustomButton
@@ -28,9 +28,10 @@ const MainActionButtons = ({ onPay, onAddDebt }: { onPay: () => void; onAddDebt:
                 iconName="arrow-up-circle-outline"
                 buttonStyle={[
                     styles.mainActionButton,
+
                     { backgroundColor: theme.errorLight, height: 90 },
                 ]}
-                textStyle={{ color: theme.error }}
+                textStyle={{ color: theme.error, fontSize: 20 }}
                 iconColor={theme.error}
             />
         </View>

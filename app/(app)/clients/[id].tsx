@@ -30,6 +30,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Alert, SafeAreaView, ScrollView, StyleSheet, useColorScheme, View } from 'react-native';
+import { AmountInput } from '@/components/input/AmountInput';
 
 // --- Tipos para el estado del Modal ---
 type ModalConfig = { type: 'transaction'; payload: TransactionType } | { type: 'edit' } | null;
@@ -218,17 +219,15 @@ export default function ClientDetailScreen() {
 
         if (modalConfig.type === 'transaction') {
             return (
-                <CustomInput
-                    prefix="$"
-                    placeholder="0"
+                <AmountInput
                     value={amount}
                     onChangeText={(text) => setAmount(formatNumberWithCommas(text))}
+                    placeholder="0"
                     keyboardType="numeric"
                     autoFocus
                 />
             );
         }
-
         if (modalConfig.type === 'edit') {
             return (
                 <>
@@ -281,18 +280,18 @@ export default function ClientDetailScreen() {
         if (modalConfig.type === 'transaction') {
             const isPayment = modalConfig.payload === 'Pago';
             return {
-                title: isPayment ? 'Registrar Abono' : 'Añadir Nueva Deuda',
+                title: isPayment ? 'Registrar Pago' : 'Añadir Nueva Deuda',
                 actions: [
-                    ...baseActions,
                     {
                         title: 'Guardar',
                         onPress: handleSaveTransaction,
                         buttonStyle: {
-                            backgroundColor: isPayment ? theme.success : theme.error,
+                            backgroundColor: theme.primary,
                             flex: 1,
                         },
                         textStyle: { color: theme.textOnPrimary },
                     },
+                    ...baseActions,
                 ],
             };
         }
@@ -301,13 +300,13 @@ export default function ClientDetailScreen() {
             return {
                 title: 'Editar Cliente',
                 actions: [
-                    ...baseActions,
                     {
                         title: 'Actualizar',
                         onPress: handleUpdateClient,
                         buttonStyle: { backgroundColor: theme.primary, flex: 1 },
                         textStyle: { color: theme.textOnPrimary },
                     },
+                    ...baseActions,
                 ],
             };
         }
@@ -361,7 +360,7 @@ export default function ClientDetailScreen() {
             </ScrollView>
 
             <ActionModal
-                paddingBottom={modalConfig?.type === 'transaction' ? 350 : 430}
+                paddingBottom={modalConfig?.type === 'transaction' ? 400 : 430}
                 isVisible={!!modalConfig}
                 onClose={() => setModalConfig(null)}
                 title={title}

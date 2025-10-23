@@ -62,20 +62,6 @@ const ActionModal = ({
         }
     }, [isVisible, translateY]);
 
-    // SOLUCIÓN 2: Alternativa con timing suave (comentada)
-    /*
-    useEffect(() => {
-        if (isVisible) {
-            translateY.value = withTiming(0, { 
-                duration: 350,
-                easing: Easing.out(Easing.cubic) // Requiere: import { Easing } from 'react-native-reanimated';
-            });
-        } else {
-            translateY.value = withTiming(500, { duration: 200 });
-        }
-    }, [isVisible, translateY]);
-    */
-
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [{ translateY: Math.max(0, translateY.value) }], // CLAVE: Limita valores negativos
     }));
