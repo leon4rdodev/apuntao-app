@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import CustomInput from '../input/CustomInput';
+import SyncIndicator from '../ui/SyncIndicator';
 
 interface MainHeaderProps {
     setSearchQuery: (query: string) => void;
@@ -50,6 +51,7 @@ export default function MainHeader({ setSearchQuery, setIsSearchOpen, isSearchOp
                         style={styles.bookIcon}
                     />
                     <Text style={[styles.title, { color: theme.text }]}>Apunta&apos;o</Text>
+                    <SyncIndicator />
                 </View>
             )}
 

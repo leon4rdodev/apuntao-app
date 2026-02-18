@@ -1,4 +1,5 @@
-import FeatureItem, { Feature } from '@/components/ui/FeatureItem';
+import FeatureItem from '@/components/ui/FeatureItem';
+import { Feature } from '@/constants/FeatureItems';
 import { Colors } from '@/constants/Colors';
 import { Entypo, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import React from 'react';

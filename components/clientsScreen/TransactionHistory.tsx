@@ -48,7 +48,7 @@ const TransactionHistory = ({
                                 color={theme.textSecondary}
                                 style={{ marginTop: 2 }}
                             >
-                                {formatDate(new Date(tx.date).toISOString())}
+                                {formatDate(tx.date)}
                             </CustomText>
                         </View>
                         <CustomText

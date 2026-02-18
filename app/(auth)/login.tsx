@@ -12,7 +12,7 @@ import { useSessionStore } from '@/store/sessionStore';
 import { AppSessionData } from '@/types';
 import { formatPhoneNumber } from '@/utils/formatters';
 import { apiFetch } from '@/services/apiService';
-import { saveToStorage } from '@/utils/storage';
+import { saveToStorage, getFromStorage } from '@/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -40,6 +40,68 @@ export default function LoginScreen() {
     const [phoneNumber, setPhoneNumber] = useState('');
     const [pin, setPin] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    
+    // Estado para recuperación de datos
+    const [backupInfo, setBackupInfo] = useState<{ count: number; date: string } | null>(null);
+
+    // Verificar si hay backup al montar
+    React.useEffect(() => {
+        const checkBackup = async () => {
+             // Solo mostrar si NO hay clientes activos en storage (evitar confusión)
+             const currentClients = await getFromStorage<any[]>(STORAGE_KEYS.CLIENTS);
+             if (currentClients && currentClients.length > 0) return;
+
+             const backup = await getFromStorage<any>('@clients_backup');
+             if (backup && backup.clients && backup.clients.length > 0) {
+                 setBackupInfo({
+                     count: backup.clients.length,
+                     date: new Date(backup.timestamp).toLocaleString(),
+                 });
+             }
+        };
+        checkBackup();
+    }, []);
+
+    const handleRestoreBackup = () => {
+        if (!backupInfo) return;
+        
+        // Alerta nativa para confirmar
+        // Nota: En Expo Web esto no funcionaría igual, pero es mobile-focused.
+        // Usamos un confirm simple si no hay Alert.alert (web), pero React Native tiene Alert.
+        const { Alert } = require('react-native');
+        
+        Alert.alert(
+            'Restaurar Datos Locales',
+            `Se encontraron ${backupInfo.count} clientes del ${backupInfo.date}.\n\n¿Quieres restaurarlos ahora? Esto sobrescribirá los datos locales actuales.`,
+            [
+                { text: 'Cancelar', style: 'cancel' },
+                {
+                    text: 'Restaurar',
+                    onPress: async () => {
+                        try {
+                            setIsLoading(true);
+                            const backup = await getFromStorage<any>('@clients_backup');
+                            if (backup) {
+                                await saveToStorage(STORAGE_KEYS.CLIENTS, backup.clients);
+                                await saveToStorage('@sync_queue', backup.queue || []);
+                                
+                                showNotification({
+                                    message: '¡Datos restaurados! Ahora inicia sesión para sincronizar.',
+                                    type: 'success',
+                                });
+                                // Ocultar botón tras restaurar
+                                setBackupInfo(null);
+                            }
+                        } catch (e) {
+                            showNotification({ message: 'Error al restaurar', type: 'error' });
+                        } finally {
+                            setIsLoading(false);
+                        }
+                    },
+                },
+            ]
+        );
+    };
 
     const handleLogin = async () => {
         Keyboard.dismiss();
@@ -143,6 +205,18 @@ export default function LoginScreen() {
                                 disabled={isLoading}
                                 iconName="log-in-outline"
                             />
+                            
+                            {/* 🔥 BOTÓN DE RECUPERACIÓN DE DATOS (SOLO SI HAY BACKUP) */}
+                            {backupInfo && (
+                                <CustomButton
+                                    title={`Recuperar Datos (${backupInfo.count} clientes)`}
+                                    onPress={handleRestoreBackup}
+                                    iconName="cloud-upload-outline"
+                                    buttonStyle={{ backgroundColor: theme.warning, marginTop: 16 }}
+                                    textStyle={{ color: '#000' }}
+                                />
+                            )}
+
                             <CustomButton
                                 title="No tengo cuenta, quiero registrarme"
                                 onPress={() => router.replace('/(auth)/register')}

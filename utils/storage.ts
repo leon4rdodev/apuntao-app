@@ -75,7 +75,7 @@ export const existsInStorage = async (key: string): Promise<boolean> => {
  */
 export const getAccessToken = async (): Promise<string | null> => {
   try {
-    const authData = await getFromStorage<any>(STORAGE_KEYS.AUTH_DATA)
+    const authData = await getFromStorage<any>(STORAGE_KEYS.APP_SESSION)
     return authData?.accessToken || null
   } catch (error: any) {
     handleError(error, "getAccessToken")

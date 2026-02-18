@@ -2,7 +2,6 @@ import ClientCard from '@/components/cards/ClientCard';
 import MainHeader from '@/components/headers/MainHeader';
 import ClientsSummary from '@/components/ui/ClientsSummary';
 import { Colors } from '@/constants/Colors';
-import { useClientContext } from '@/context/ClientContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useClientStore } from '@/store/clientStore';
 
@@ -20,7 +19,9 @@ export default function Index() {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
 
     const summaryData = useMemo(() => {
-        const clientsWithDebt = clients.filter((c) => c.debt > 0);
+        // 🔥 SOFT DELETE FILTER: Ignoramos los borrados para el resumen
+        const validClients = clients.filter((c) => !c.deleted);
+        const clientsWithDebt = validClients.filter((c) => c.debt > 0);
         const totalDebt = clientsWithDebt.reduce((sum, client) => sum + client.debt, 0);
         return {
             totalDebt,
@@ -29,15 +30,18 @@ export default function Index() {
     }, [clients]);
 
     const displayedClients = useMemo(() => {
+        // 🔥 SOFT DELETE FILTER: Filtramos borrados de la vista principal
+        const validClients = clients.filter((c) => !c.deleted);
+
         const lowerCaseQuery = searchQuery.toLowerCase().trim();
         if (lowerCaseQuery) {
-            return clients.filter(
+            return validClients.filter(
                 (client) =>
                     client.name.toLowerCase().includes(lowerCaseQuery) ||
                     client.phone?.replace(/-/g, '').includes(lowerCaseQuery.replace(/-/g, ''))
             );
         }
-        return [...clients]
+        return [...validClients]
             .filter((c) => c.debt > 0)
             .sort((a, b) => b.debt - a.debt)
             .slice(0, 10);
@@ -101,9 +105,21 @@ export default function Index() {
                         />
                     ) : null
                 }
-                renderItem={({ item }) => (
-                    <ClientCard item={item} onPress={() => handleClientPress(item.id)} />
-                )}
+                renderItem={({ item }) => {
+                    // Check if client has pending actions in queue
+                    // Optimization: For large lists, this should be memoized or handled in the item component
+                    const isPending = useClientStore.getState().syncQueue.some(
+                        (action) =>
+                            action.payload?.id === item.id || action.payload?.clientId === item.id
+                    );
+                    return (
+                        <ClientCard
+                            item={item}
+                            onPress={() => handleClientPress(item.id)}
+                            isPending={isPending}
+                        />
+                    );
+                }}
                 ListEmptyComponent={renderEmptyListComponent}
             />
         </View>

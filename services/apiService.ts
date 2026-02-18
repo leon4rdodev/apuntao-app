@@ -4,12 +4,13 @@
  * @version 2.2 - Manejo de errores específico del backend.
  */
 
+import Constants from 'expo-constants';
 import { API_URLS, ERROR_MESSAGES, STORAGE_KEYS } from '@/constants';
 import type { AppSessionData } from '@/types';
 import { getFromStorage, removeFromStorage, saveToStorage } from '@/utils/storage';
 
 // --- 2. LEE LA VARIABLE DESDE LA CONFIGURACIÓN DE EXPO ---
-const API_BASE_URL = 'https://apuntao-admin.vercel.app';
+const API_BASE_URL = Constants.expoConfig?.extra?.API_URL || 'http://localhost:3000';
 let isRefreshing = false;
 let failedQueue: { resolve: (token: string) => void; reject: (reason?: any) => void }[] = [];
 
@@ -171,5 +172,6 @@ export async function logout() {
     console.log('Cerrando sesión y limpiando datos...');
     await removeFromStorage(STORAGE_KEYS.APP_SESSION);
     await removeFromStorage(STORAGE_KEYS.ACCOUNT_INFO);
-    await removeFromStorage(STORAGE_KEYS.CLIENTS);
+    // 🔥 NO BORRAR CLIENTES NI COLA DE SYNC PARA EVITAR PÉRDIDA DE DATOS OFFLINE
+    // await removeFromStorage(STORAGE_KEYS.CLIENTS); 
 }

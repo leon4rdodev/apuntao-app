@@ -10,7 +10,6 @@ import SubscriptionRenewalModal from '@/components/modals/SubscriptionRenewalMod
 export default function AppStackLayout() {
     return (
         <>
-            {' '}
             {/* <-- Envolvemos en un Fragmento para incluir el modal --> */}
             <Stack screenOptions={{ animation: 'fade_from_bottom' }}>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

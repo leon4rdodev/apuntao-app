@@ -90,10 +90,16 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
             // Retornamos los datos completos para que los contextos los usen
             return { accountData, clients: syncData.clients || [] };
-        } catch (error) {
+        } catch (error: any) {
             console.error('Fallo al sincronizar datos de la cuenta:', error);
-            // Si falla la sincronización, cerramos la sesión para forzar un nuevo login
-            await get().logout(); // Usamos get() para llamar a otra acción del store
+            
+            // 🔥 CAMBIO CRÍTICO: No hacer logout si falla la sincronización.
+            // Si es un error de autenticación (401), el apiService ya habrá manejado el logout.
+            // Si es error de red u otro, permitimos que el usuario siga usando la app offline.
+            
+            // Opcional: Notificar al usuario (aunque el SyncIndicator ya lo hace)
+            // useNotificationStore.getState().show({ message: 'Modo offline activado', type: 'info' });
+
             return undefined;
         }
     },

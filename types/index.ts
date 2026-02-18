@@ -31,6 +31,8 @@ export interface Client {
     transactions: Transaction[];
     /** Fecha de la última modificación en formato de timestamp (milisegundos). */
     lastModified: number;
+    /** Indica si el cliente ha sido borrado (Soft Delete). */
+    deleted?: boolean;
 }
 
 /** Define el estado y plan de la suscripción de una cuenta. */
@@ -80,4 +82,15 @@ export interface ClientContextType {
     addTransaction: (clientId: string, transaction: Omit<Transaction, 'id'>) => void;
     deleteTransaction: (clientId: string, transactionId: string) => void;
     clearClients: () => void;
+}
+
+// --- Tipos para Sincronización Offline (NUEVO) ---
+
+export type SyncStatus = 'synced' | 'pending' | 'error';
+
+export interface SyncAction {
+    id: string;
+    type: 'ADD_CLIENT' | 'UPDATE_CLIENT' | 'DELETE_CLIENT' | 'ADD_TRANSACTION' | 'DELETE_TRANSACTION';
+    payload: any;
+    timestamp: number;
 }

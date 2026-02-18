@@ -3,7 +3,7 @@
  * Contiene funciones para manejo de conexiones y requests
  */
 
-import { APP_LIMITS, ERROR_MESSAGES } from "../constants"
+import { APP_CONFIG, ERROR_MESSAGES } from "../constants"
 
 /**
  * Verifica si hay conexión a internet
@@ -28,7 +28,7 @@ export const checkNetworkConnection = async (): Promise<boolean> => {
 export const makeRequest = async (
   url: string,
   options: RequestInit,
-  maxRetries = APP_LIMITS.MAX_RETRIES,
+  maxRetries = APP_CONFIG.MAX_API_RETRIES,
 ): Promise<Response> => {
   let lastError: Error
 

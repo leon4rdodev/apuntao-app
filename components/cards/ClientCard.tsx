@@ -17,12 +17,14 @@ interface ClientCardProps {
     item: Client;
     /** Acción al presionar la tarjeta */
     onPress: () => void;
+    /** Indicar si tiene cambios pendientes de subir */
+    isPending?: boolean;
 }
 
 /**
  * Componente de tarjeta de cliente
  */
-const ClientCard: React.FC<ClientCardProps> = ({ item, onPress }) => {
+const ClientCard: React.FC<ClientCardProps> = ({ item, onPress, isPending }) => {
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme || 'light'];
 
@@ -54,6 +56,11 @@ const ClientCard: React.FC<ClientCardProps> = ({ item, onPress }) => {
                 <View style={styles.info}>
                     <View style={styles.nameRow}>
                         <Text style={[styles.name, { color: theme.text }]}>{item.name}</Text>
+                        {isPending && (
+                            <View style={{ marginLeft: 6 }}>
+                                <FontAwesome name="cloud-upload" size={14} color={theme.warning} />
+                            </View>
+                        )}
                         <View style={[styles.badge, { backgroundColor: `${color}15` }]}>
                             <Text style={[styles.badgeText, { color }]}>{text}</Text>
                         </View>
