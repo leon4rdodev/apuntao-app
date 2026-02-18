@@ -47,16 +47,24 @@ export default function LoginScreen() {
     // Verificar si hay backup al montar
     React.useEffect(() => {
         const checkBackup = async () => {
+             console.log('🔍 Buscando backup local...');
              // Solo mostrar si NO hay clientes activos en storage (evitar confusión)
              const currentClients = await getFromStorage<any[]>(STORAGE_KEYS.CLIENTS);
-             if (currentClients && currentClients.length > 0) return;
+             if (currentClients && currentClients.length > 0) {
+                 console.log('⚠️ Ya hay clientes activos, ocultando opción de backup.');
+                 return;
+             }
 
              const backup = await getFromStorage<any>('@clients_backup');
+             console.log('📦 Resultado backup:', backup ? `Encontrado (${backup.clients?.length} clientes)` : 'NULL');
+             
              if (backup && backup.clients && backup.clients.length > 0) {
                  setBackupInfo({
                      count: backup.clients.length,
                      date: new Date(backup.timestamp).toLocaleString(),
                  });
+             } else {
+                 console.log('❌ Backup vacío o inválido');
              }
         };
         checkBackup();
@@ -215,6 +223,15 @@ export default function LoginScreen() {
                                     buttonStyle={{ backgroundColor: theme.warning, marginTop: 16 }}
                                     textStyle={{ color: '#000' }}
                                 />
+                            )}
+                            
+                            {/* DEBUG INFO: Mostrar estado si no hay backup visible */}
+                            {!backupInfo && (
+                                <View style={{ padding: 10, alignItems: 'center' }}>
+                                    <CustomText size="small" color={theme.textSecondary}>
+                                        Debug: No se detectó backup restaurable.
+                                    </CustomText>
+                                </View>
                             )}
 
                             <CustomButton
