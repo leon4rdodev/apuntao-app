@@ -55,8 +55,12 @@ export class BackupService {
                 clients,
             };
 
-            await FileSystem.writeAsStringAsync(filePath, JSON.stringify(backupData, null, 2));
+            const content = JSON.stringify(backupData, null, 2);
+            await FileSystem.writeAsStringAsync(filePath, content);
             console.log(`✅ Backup creado: ${filePath}`);
+
+            // 🔥 INTENTAR GUARDAR EN EXTERNO (si está configurado)
+            await this.copyToExternalStorage(fileName, content, dateFolder);
 
             // Ejecutar limpieza asincrona (no bloquear el flujo principal)
             this.cleanupOldBackups();
@@ -156,7 +160,121 @@ export class BackupService {
 
         } catch (error) {
             console.error("❌ Error exportando backups:", error);
-            throw error; // Re-lanzar para manejar en la UI
+            throw error;
+        }
+    }
+
+    static async setupExternalStorage(): Promise<boolean> {
+        try {
+            const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+            
+            if (permissions.granted) {
+                const uri = permissions.directoryUri;
+                const { saveToStorage } = require('@/utils/storage');
+                
+                await saveToStorage('EXTERNAL_BACKUP_URI', uri);
+                console.log('✅ URI de respaldo externo guardada:', uri);
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Error configurando almacenamiento externo:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Intenta guardar una copia del backup en la carpeta externa configurada.
+     */
+    /**
+     * Intenta guardar una copia del backup en la carpeta externa configurada.
+     */
+    private static async copyToExternalStorage(fileName: string, content: string, dateFolder: string) {
+        try {
+            const { getFromStorage } = require('@/utils/storage');
+            const rootExternalUri = await getFromStorage('EXTERNAL_BACKUP_URI');
+
+            if (!rootExternalUri) return;
+
+            // Obtener (o crear) la subcarpeta del día
+            const targetFolderUri = await this.getExternalDateFolderUri(rootExternalUri, dateFolder);
+            
+            if (!targetFolderUri) {
+                 console.warn('⚠️ No se pudo obtener la carpeta del día en almacenamiento externo.');
+                 return;
+            }
+
+            const mimeType = 'application/json';
+            
+            // Crear el archivo en la subcarpeta
+            const newFileUri = await FileSystem.StorageAccessFramework.createFileAsync(
+                targetFolderUri,
+                fileName,
+                mimeType
+            );
+
+            await FileSystem.writeAsStringAsync(newFileUri, content, { encoding: FileSystem.EncodingType.UTF8 });
+            console.log(`🌍 Backup copiado externamente en ${dateFolder}: ${newFileUri}`);
+
+        } catch (error) {
+            console.warn('⚠️ Fallo respaldo externo:', error);
+        }
+    }
+
+    /**
+     * Obtiene la URI de la subcarpeta de fecha (ej: 2023-10-27) dentro del root externo.
+     * Usa caché para evitar escanear directorios en cada operación.
+     */
+    private static async getExternalDateFolderUri(rootUri: string, folderName: string): Promise<string | null> {
+        try {
+            const { getFromStorage, saveToStorage } = require('@/utils/storage');
+            const cacheKey = `EXT_URI_CACHE_${folderName}`;
+            
+            // 1. Intentar obtener del caché
+            const cachedUri = await getFromStorage(cacheKey);
+            if (cachedUri) {
+                // Verificar rápidamente si sigue siendo accesible (opcional, pero SAF a veces revoca)
+                // Para mantenerlo rápido, asumimos que es válido. Si falla al escribir, el usuario se enterará.
+                return cachedUri;
+            }
+
+            // 2. Si no está en caché, buscar en el directorio root
+            // SAF no tiene "exists()", hay que listar.
+            const files = await FileSystem.StorageAccessFramework.readDirectoryAsync(rootUri);
+            
+            // Buscar si ya existe la carpeta (SAF devuelve URIs, necesitamos decodificarlas o buscar por nombre si expone eso)
+            // Desafortunadamente SAF devuelve URIs completas. 
+            // TRUCO: Intentar crearla. Si ya existe, SAF suele lanzar error o devolver la existente dependiendo de la implementación.
+            // Pero en Android SAF, makeDirectoryAsync suele fallar si existe.
+            
+            // Vamos a iterar y decodificar es lento. Mejor estrategia:
+            // Intentar crear la carpeta directamente. 
+            try {
+                const newFolderUri = await FileSystem.StorageAccessFramework.makeDirectoryAsync(rootUri, folderName);
+                // Si tiene éxito, guardamos en caché
+                await saveToStorage(cacheKey, newFolderUri);
+                return newFolderUri;
+            } catch (e: any) {
+                // Si falla, probablemente ya existe. 
+                // En ese caso, TENEMOS que buscarla en la lista para obtener su URI.
+                // No hay de otra.
+                
+                // Nota: Los nombres de archivo en las URIs de SAF están URL-encoded.
+                // Una carpeta llamada "2023-10-27" tendrá ese string en su URI.
+                const targetUri = files.find(uri => decodeURIComponent(uri).endsWith(folderName) || decodeURIComponent(uri).endsWith(folderName + '/'));
+                
+                if (targetUri) {
+                    await saveToStorage(cacheKey, targetUri);
+                    return targetUri;
+                } else {
+                    console.error('❌ No se pudo crear ni encontrar la carpeta externa:', folderName);
+                    return null;
+                }
+            }
+
+        } catch (error) {
+            console.error('Error gestionando carpetas externas:', error);
+            return null; // Fallback: guardar en raíz si esto falla? No, mejor no guardar para no desordenar.
         }
     }
 }

@@ -25,6 +25,16 @@ export default function CuentaScreen() {
     const theme = Colors[useColorScheme() || 'light'];
     const router = useRouter();
     const { session: account, signOut } = useAuth();
+    const [isExternalConfigured, setIsExternalConfigured] = React.useState(false);
+
+    React.useEffect(() => {
+        const checkConfig = async () => {
+             const { getFromStorage } = require('@/utils/storage');
+             const uri = await getFromStorage('EXTERNAL_BACKUP_URI');
+             setIsExternalConfigured(!!uri);
+        };
+        checkConfig();
+    }, []);
 
     const handleSignOut = () => {
         Alert.alert('Cerrar Sesión', '¿Estás seguro? Se cerrará tu sesión en este dispositivo.', [
@@ -110,6 +120,50 @@ export default function CuentaScreen() {
                         theme={theme}
                     />
                     
+                    {/* 🔥 Botón de Configuración de Respaldo Externo (SAF) */}
+                    <ActionRow
+                        icon={isExternalConfigured ? "folder-open-outline" : "folder-outline"}
+                        text={isExternalConfigured ? "Respaldo Automático: ACTIVADO" : "Configurar Respaldo Automático"}
+                        onPress={async () => {
+                             const { BackupService } = require('@/services/BackupService');
+                             
+                             if (isExternalConfigured) {
+                                 Alert.alert(
+                                     "Respaldo Automático",
+                                     "Tus datos se guardan automáticamente en una carpeta segura de tu dispositivo.\n\n¿Deseas dejar de guardar copias externas?",
+                                     [
+                                         { text: "Cancelar", style: "cancel" },
+                                         { 
+                                             text: "Desactivar", 
+                                             style: "destructive", 
+                                             onPress: async () => {
+                                                 const { removeFromStorage } = require('@/utils/storage');
+                                                 await removeFromStorage('EXTERNAL_BACKUP_URI');
+                                                 setIsExternalConfigured(false);
+                                             }
+                                         }
+                                     ]
+                                 );
+                             } else {
+                                 Alert.alert(
+                                     "Configurar Respaldo",
+                                     "Elige una carpeta donde se guardarán tus copias de seguridad. Estas copias NO se borrarán si desinstalas la app.",
+                                     [
+                                         { text: "Cancelar", style: "cancel" },
+                                         { text: "Elegir Carpeta", onPress: async () => {
+                                             const success = await BackupService.setupExternalStorage();
+                                             if (success) {
+                                                 setIsExternalConfigured(true);
+                                                 Alert.alert("¡Listo!", "Tus datos ahora están seguros en la carpeta elegida.");
+                                             }
+                                         }}
+                                     ]
+                                 );
+                             }
+                        }}
+                        theme={theme}
+                    />
+
                     {/* 🔥 Botón de Exportar Backups */}
                     <ActionRow
                         icon="download-outline"
