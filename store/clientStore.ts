@@ -6,6 +6,7 @@ import { API_URLS, ERROR_MESSAGES, STORAGE_KEYS } from '@/constants';
 import { apiFetch } from '@/services/apiService';
 import { useNotificationStore } from './notificationStore';
 import NetInfo from '@react-native-community/netinfo';
+import { BackupService } from '@/services/BackupService'; // 🔥 Importamos el servicio de backups
 
 // --- Tipos para el Estado y las Acciones del Store ---
 interface ClientState {
@@ -53,7 +54,7 @@ const normalizeClient = (client: Partial<Client>): Client => ({
 /**
  * Persiste los clientes, la cola de sincronización y crea un BACKUP local adicional.
  */
-const persistState = async (clients: Client[], queue: SyncAction[]) => {
+const persistState = async (clients: Client[], queue: SyncAction[], actionName: string = 'UNKNOWN') => {
     try {
         await saveToStorage(STORAGE_KEYS.CLIENTS, clients);
         await saveToStorage('@sync_queue', queue);
@@ -61,6 +62,11 @@ const persistState = async (clients: Client[], queue: SyncAction[]) => {
         // 🔥 LOCAL BACKUP REDUNDANTE (Requested by User)
         // Guardamos una copia exacta en otra key por si el archivo principal se corrompe.
         await saveToStorage('@clients_backup', { clients, queue, timestamp: Date.now() });
+
+        // 🔥 BACKUP HISTÓRICO - 30 DÍAS
+        // Guardamos un archivo JSON por cada cambio significativo
+        BackupService.createBackup(clients, actionName);
+
     } catch (e) {
         console.error('Error persistiendo estado:', e);
     }
@@ -118,7 +124,7 @@ export const useClientStore = create<ClientState>((set, get) => ({
             if (!Array.isArray(newClientsData)) return;
             const normalized = newClientsData.map(normalizeClient);
             set({ clients: normalized });
-            persistState(normalized, get().syncQueue);
+            persistState(normalized, get().syncQueue, 'SET_CLIENTS');
         },
 
         mergeClients: (serverClients) => {
@@ -142,7 +148,7 @@ export const useClientStore = create<ClientState>((set, get) => ({
 
             const mergedList = Array.from(mergedMap.values());
             set({ clients: mergedList });
-            persistState(mergedList, syncQueue);
+            persistState(mergedList, syncQueue, 'SYNC_MERGE');
         },
 
         clearClients: () => {
@@ -164,7 +170,7 @@ export const useClientStore = create<ClientState>((set, get) => ({
             const newQueue = [...get().syncQueue, action];
 
             set({ clients: newClients, syncQueue: newQueue, syncStatus: 'pending' });
-            persistState(newClients, newQueue);
+            persistState(newClients, newQueue, 'ADD_CLIENT');
             get().actions.processSyncQueue();
             return newClient;
         },
@@ -183,7 +189,7 @@ export const useClientStore = create<ClientState>((set, get) => ({
 
             const newQueue = [...get().syncQueue, action];
             set({ clients: updatedClients, syncQueue: newQueue, syncStatus: 'pending' });
-            persistState(updatedClients, newQueue);
+            persistState(updatedClients, newQueue, 'UPDATE_CLIENT');
             get().actions.processSyncQueue();
         },
 
@@ -202,7 +208,7 @@ export const useClientStore = create<ClientState>((set, get) => ({
 
             const newQueue = [...get().syncQueue, action];
             set({ clients: updatedClients, syncQueue: newQueue, syncStatus: 'pending' });
-            persistState(updatedClients, newQueue);
+            persistState(updatedClients, newQueue, 'DELETE_CLIENT');
             get().actions.processSyncQueue();
         },
 
@@ -238,7 +244,7 @@ export const useClientStore = create<ClientState>((set, get) => ({
 
             const newQueue = [...get().syncQueue, action];
             set({ clients: updatedClients, syncQueue: newQueue, syncStatus: 'pending' });
-            persistState(updatedClients, newQueue);
+            persistState(updatedClients, newQueue, 'ADD_TRANSACTION');
             get().actions.processSyncQueue();
         },
 
@@ -269,7 +275,7 @@ export const useClientStore = create<ClientState>((set, get) => ({
 
              const newQueue = [...get().syncQueue, action];
             set({ clients: updatedClients, syncQueue: newQueue, syncStatus: 'pending' });
-            persistState(updatedClients, newQueue);
+            persistState(updatedClients, newQueue, 'DELETE_TRANSACTION');
             get().actions.processSyncQueue();
         },
         
@@ -324,7 +330,7 @@ export const useClientStore = create<ClientState>((set, get) => ({
                     isSyncing: false 
                 });
                 
-                persistState(state.clients, remainingQueue);
+                persistState(state.clients, remainingQueue, 'SYNC_PROCESSED');
 
                 // 7. RECURSIVIDAD: Si quedaron items (agregados durante el request),
                 // procesar de nuevo inmediatamente.

@@ -225,15 +225,6 @@ export default function LoginScreen() {
                                 />
                             )}
                             
-                            {/* DEBUG INFO: Mostrar estado si no hay backup visible */}
-                            {!backupInfo && (
-                                <View style={{ padding: 10, alignItems: 'center' }}>
-                                    <CustomText size="small" color={theme.textSecondary}>
-                                        Debug: No se detectó backup restaurable.
-                                    </CustomText>
-                                </View>
-                            )}
-
                             <CustomButton
                                 title="No tengo cuenta, quiero registrarme"
                                 onPress={() => router.replace('/(auth)/register')}
@@ -241,6 +232,24 @@ export default function LoginScreen() {
                                 buttonStyle={{ backgroundColor: 'transparent', marginTop: 16 }}
                                 textStyle={{ color: theme.primary }}
                             />
+
+                            {/* 🔥 Botón de Exportar Backups (Siempre visible) */}
+                            <View style={{ padding: 10, alignItems: 'center' }}>
+                                <CustomButton
+                                    title="Exportar Backups Locales"
+                                    onPress={async () => {
+                                        try {
+                                            const { BackupService } = require('@/services/BackupService');
+                                            await BackupService.exportBackups();
+                                        } catch (error) {
+                                            // Ignore
+                                        }
+                                    }}
+                                    iconName="download-outline"
+                                    buttonStyle={{ backgroundColor: 'transparent', marginTop: 8 }}
+                                    textStyle={{ color: theme.textSecondary, fontSize: 12 }}
+                                />
+                            </View>
                         </View>
                     </ScrollView>
                 </TouchableWithoutFeedback>

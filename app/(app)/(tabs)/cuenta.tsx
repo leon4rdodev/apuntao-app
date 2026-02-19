@@ -109,6 +109,21 @@ export default function CuentaScreen() {
                         }
                         theme={theme}
                     />
+                    
+                    {/* 🔥 Botón de Exportar Backups */}
+                    <ActionRow
+                        icon="download-outline"
+                        text="Exportar Copias de Seguridad"
+                        onPress={async () => {
+                            try {
+                                const { BackupService } = require('@/services/BackupService');
+                                await BackupService.exportBackups();
+                            } catch (error) {
+                                Alert.alert("Error", "No se pudieron exportar los backups.");
+                            }
+                        }}
+                        theme={theme}
+                    />
                 </View>
 
                 <View style={{ marginTop: 24 }}>
