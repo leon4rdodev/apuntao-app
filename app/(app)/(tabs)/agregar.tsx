@@ -19,7 +19,6 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
     Keyboard,
-    SafeAreaView,
     ScrollView,
     StyleSheet,
     Text,
@@ -27,6 +26,7 @@ import {
     useColorScheme,
     View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // --- Sub-componente de la Cabecera (sin cambios) ---
 const HeaderSection = () => {
@@ -68,7 +68,7 @@ export default function AgregarClienteScreen() {
     /**
      * Maneja la lógica de validación y guardado del cliente.
      */
-    const handleSave = () => {
+    const handleSave = async () => {
         Keyboard.dismiss();
         if (!isFormValid) return;
 
@@ -108,10 +108,10 @@ export default function AgregarClienteScreen() {
 
         // 3. Intentar guardar el cliente (lógica sin cambios)
         try {
-            const newClient = addClient({ name: formattedName, phone: formattedPhone });
+            const newClient = await addClient({ name: formattedName, phone: formattedPhone });
 
             if (debtAmount > 0) {
-                addTransaction(newClient.id, {
+                await addTransaction(newClient.id, {
                     amount: debtAmount,
                     type: 'Deuda',
                     date: Date.now(),

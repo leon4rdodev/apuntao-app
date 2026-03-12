@@ -1,158 +1,102 @@
 /**
  * @file app/(auth)/login.tsx
- * @description Pantalla de inicio de sesión para que los usuarios accedan a su cuenta.
+ * @description Pantalla de inicio de sesión con Firebase Phone Auth.
  */
 import CustomButton from '@/components/ui/CustomButton';
 import CustomInput from '@/components/input/CustomInput';
 import CustomText from '@/components/ui/CustomText';
-import { API_URLS, ERROR_MESSAGES, STORAGE_KEYS } from '@/constants';
 import { Colors } from '@/constants/Colors';
 import { useNotification } from '@/store/notificationStore';
-import { useSessionStore } from '@/store/sessionStore';
-import { AppSessionData } from '@/types';
 import { formatPhoneNumber } from '@/utils/formatters';
-import { apiFetch } from '@/services/apiService';
-import { saveToStorage, getFromStorage } from '@/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { useClientStore } from '@/store/clientStore';
+import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
 import {
     Keyboard,
     KeyboardAvoidingView,
     Platform,
-    SafeAreaView,
     ScrollView,
     StyleSheet,
     TouchableWithoutFeedback,
     useColorScheme,
     View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LoginScreen() {
     const theme = Colors[useColorScheme() || 'light'];
     const router = useRouter();
     const showNotification = useNotification();
-    const setClients = useClientStore((state) => state.actions.setClients);
-    const { syncAccountData } = useSessionStore();
 
     const [phoneNumber, setPhoneNumber] = useState('');
-    const [pin, setPin] = useState('');
+    const [code, setCode] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     
-    // Estado para recuperación de datos
-    const [backupInfo, setBackupInfo] = useState<{ count: number; date: string } | null>(null);
+    // Estado para guardar la confirmación de Firebase
+    const [confirm, setConfirm] = useState<FirebaseAuthTypes.ConfirmationResult | null>(null);
 
-    // Verificar si hay backup al montar
-    React.useEffect(() => {
-        const checkBackup = async () => {
-             console.log('🔍 Buscando backup local...');
-             // Solo mostrar si NO hay clientes activos en storage (evitar confusión)
-             const currentClients = await getFromStorage<any[]>(STORAGE_KEYS.CLIENTS);
-             if (currentClients && currentClients.length > 0) {
-                 console.log('⚠️ Ya hay clientes activos, ocultando opción de backup.');
-                 return;
-             }
-
-             const backup = await getFromStorage<any>('@clients_backup');
-             console.log('📦 Resultado backup:', backup ? `Encontrado (${backup.clients?.length} clientes)` : 'NULL');
-             
-             if (backup && backup.clients && backup.clients.length > 0) {
-                 setBackupInfo({
-                     count: backup.clients.length,
-                     date: new Date(backup.timestamp).toLocaleString(),
-                 });
-             } else {
-                 console.log('❌ Backup vacío o inválido');
-             }
-        };
-        checkBackup();
-    }, []);
-
-    const handleRestoreBackup = () => {
-        if (!backupInfo) return;
-        
-        // Alerta nativa para confirmar
-        // Nota: En Expo Web esto no funcionaría igual, pero es mobile-focused.
-        // Usamos un confirm simple si no hay Alert.alert (web), pero React Native tiene Alert.
-        const { Alert } = require('react-native');
-        
-        Alert.alert(
-            'Restaurar Datos Locales',
-            `Se encontraron ${backupInfo.count} clientes del ${backupInfo.date}.\n\n¿Quieres restaurarlos ahora? Esto sobrescribirá los datos locales actuales.`,
-            [
-                { text: 'Cancelar', style: 'cancel' },
-                {
-                    text: 'Restaurar',
-                    onPress: async () => {
-                        try {
-                            setIsLoading(true);
-                            const backup = await getFromStorage<any>('@clients_backup');
-                            if (backup) {
-                                await saveToStorage(STORAGE_KEYS.CLIENTS, backup.clients);
-                                await saveToStorage('@sync_queue', backup.queue || []);
-                                
-                                showNotification({
-                                    message: '¡Datos restaurados! Ahora inicia sesión para sincronizar.',
-                                    type: 'success',
-                                });
-                                // Ocultar botón tras restaurar
-                                setBackupInfo(null);
-                            }
-                        } catch (e) {
-                            showNotification({ message: 'Error al restaurar', type: 'error' });
-                        } finally {
-                            setIsLoading(false);
-                        }
-                    },
-                },
-            ]
-        );
-    };
-
-    const handleLogin = async () => {
+    // 1. Iniciar sesión con número de teléfono
+    const handleSendCode = async () => {
         Keyboard.dismiss();
-        if (!phoneNumber || !pin || pin.length < 6) {
+        if (!phoneNumber || phoneNumber.length < 10) {
             showNotification({
-                message: 'Por favor, completa todos los campos correctamente.',
+                message: 'Por favor, ingresa un número de teléfono válido.',
                 type: 'error',
             });
             return;
         }
 
         setIsLoading(true);
-
         try {
-            const cleanedPhone = phoneNumber.replace(/-/g, '');
-
-            // 1. Autenticar y obtener los tokens de sesión.
-            const sessionData: AppSessionData = await apiFetch(
-                API_URLS.LOGIN,
-                {
-                    method: 'POST',
-                    body: JSON.stringify({ phoneNumber: cleanedPhone, pin }),
-                },
-                true
-            );
-
-            // 2. Guardar los tokens de sesión.
-            await saveToStorage(STORAGE_KEYS.APP_SESSION, sessionData);
-
-            // 3. Sincronizar los datos de la cuenta.
-            // Esta función ahora actualiza el store de Zustand (`sessionStore`).
-            const syncedData = await syncAccountData();
-
-            // 4. Poblar el ClientContext con los clientes recibidos.
-            if (syncedData?.clients) {
-                setClients(syncedData.clients);
+            // Asegurar formato internacional (ej. +18091234567 para RD)
+            let formattedPhone = phoneNumber.replace(/-/g, '').replace(/ /g, '');
+            if (!formattedPhone.startsWith('+')) {
+                // Asumimos código de país +1 si no se provee (República Dominicana/USA)
+                // Ajustar según el target principal de la app
+                formattedPhone = '+1' + formattedPhone; 
             }
 
-            // 5. NO es necesario navegar. El hook `useProtectedRoute` detectará
-            //    el cambio en la sesión y redirigirá automáticamente.
-        } catch (error: any) {
+            const confirmation = await auth().signInWithPhoneNumber(formattedPhone);
+            setConfirm(confirmation);
+            
             showNotification({
-                message: error.message || ERROR_MESSAGES.GENERIC_ERROR,
+                message: 'Código SMS enviado.',
+                type: 'success',
+            });
+        } catch (error: any) {
+            console.error('Error enviando SMS:', error);
+            showNotification({
+                message: 'Error al enviar el código. Verifica el número.',
+                type: 'error',
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // 2. Confirmar el código recibido por SMS
+    const handleConfirmCode = async () => {
+        Keyboard.dismiss();
+        if (!code || code.length !== 6) {
+            showNotification({
+                message: 'Por favor, ingresa el código de 6 dígitos.',
+                type: 'error',
+            });
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            if (confirm) {
+                await confirm.confirm(code);
+                // El AuthContext detectará el cambio y redirigirá lógicamente.
+            }
+        } catch (error: any) {
+            console.error('Error confirmando código:', error);
+            showNotification({
+                message: 'Código incorrecto o expirado.',
                 type: 'error',
             });
         } finally {
@@ -177,79 +121,80 @@ export default function LoginScreen() {
                                 ¡Qué bueno verte!
                             </CustomText>
                             <CustomText color={theme.textSecondary} style={styles.subtitle}>
-                                Ingresa tus datos para acceder a tu negocio.
+                                {confirm 
+                                    ? 'Ingresa el código que te enviamos por SMS.' 
+                                    : 'Ingresa tu teléfono para recibir un código de acceso.'}
                             </CustomText>
                         </View>
 
                         <View style={styles.form}>
-                            <CustomInput
-                                icon="call-outline"
-                                placeholder="Número de Teléfono"
-                                value={phoneNumber}
-                                onChangeText={(text) => setPhoneNumber(formatPhoneNumber(text))}
-                                keyboardType="phone-pad"
-                                maxLength={12}
-                                editable={!isLoading}
-                            />
-                            <CustomInput
-                                icon="lock-closed-outline"
-                                placeholder="PIN de 6 dígitos"
-                                value={pin}
-                                onChangeText={setPin}
-                                keyboardType="number-pad"
-                                secureTextEntry
-                                maxLength={6}
-                                editable={!isLoading}
-                                returnKeyType="done"
-                                onSubmitEditing={handleLogin}
-                            />
+                            {!confirm ? (
+                                <CustomInput
+                                    icon="call-outline"
+                                    placeholder="Número de Teléfono (Ej. 809-123-4567)"
+                                    value={phoneNumber}
+                                    onChangeText={(text) => setPhoneNumber(formatPhoneNumber(text))}
+                                    keyboardType="phone-pad"
+                                    maxLength={14}
+                                    editable={!isLoading}
+                                    returnKeyType="done"
+                                    onSubmitEditing={handleSendCode}
+                                />
+                            ) : (
+                                <CustomInput
+                                    icon="chatbubble-ellipses-outline"
+                                    placeholder="Código SMS de 6 dígitos"
+                                    value={code}
+                                    onChangeText={setCode}
+                                    keyboardType="number-pad"
+                                    maxLength={6}
+                                    editable={!isLoading}
+                                    returnKeyType="done"
+                                    onSubmitEditing={handleConfirmCode}
+                                />
+                            )}
                         </View>
 
                         <View style={styles.footer}>
-                            <CustomButton
-                                title={isLoading ? 'Iniciando...' : 'Iniciar Sesión'}
-                                onPress={handleLogin}
-                                isLoading={isLoading}
-                                disabled={isLoading}
-                                iconName="log-in-outline"
-                            />
-                            
-                            {/* 🔥 BOTÓN DE RECUPERACIÓN DE DATOS (SOLO SI HAY BACKUP) */}
-                            {backupInfo && (
+                            {!confirm ? (
                                 <CustomButton
-                                    title={`Recuperar Datos (${backupInfo.count} clientes)`}
-                                    onPress={handleRestoreBackup}
-                                    iconName="cloud-upload-outline"
-                                    buttonStyle={{ backgroundColor: theme.warning, marginTop: 16 }}
-                                    textStyle={{ color: '#000' }}
+                                    title={isLoading ? 'Enviando...' : 'Enviar SMS'}
+                                    onPress={handleSendCode}
+                                    isLoading={isLoading}
+                                    disabled={isLoading}
+                                    iconName="send-outline"
                                 />
+                            ) : (
+                                <>
+                                    <CustomButton
+                                        title={isLoading ? 'Verificando...' : 'Conectar'}
+                                        onPress={handleConfirmCode}
+                                        isLoading={isLoading}
+                                        disabled={isLoading}
+                                        iconName="log-in-outline"
+                                    />
+                                    <CustomButton
+                                        title="Volver a intentar"
+                                        onPress={() => {
+                                            setConfirm(null);
+                                            setCode('');
+                                        }}
+                                        disabled={isLoading}
+                                        buttonStyle={{ backgroundColor: 'transparent', marginTop: 16 }}
+                                        textStyle={{ color: theme.primary }}
+                                    />
+                                </>
                             )}
                             
-                            <CustomButton
-                                title="No tengo cuenta, quiero registrarme"
-                                onPress={() => router.replace('/(auth)/register')}
-                                disabled={isLoading}
-                                buttonStyle={{ backgroundColor: 'transparent', marginTop: 16 }}
-                                textStyle={{ color: theme.primary }}
-                            />
-
-                            {/* 🔥 Botón de Exportar Backups (Siempre visible) */}
-                            <View style={{ padding: 10, alignItems: 'center' }}>
+                            {!confirm && (
                                 <CustomButton
-                                    title="Exportar Backups Locales"
-                                    onPress={async () => {
-                                        try {
-                                            const { BackupService } = require('@/services/BackupService');
-                                            await BackupService.exportBackups();
-                                        } catch (error) {
-                                            // Ignore
-                                        }
-                                    }}
-                                    iconName="download-outline"
-                                    buttonStyle={{ backgroundColor: 'transparent', marginTop: 8 }}
-                                    textStyle={{ color: theme.textSecondary, fontSize: 12 }}
+                                    title="No tengo cuenta, quiero registrarme"
+                                    onPress={() => router.replace('/(auth)/register')}
+                                    disabled={isLoading}
+                                    buttonStyle={{ backgroundColor: 'transparent', marginTop: 16 }}
+                                    textStyle={{ color: theme.primary }}
                                 />
-                            </View>
+                            )}
                         </View>
                     </ScrollView>
                 </TouchableWithoutFeedback>

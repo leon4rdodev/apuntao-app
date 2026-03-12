@@ -46,13 +46,13 @@ export interface Subscription {
 
 /** Datos de una cuenta de Colmado, que es el "usuario" de nuestra app. */
 export interface ColmadoAccountInfo { 
-    _id: string;
+    _id?: string;
     colmadoName: string;
     phoneNumber: string;
     clients: Client[];
     subscription: Subscription;
-    createdAt: string;
-    updatedAt: string;
+    createdAt?: any;
+    updatedAt?: any;
 }
 
 // --- Tipos para la Gestión de Sesión ---

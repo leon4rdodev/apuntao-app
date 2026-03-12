@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1097291344182",
+    "project_id": "apuntao-app",
+    "storage_bucket": "apuntao-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1097291344182:android:5827c4e4d01cdcd744eb97",
+        "android_client_info": {
+          "package_name": "com.leon4rdodev.apuntao"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAd-bSPhCHcXawxIQ6yrMIBW9O5j28QmG4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

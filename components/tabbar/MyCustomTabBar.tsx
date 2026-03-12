@@ -14,9 +14,9 @@ type RouteConfig = {
 
 const ROUTE_CONFIG: RouteConfig = {
     index: { icon: 'home', label: 'Inicio' },
-    agregar: { icon: 'pluscircleo', label: 'Agregar' },
+    agregar: { icon: 'plus-circle', label: 'Agregar' },
     cuenta: { icon: 'user', label: 'Cuenta' },
-    ayuda: { icon: 'questioncircleo', label: 'Ayuda' },
+    ayuda: { icon: 'question-circle', label: 'Ayuda' },
 };
 
 export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
@@ -38,7 +38,7 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     const renderTab = (route: any, index: number) => {
         const isFocused = state.index === index;
         const routeConfig = ROUTE_CONFIG[route.name] || {
-            icon: 'questioncircleo',
+            icon: 'question-circle',
             label: route.name,
         };
 

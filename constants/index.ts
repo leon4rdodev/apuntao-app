@@ -6,25 +6,9 @@
 
 // --- Claves de Almacenamiento Local (AsyncStorage) ---
 export const STORAGE_KEYS = {
-    /** Datos de sesión de la app (accessToken, refreshToken, etc.). */
-    APP_SESSION: '@app_session',
-    /** Información de la cuenta del colmado (nombre, suscripción, etc.). */
-    ACCOUNT_INFO: '@account_info',
-    /** Lista de clientes del colmado (cache local). */
-    CLIENTS: '@clients',
     HAS_ONBOARDED: '@has_onboarded',
 } as const;
 
-// --- Endpoints de la API del Backend ---
-export const API_URLS = {
-    REGISTER: '/api/auth/register',
-    LOGIN: '/api/auth/login',
-    REFRESH_TOKEN: '/api/auth/refresh-token',
-    /** Endpoint para obtener el perfil del dueño del colmado. */
-    ACCOUNT_PROFILE: '/api/account/me',
-    /** Endpoint para sincronizar todos los datos (clientes, suscripción). */
-    DATA_SYNC: '/api/data/sync',
-} as const;
 
 // --- Configuración y Límites de la Aplicación ---
 export const APP_CONFIG = {

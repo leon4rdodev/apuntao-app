@@ -6,12 +6,12 @@ import React from 'react';
 import {
     Alert,
     Linking,
-    SafeAreaView,
     ScrollView,
     StyleSheet,
     View,
     useColorScheme,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import ActionRow from '@/components/ui/ActionRow';
 import CustomText from '@/components/ui/CustomText';

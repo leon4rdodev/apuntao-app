@@ -13,7 +13,7 @@ export default {
         splash: {
             image: './assets/images/icon.png',
             resizeMode: 'contain',
-            backgroundColor: '#00000000',
+            backgroundColor: '#ffffff',
         },
         ios: {
             supportsTablet: true,
@@ -26,13 +26,28 @@ export default {
             },
             edgeToEdgeEnabled: true,
             package: 'com.leon4rdodev.apuntao',
+            googleServicesFile: './google-services.json',
         },
         web: {
             bundler: 'metro',
             output: 'static',
             favicon: './assets/images/icon.png',
         },
-        plugins: ['expo-router'],
+        plugins: [
+            'expo-router',
+            'expo-font',
+            '@react-native-firebase/app',
+            '@react-native-firebase/auth',
+            '@react-native-firebase/crashlytics',
+            [
+                'expo-build-properties',
+                {
+                    ios: {
+                        useFrameworks: 'static',
+                    },
+                },
+            ],
+        ],
         experiments: {
             typedRoutes: true,
         },
@@ -41,7 +56,6 @@ export default {
             eas: {
                 projectId: 'f72d17fc-9f66-4d0c-99d0-eb12611cd8a4',
             },
-            API_URL: 'https://apuntao-admin.vercel.app',
         },
     },
 };

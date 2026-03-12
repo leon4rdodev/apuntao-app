@@ -54,8 +54,6 @@ const ActionModal = ({
                 damping: 20, // Aumentado para menos rebote
                 stiffness: 120, // Reducido para movimiento más suave
                 overshootClamping: true, // CLAVE: Evita que sobrepase el valor objetivo
-                restDisplacementThreshold: 0.01,
-                restSpeedThreshold: 0.01,
             });
         } else {
             translateY.value = withTiming(500, { duration: 200 });

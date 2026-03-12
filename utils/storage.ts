@@ -4,8 +4,6 @@
  */
 
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { STORAGE_KEYS } from "../constants"
-import { handleError } from "./network"
 
 /**
  * Guarda datos en AsyncStorage de forma segura
@@ -19,7 +17,7 @@ export const saveToStorage = async <T>(key: string, data: T)
     const jsonData = JSON.stringify(data)
     await AsyncStorage.setItem(key, jsonData)
   } catch (error: any) {
-    handleError(error, `saveToStorage - ${key}`)
+    console.error(`saveToStorage - ${key}`, error)
     throw error
   }
 }
@@ -36,7 +34,7 @@ export const getFromStorage = async <T>(key: string)
     const jsonData = await AsyncStorage.getItem(key)
     return jsonData ? JSON.parse(jsonData) : null;
   } catch (error: any) {
-    handleError(error, `getFromStorage - ${key}`)
+    console.error(`getFromStorage - ${key}`, error)
     return null;
   }
 }
@@ -49,7 +47,7 @@ export const removeFromStorage = async (key: string): Promise<void> => {
   try {
     await AsyncStorage.removeItem(key)
   } catch (error: any) {
-    handleError(error, `removeFromStorage - ${key}`)
+    console.error(`removeFromStorage - ${key}`, error)
     throw error
   }
 }
@@ -64,21 +62,7 @@ export const existsInStorage = async (key: string): Promise<boolean> => {
     const value = await AsyncStorage.getItem(key)
     return value !== null
   } catch (error: any) {
-    handleError(error, `existsInStorage - ${key}`)
+    console.error(`existsInStorage - ${key}`, error)
     return false
-  }
-}
-
-/**
- * Obtiene el token de acceso almacenado
- * @returns Token de acceso o null
- */
-export const getAccessToken = async (): Promise<string | null> => {
-  try {
-    const authData = await getFromStorage<any>(STORAGE_KEYS.APP_SESSION)
-    return authData?.accessToken || null
-  } catch (error: any) {
-    handleError(error, "getAccessToken")
-    return null
   }
 }

@@ -106,17 +106,11 @@ export default function Index() {
                     ) : null
                 }
                 renderItem={({ item }) => {
-                    // Check if client has pending actions in queue
-                    // Optimization: For large lists, this should be memoized or handled in the item component
-                    const isPending = useClientStore.getState().syncQueue.some(
-                        (action) =>
-                            action.payload?.id === item.id || action.payload?.clientId === item.id
-                    );
                     return (
                         <ClientCard
                             item={item}
                             onPress={() => handleClientPress(item.id)}
-                            isPending={isPending}
+                            isPending={false}
                         />
                     );
                 }}

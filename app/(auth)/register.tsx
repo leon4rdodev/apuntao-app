@@ -1,70 +1,121 @@
 /**
  * @file app/(auth)/register.tsx
- * @description Pantalla de registro para nuevos dueños de colmados.
+ * @description Pantalla de registro para nuevos dueños de colmados usando Firebase Phone Auth.
  */
 import CustomButton from '@/components/ui/CustomButton';
 import CustomInput from '@/components/input/CustomInput';
 import CustomText from '@/components/ui/CustomText';
-import { API_URLS, ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/constants';
 import { Colors } from '@/constants/Colors';
 import { useNotification } from '@/store/notificationStore';
 import { formatPhoneNumber } from '@/utils/formatters';
-import { apiFetch } from '@/services/apiService';
+import { useSessionStore } from '@/store/sessionStore';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
+import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+
 import {
-    Alert,
     Keyboard,
     KeyboardAvoidingView,
     Platform,
-    SafeAreaView,
     ScrollView,
     StyleSheet,
     TouchableWithoutFeedback,
     useColorScheme,
     View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RegisterScreen() {
     const theme = Colors[useColorScheme() || 'light'];
     const router = useRouter();
     const showNotification = useNotification();
+    const setAccount = useSessionStore((state) => state.setAccount);
 
     const [colmadoName, setColmadoName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
-    const [pin, setPin] = useState('');
+    const [code, setCode] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    
+    // Estado para guardar la confirmación de Firebase
+    const [confirm, setConfirm] = useState<FirebaseAuthTypes.ConfirmationResult | null>(null);
 
-    /**
-     * @function handleRegister
-     * @description Valida los datos y envía la petición de registro al backend.
-     */
+    // 1. Iniciar registro enviando la solicitud SMS
     const handleRegister = async () => {
         Keyboard.dismiss();
-        if (!colmadoName.trim() || !phoneNumber || pin.length < 6) {
-            showNotification({ message: 'Todos los campos son obligatorios y el PIN debe tener 6 dígitos.', type: 'error' });
+        if (!colmadoName.trim() || !phoneNumber || phoneNumber.length < 10) {
+            showNotification({
+                message: 'Completa correctamente el nombre de tu colmado y el teléfono.',
+                type: 'error',
+            });
             return;
         }
+
         setIsLoading(true);
-
         try {
-            const cleanedPhone = phoneNumber.replace(/-/g, '');
-            await apiFetch(
-                API_URLS.REGISTER,
-                {
-                    method: 'POST',
-                    body: JSON.stringify({ colmadoName: colmadoName.trim(), phoneNumber: cleanedPhone, pin }),
-                },
-                true // Marcar como ruta pública
-            );
+            let formattedPhone = phoneNumber.replace(/-/g, '').replace(/ /g, '');
+            if (!formattedPhone.startsWith('+')) {
+                formattedPhone = '+1' + formattedPhone; 
+            }
 
-            Alert.alert(SUCCESS_MESSAGES.REGISTRATION_SUCCESS_TITLE, SUCCESS_MESSAGES.ACCOUNT_CREATED, [
-                { text: 'Ir a Iniciar Sesión', onPress: () => router.replace('/(auth)/login') },
-            ]);
-        } catch (error: any) {
+            const confirmation = await auth().signInWithPhoneNumber(formattedPhone);
+            setConfirm(confirmation);
+            
             showNotification({
-                message: error.message || ERROR_MESSAGES.GENERIC_ERROR,
+                message: 'Código SMS enviado a tu teléfono.',
+                type: 'success',
+            });
+        } catch (error: any) {
+            console.error('Error enviando SMS de registro:', error);
+            showNotification({
+                message: 'Error al enviar el SMS. Revisa tu red o el formato del teléfono.',
+                type: 'error',
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // 2. Confirmar el SMS recibido y guardar el perfil del usuario
+    const handleConfirmCode = async () => {
+        Keyboard.dismiss();
+        if (!code || code.length !== 6) {
+            showNotification({
+                message: 'Por favor, ingresa el código de 6 dígitos que recibiste.',
+                type: 'error',
+            });
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            if (confirm) {
+                const credential = await confirm.confirm(code);
+                const user = credential?.user;
+                
+                if (user) {
+                    // Escribir el perfil en Firestore inmediatamente
+                    const defaultSub = { status: 'active', plan: 'free' };
+                    await firestore().collection('users').doc(user.uid).set({
+                        colmadoName: colmadoName.trim(),
+                        phoneNumber: user.phoneNumber,
+                        subscription: defaultSub,
+                        createdAt: firestore.FieldValue.serverTimestamp(),
+                    }, { merge: true });
+
+                    // Forzamos actualización en el store por si el AuthContext fue más rápido
+                    setAccount({
+                        colmadoName: colmadoName.trim(),
+                        phoneNumber: user.phoneNumber || '',
+                        subscription: defaultSub as any, // Bypass TS temporal
+                    });
+                }
+            }
+        } catch (error: any) {
+            console.error('Error confirmando código en registro:', error);
+            showNotification({
+                message: 'Código incorrecto o expirado.',
                 type: 'error',
             });
         } finally {
@@ -73,8 +124,7 @@ export default function RegisterScreen() {
     };
 
     return (
-        <SafeAreaView 
-        style={[styles.safeArea, { backgroundColor: theme.background }]}>
+        <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.container}
@@ -91,56 +141,85 @@ export default function RegisterScreen() {
                                 Crea tu Cuenta
                             </CustomText>
                             <CustomText color={theme.textSecondary} style={styles.subtitle}>
-                                Empieza a digitalizar tu negocio en menos de un minuto.
+                                {!confirm 
+                                    ? 'Crea el perfil de tu colmado.' 
+                                    : 'Por seguridad, ingresa el código SMS que te enviamos.'}
                             </CustomText>
                         </View>
 
                         <View style={styles.form}>
-                            <CustomInput
-                                icon="storefront-outline"
-                                placeholder="Nombre de tu Negocio"
-                                value={colmadoName}
-                                onChangeText={setColmadoName}
-                                editable={!isLoading}
-                            />
-                            <CustomInput
-                                icon="call-outline"
-                                placeholder="Tu Número de Teléfono (será tu usuario)"
-                                value={phoneNumber}
-                                onChangeText={(text) => setPhoneNumber(formatPhoneNumber(text))}
-                                keyboardType="phone-pad"
-                                maxLength={12}
-                                editable={!isLoading}
-                            />
-                            <CustomInput
-                                icon="lock-closed-outline"
-                                placeholder="Crea un PIN de 6 dígitos"
-                                value={pin}
-                                onChangeText={setPin}
-                                keyboardType="number-pad"
-                                secureTextEntry
-                                maxLength={6}
-                                editable={!isLoading}
-                            />
+                            {!confirm ? (
+                                <>
+                                    <CustomInput
+                                        icon="storefront-outline"
+                                        placeholder="Nombre de tu Negocio"
+                                        value={colmadoName}
+                                        onChangeText={setColmadoName}
+                                        editable={!isLoading}
+                                    />
+                                    <CustomInput
+                                        icon="call-outline"
+                                        placeholder="Teléfono (Ej. 809-123-4567)"
+                                        value={phoneNumber}
+                                        onChangeText={(text) => setPhoneNumber(formatPhoneNumber(text))}
+                                        keyboardType="phone-pad"
+                                        maxLength={14}
+                                        editable={!isLoading}
+                                    />
+                                </>
+                            ) : (
+                                <CustomInput
+                                    icon="chatbubble-ellipses-outline"
+                                    placeholder="Código SMS de 6 dígitos"
+                                    value={code}
+                                    onChangeText={setCode}
+                                    keyboardType="number-pad"
+                                    maxLength={6}
+                                    editable={!isLoading}
+                                    returnKeyType="done"
+                                    onSubmitEditing={handleConfirmCode}
+                                />
+                            )}
                         </View>
 
                         <View style={styles.footer}>
-                            <CustomButton
-                                title="Crear Cuenta"
-                                onPress={handleRegister}
-                                isLoading={isLoading}
-                                iconName="checkmark-circle-outline"
-                            />
-                            <CustomButton
-                                title="Ya tengo una cuenta"
-                                onPress={() => router.replace('/(auth)/login')}
-                                disabled={isLoading}
-                                buttonStyle={{
-                                    backgroundColor: 'transparent',
-                                    marginTop: 16,
-                                }}
-                                textStyle={{ color: theme.primary }}
-                            />
+                            {!confirm ? (
+                                <CustomButton
+                                    title={isLoading ? 'Enviando SMS...' : 'Enviar Código'}
+                                    onPress={handleRegister}
+                                    isLoading={isLoading}
+                                    iconName="send-outline"
+                                />
+                            ) : (
+                                <>
+                                    <CustomButton
+                                        title={isLoading ? 'Verificando...' : 'Verificar y Crear Cuenta'}
+                                        onPress={handleConfirmCode}
+                                        isLoading={isLoading}
+                                        iconName="checkmark-circle-outline"
+                                    />
+                                    <CustomButton
+                                        title="Volver atrás"
+                                        onPress={() => {
+                                            setConfirm(null);
+                                            setCode('');
+                                        }}
+                                        disabled={isLoading}
+                                        buttonStyle={{ backgroundColor: 'transparent', marginTop: 16 }}
+                                        textStyle={{ color: theme.primary }}
+                                    />
+                                </>
+                            )}
+                            
+                            {!confirm && (
+                                <CustomButton
+                                    title="Ya tengo una cuenta"
+                                    onPress={() => router.replace('/(auth)/login')}
+                                    disabled={isLoading}
+                                    buttonStyle={{ backgroundColor: 'transparent', marginTop: 16 }}
+                                    textStyle={{ color: theme.primary }}
+                                />
+                            )}
                         </View>
                     </ScrollView>
                 </TouchableWithoutFeedback>

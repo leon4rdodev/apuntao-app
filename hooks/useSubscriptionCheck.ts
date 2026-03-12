@@ -29,7 +29,7 @@ export function useSubscriptionCheck() {
     const restrictedStatuses: Subscription['status'][] = [
         'expired',
         'cancelled',
-        'unknown', // <-- MANTENER: Incluye 'unknown' en la restricción
+        'unknown',
     ];
 
     /**
