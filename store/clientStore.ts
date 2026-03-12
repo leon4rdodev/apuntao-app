@@ -1,6 +1,16 @@
-// store/clientStore.ts
 import { create } from 'zustand';
-import firestore from '@react-native-firebase/firestore';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { createSQLiteStorage } from '@/utils/sqliteStorage';
+import { 
+    getFirestore, 
+    collection, 
+    doc, 
+    onSnapshot, 
+    query, 
+    where, 
+    addDoc, 
+    updateDoc 
+} from '@react-native-firebase/firestore';
 import type { Client, Transaction } from '@/types';
 import { useNotificationStore } from './notificationStore';
 
@@ -12,14 +22,14 @@ interface ClientState {
         startFirestoreSync: (uid: string) => void;
         stopFirestoreSync: () => void;
         addClient: (
-            clientData: Omit<Client, 'id' | 'debt' | 'transactions' | 'lastModified'>
+            clientData: Omit<Client, 'id' | 'debt' | 'transactions' | 'lastModified'>,
+            initialDebt?: number
         ) => Promise<Client>;
         updateClient: (clientId: string, updatedData: Pick<Client, 'name' | 'phone'>) => Promise<void>;
         deleteClient: (clientId: string) => Promise<void>;
         addTransaction: (clientId: string, transaction: Omit<Transaction, 'id'>) => Promise<void>;
         deleteTransaction: (clientId: string, transactionId: string) => Promise<void>;
         getClientById: (id: string) => Client | undefined;
-        // Funciones dejadas vacías para no romper interfaces de AuthContext que no se hayan borrado totalmente
         initializeClientsFromStorage: () => Promise<void>;
         mergeClients: () => void;
         processSyncQueue: () => Promise<void>;
@@ -28,16 +38,23 @@ interface ClientState {
 
 let currentUid: string | null = null;
 
-export const useClientStore = create<ClientState>((set, get) => ({
-    clients: [],
-    isLoading: true,
-    unsubscribeSnapshot: null,
-    actions: {
+const sqliteStorage = createSQLiteStorage('clients_v1.db');
+
+export const useClientStore = create<ClientState>()(
+    persist(
+        (set, get) => ({
+            clients: [],
+            isLoading: false, 
+            unsubscribeSnapshot: null,
+            actions: {
+                // ... (resto de las acciones igual)
+
+
         // 🔥 INICIA LA SINCRONIZACIÓN EN TIEMPO REAL CON FIRESTORE
         startFirestoreSync: (uid: string) => {
             currentUid = uid;
             
-            // Si ya hay una suscripción activa, no hacer nada o detenerla
+            const db = getFirestore();
             const { unsubscribeSnapshot } = get();
             if (unsubscribeSnapshot) {
                 unsubscribeSnapshot();
@@ -45,42 +62,38 @@ export const useClientStore = create<ClientState>((set, get) => ({
 
             set({ isLoading: true });
 
-            const unsubscribe = firestore()
-                .collection('users')
-                .doc(uid)
-                .collection('clients')
-                .where('deleted', '!=', true) // Solo traer los NO eliminados lógicamente (o los que no tengan el campo deleted en true)
-                .onSnapshot(
-                    (querySnapshot) => {
-                        const clientsList: Client[] = [];
-                        querySnapshot.forEach((doc) => {
-                            const data = doc.data();
-                            
-                            // Aseguramos que la data en Firestore se parezca a nuestra interface
-                            clientsList.push({
-                                id: doc.id,
-                                name: data.name || 'Cliente sin nombre',
-                                phone: data.phone,
-                                debt: typeof data.debt === 'number' ? Math.max(0, data.debt) : 0,
-                                transactions: Array.isArray(data.transactions) ? data.transactions : [],
-                                lastModified: data.lastModified || Date.now(),
-                                deleted: data.deleted || false,
-                            });
-                        });
-                        
-                        // Ordenar por lastModified descendente si se desea, o alfabéticamente
-                        clientsList.sort((a, b) => b.lastModified - a.lastModified);
+            const clientsRef = collection(db, 'users', uid, 'clients');
+            const q = query(clientsRef, where('deleted', '!=', true));
 
-                        set({ clients: clientsList, isLoading: false });
-                    },
-                    (error) => {
-                        console.error('Error escuchando la colección de clientes:', error);
-                        useNotificationStore.getState().show({
-                            message: 'Error de conexión con la base de datos.',
-                            type: 'error'
+            const unsubscribe = onSnapshot(
+                q,
+                (querySnapshot) => {
+                    const clientsList: Client[] = [];
+                    querySnapshot.forEach((doc: any) => {
+                        const data = doc.data();
+                        
+                        clientsList.push({
+                            id: doc.id,
+                            name: data.name || 'Cliente sin nombre',
+                            phone: data.phone,
+                            debt: typeof data.debt === 'number' ? Math.max(0, data.debt) : 0,
+                            transactions: Array.isArray(data.transactions) ? data.transactions : [],
+                            lastModified: data.lastModified || Date.now(),
+                            deleted: data.deleted || false,
                         });
-                    }
-                );
+                    });
+                    
+                    clientsList.sort((a, b) => b.lastModified - a.lastModified);
+                    set({ clients: clientsList, isLoading: false });
+                },
+                (error) => {
+                    console.error('Error escuchando la colección de clientes:', error);
+                    useNotificationStore.getState().show({
+                        message: 'Error de conexión con la base de datos.',
+                        type: 'error'
+                    });
+                }
+            );
 
             set({ unsubscribeSnapshot: unsubscribe });
         },
@@ -96,59 +109,62 @@ export const useClientStore = create<ClientState>((set, get) => ({
             currentUid = null;
         },
 
-        addClient: async (clientData) => {
+        addClient: async (clientData, initialDebt = 0) => {
             if (!currentUid) throw new Error("No hay usuario autenticado.");
             
+            const db = getFirestore();
+            
+            // Si hay deuda inicial, preparamos la primera transacción
+            const transactions: Transaction[] = [];
+            if (initialDebt > 0) {
+                transactions.push({
+                    id: `txn_${Date.now()}_init`,
+                    amount: initialDebt,
+                    type: 'Deuda',
+                    date: Date.now(),
+                });
+            }
+
             const newClient = {
                 name: clientData.name,
                 phone: clientData.phone || null,
-                debt: 0,
-                transactions: [],
+                debt: initialDebt,
+                transactions: transactions,
                 lastModified: Date.now(),
                 deleted: false,
             };
 
-            // Firestore genera el ID automáticamente
-            const docRef = await firestore()
-                .collection('users')
-                .doc(currentUid)
-                .collection('clients')
-                .add(newClient);
+            const clientsRef = collection(db, 'users', currentUid, 'clients');
+            const docRef = await addDoc(clientsRef, newClient);
 
             return { id: docRef.id, ...newClient } as Client;
         },
 
         updateClient: async (clientId, updatedData) => {
             if (!currentUid) return;
+            const db = getFirestore();
             const now = Date.now();
             
-            await firestore()
-                .collection('users')
-                .doc(currentUid)
-                .collection('clients')
-                .doc(clientId)
-                .update({
-                    ...updatedData,
-                    lastModified: now
-                });
+            const clientRef = doc(db, 'users', currentUid, 'clients', clientId);
+            await updateDoc(clientRef, {
+                ...updatedData,
+                lastModified: now
+            });
         },
 
         deleteClient: async (clientId) => {
             if (!currentUid) return;
-            // Soft delete en Firestore
-            await firestore()
-                .collection('users')
-                .doc(currentUid)
-                .collection('clients')
-                .doc(clientId)
-                .update({
-                    deleted: true,
-                    lastModified: Date.now()
-                });
+            const db = getFirestore();
+            const clientRef = doc(db, 'users', currentUid, 'clients', clientId);
+            await updateDoc(clientRef, {
+                deleted: true,
+                lastModified: Date.now()
+            });
         },
 
         addTransaction: async (clientId, transaction) => {
             if (!currentUid) return;
+            const db = getFirestore();
             
             const client = get().clients.find(c => c.id === clientId);
             if (!client) return;
@@ -163,20 +179,17 @@ export const useClientStore = create<ClientState>((set, get) => ({
             const clearTransactions = newDebt === 0;
             const finalTransactions = clearTransactions ? [] : [newTx, ...client.transactions];
 
-            await firestore()
-                .collection('users')
-                .doc(currentUid)
-                .collection('clients')
-                .doc(clientId)
-                .update({
-                    debt: newDebt,
-                    transactions: finalTransactions,
-                    lastModified: Date.now()
-                });
+            const clientRef = doc(db, 'users', currentUid, 'clients', clientId);
+            await updateDoc(clientRef, {
+                debt: newDebt,
+                transactions: finalTransactions,
+                lastModified: Date.now()
+            });
         },
 
         deleteTransaction: async (clientId, transactionId) => {
             if (!currentUid) return;
+            const db = getFirestore();
 
             const client = get().clients.find(c => c.id === clientId);
             if (!client) return;
@@ -189,16 +202,12 @@ export const useClientStore = create<ClientState>((set, get) => ({
             const remaining = client.transactions.filter(t => t.id !== transactionId);
             const clearAll = newDebt === 0;
 
-            await firestore()
-                .collection('users')
-                .doc(currentUid)
-                .collection('clients')
-                .doc(clientId)
-                .update({
-                    debt: newDebt,
-                    transactions: clearAll ? [] : remaining,
-                    lastModified: Date.now()
-                });
+            const clientRef = doc(db, 'users', currentUid, 'clients', clientId);
+            await updateDoc(clientRef, {
+                debt: newDebt,
+                transactions: clearAll ? [] : remaining,
+                lastModified: Date.now()
+            });
         },
 
         getClientById: (id) => get().clients.find((c) => c.id === id),
@@ -208,4 +217,14 @@ export const useClientStore = create<ClientState>((set, get) => ({
         mergeClients: () => {},
         processSyncQueue: async () => {},
     },
-}));
+}),
+{
+    name: 'client-storage',
+    storage: createJSONStorage(() => sqliteStorage),
+    partialize: (state) => ({ clients: state.clients } as any),
+}
+)
+);
+
+
+

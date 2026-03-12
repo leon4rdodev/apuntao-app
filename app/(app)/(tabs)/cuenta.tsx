@@ -20,6 +20,7 @@ import {
     useColorScheme,
     View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CuentaScreen() {
     const theme = Colors[useColorScheme() || 'light'];
@@ -48,7 +49,10 @@ export default function CuentaScreen() {
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <SafeAreaView 
+            style={[styles.container, { backgroundColor: theme.background }]}
+            edges={['top']}
+        >
             <ScrollView
                 contentContainerStyle={styles.scrollContainer}
                 showsVerticalScrollIndicator={false}
@@ -138,13 +142,17 @@ export default function CuentaScreen() {
                     Versión {Constants.expoConfig?.version || '1.0.0'}
                 </CustomText>
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    scrollContainer: { padding: 24, paddingTop: Constants.statusBarHeight + 24, paddingBottom: 50 },
+    scrollContainer: { 
+        padding: 24, 
+        paddingTop: 12, // El TabBar navigator ya maneja el padding si no hay header
+        paddingBottom: 40, 
+    },
     profileHeader: { alignItems: 'center', marginBottom: 24, minHeight: 70 },
 
     // --- 3. AÑADE LOS ESTILOS PARA EL ÍCONO ---

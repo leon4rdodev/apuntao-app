@@ -1,8 +1,8 @@
 // context/AuthContext.tsx
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
+import { getFirestore, collection, doc, getDoc } from '@react-native-firebase/firestore';
 import * as Font from 'expo-font';
 import { AntDesign, Entypo, FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useSessionStore } from '@/store/sessionStore';
@@ -41,33 +41,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, []);
 
     useEffect(() => {
-        const subscriber = auth().onAuthStateChanged(async (user) => {
+        const auth = getAuth();
+        const db = getFirestore();
+
+        const subscriber = onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // Obtener perfil desde Firestore
+                // Iniciar la sincronización en tiempo real a Clientes de inmediato.
+                // Firestore usará su propia persistencia local si no hay internet.
+                startFirestoreSync(user.uid);
+
+                // Intentar actualizar el perfil desde Firestore en segundo plano
                 try {
-                    const userDoc = await firestore().collection('users').doc(user.uid).get();
-                    const data = userDoc.data() as any;
+                    const userRef = doc(db, 'users', user.uid);
+                    const userSnap = await getDoc(userRef);
+                    const data = userSnap.data() as any;
                     
                     if (data) {
                         setAccount({
                             colmadoName: data.colmadoName || 'Mi Colmado',
-                            phoneNumber: user.phoneNumber || data.phoneNumber || '',
+                            email: user.email || data.email || '',
+                            phoneNumber: data.phoneNumber || '',
                             subscription: data.subscription || { status: 'active', plan: 'none' },
                         });
                         setSubscription(data.subscription || { status: 'active', plan: 'none' });
-                    } else {
-                        // Perfil nuevo o sin completar
-                        setAccount({
-                            colmadoName: 'Mi Colmado',
-                            phoneNumber: user.phoneNumber || '',
-                            subscription: { status: 'active', plan: 'none' },
-                        });
                     }
-                    
-                    // Iniciar la suscripción en tiempo real a Clientes
-                    startFirestoreSync(user.uid);
-                } catch (error) {
-                    console.error('Error cargando el perfil del usuario:', error);
+                } catch (error: any) {
+                    // Si falla (ej: estamos offline), no pasa nada, el 'sessionStore' 
+                    // ya tiene los últimos datos gracias al middleware 'persist'.
+                    console.log('Trabajando en modo offline o error al refrescar perfil:', error.message);
                 }
             } else {
                 setAccount(null);
@@ -77,6 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setIsAuthReady(true);
             setInitialized(true);
         });
+
         
         return () => {
             subscriber();

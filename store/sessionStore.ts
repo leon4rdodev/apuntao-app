@@ -4,15 +4,14 @@
  */
 
 import { create } from 'zustand';
-import auth from '@react-native-firebase/auth';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { createSQLiteStorage } from '@/utils/sqliteStorage';
+import { getAuth, signOut } from '@react-native-firebase/auth';
 import type { ColmadoAccountInfo, Subscription } from '@/types';
 
 interface SessionState {
-    /** El perfil del colmado (sin la lista de clientes). Null si no hay sesión. */
     account: Omit<ColmadoAccountInfo, 'clients'> | null;
-    /** El estado de la suscripción de la cuenta. */
     subscription: Subscription;
-    /** Indica si el store ha intentado cargar la sesión inicial desde Firebase. */
     isInitialized: boolean;
 
     setAccount: (account: Omit<ColmadoAccountInfo, 'clients'> | null) => void;
@@ -22,22 +21,40 @@ interface SessionState {
     logout: () => Promise<void>;
 }
 
-export const useSessionStore = create<SessionState>((set) => ({
-    account: null,
-    subscription: { status: 'loading', plan: 'none' },
-    isInitialized: false,
+const sqliteStorage = createSQLiteStorage('session_v1.db');
 
-    setAccount: (account) => set({ account }),
-    setSubscription: (subscription) => set({ subscription }),
-    setInitialized: (val) => set({ isInitialized: val }),
+export const useSessionStore = create<SessionState>()(
+    persist(
+        (set) => ({
+            account: null,
+            subscription: { status: 'loading', plan: 'none' },
+            isInitialized: false,
 
-    logout: async () => {
-        try {
-            await auth().signOut();
-            set({ account: null, subscription: { status: 'loading', plan: 'none' } });
-        } catch (error) {
-            console.error('Error al cerrar sesión:', error);
-            throw error;
+            setAccount: (account) => set({ account }),
+            setSubscription: (subscription) => set({ subscription }),
+            setInitialized: (val) => set({ isInitialized: val }),
+
+            logout: async () => {
+                try {
+                    const auth = getAuth();
+                    await signOut(auth);
+                    set({ account: null, subscription: { status: 'loading', plan: 'none' } });
+                } catch (error) {
+                    console.error('Error al cerrar sesión:', error);
+                    throw error;
+                }
+            },
+        }),
+        {
+            name: 'session-storage',
+            storage: createJSONStorage(() => sqliteStorage),
+            partialize: (state) => ({ 
+                account: state.account, 
+                subscription: state.subscription 
+            } as any),
         }
-    },
-}));
+    )
+);
+
+
+

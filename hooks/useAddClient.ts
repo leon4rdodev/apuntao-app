@@ -60,15 +60,10 @@ export function useAddClient() {
 
         // 3. Escribir a Firestore
         try {
-            const newClient = await addClient({ name: formattedName, phone: formattedPhone });
-
-            if (debtAmount > 0) {
-                await addTransaction(newClient.id, {
-                    amount: debtAmount,
-                    type: 'Deuda',
-                    date: Date.now(),
-                });
-            }
+            await addClient(
+                { name: formattedName, phone: formattedPhone },
+                debtAmount
+            );
 
             showNotification({
                 message: SUCCESS_MESSAGES.CLIENT_ADDED,

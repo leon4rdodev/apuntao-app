@@ -82,7 +82,9 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
                 { 
                     backgroundColor: theme.surface, 
                     borderTopColor: theme.border,
-                    paddingBottom: Platform.OS === 'ios' ? insets.bottom : 12,
+                    // Usamos el inset inferior pero aseguramos un mínimo de 18 para que no se vea pegado
+                    // en dispositivos sin barra de gestos (como algunos Android o iPhone con botón home)
+                    paddingBottom: Math.max(insets.bottom, 18),
                 },
             ]}
         >
@@ -96,14 +98,14 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        borderTopWidth: 1,
-        paddingTop: 12,
-        paddingHorizontal: 16,
-        elevation: 8,
+        borderTopWidth: StyleSheet.hairlineWidth,
+        paddingTop: 14,
+        paddingHorizontal: 8,
+        elevation: 20,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
     },
     tabButton: {
         flex: 1,
@@ -111,10 +113,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     iconContainer: {
-        paddingHorizontal: 20,
-        paddingVertical: 6,
-        borderRadius: 20,
+        paddingHorizontal: 16,
+        paddingVertical: 4,
+        borderRadius: 100, // Valor alto para asegurar forma de píldora
         marginBottom: 4,
+        overflow: 'hidden', // Crucial para asegurar que el fondo respete los bordes
     },
     label: {
         fontSize: 12,

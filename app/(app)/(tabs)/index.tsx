@@ -79,7 +79,8 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     listContent: {
-        padding: 18
+        padding: 18,
+        paddingBottom: 100, // Espacio para el TabBar absoluto
     },
     emptyContainer: {
         flex: 1,

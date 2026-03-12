@@ -126,7 +126,6 @@ const styles = StyleSheet.create({
     },
     arrow: {
         marginLeft: 16,
-        backgroundColor: '#f3f4f6', // Un pequeño círculo de fondo para la flecha
         padding: 10,
         borderRadius: 20,
     },

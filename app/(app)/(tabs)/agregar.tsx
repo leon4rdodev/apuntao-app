@@ -9,6 +9,8 @@ import React from 'react';
 import { useAddClient } from '@/hooks/useAddClient';
 import {
     Keyboard,
+    KeyboardAvoidingView,
+    Platform,
     ScrollView,
     StyleSheet,
     Text,
@@ -18,7 +20,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// --- Sub-componente de la Cabecera (sin cambios) ---
+// --- Sub-componente de la Cabecera ---
 const HeaderSection = () => {
     const theme = Colors[useColorScheme() || 'light'];
     return (
@@ -37,7 +39,6 @@ const HeaderSection = () => {
 export default function AgregarClienteScreen() {
     const theme = Colors[useColorScheme() || 'light'];
 
-    // Custom Hook encapsula estado y UI Logic
     const {
         name,
         setName,
@@ -53,103 +54,116 @@ export default function AgregarClienteScreen() {
     } = useAddClient();
 
     return (
-        <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-                <ScrollView
-                    contentContainerStyle={styles.scrollContainer}
-                    keyboardShouldPersistTaps="handled"
-                    showsVerticalScrollIndicator={false}
-                >
-                    <HeaderSection />
+        <SafeAreaView 
+            style={[styles.safeArea, { backgroundColor: theme.background }]}
+            edges={['top']} 
+        >
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                style={{ flex: 1 }}
+            >
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+                    <ScrollView
+                        contentContainerStyle={styles.scrollContainer}
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={false}
+                    >
+                        <HeaderSection />
 
-                    <View style={[styles.formContainer, { backgroundColor: theme.surface }]}>
-                        {/* Campo de Nombre */}
-                        <View style={styles.inputGroup}>
-                            <Text style={[styles.label, { color: theme.textSecondary }]}>
-                                Nombre del Cliente <Text style={{ color: theme.error }}>*</Text>
-                            </Text>
-                            <CustomInput
-                                icon="person-outline"
-                                placeholder="Ej: Juan Pérez"
-                                value={name}
-                                onChangeText={setName}
-                                onFocus={() => setFocusedField('name')}
-                                onBlur={() => setFocusedField(null)}
-                                containerStyle={
-                                    focusedField === 'name' ? { borderColor: theme.primary } : {}
-                                }
+                        <View style={[styles.formContainer, { backgroundColor: theme.surface }]}>
+                            {/* Campo de Nombre */}
+                            <View style={styles.inputGroup}>
+                                <Text style={[styles.label, { color: theme.textSecondary }]}>
+                                    Nombre del Cliente <Text style={{ color: theme.error }}>*</Text>
+                                </Text>
+                                <CustomInput
+                                    icon="person-outline"
+                                    placeholder="Ej: Juan Pérez"
+                                    value={name}
+                                    onChangeText={setName}
+                                    onFocus={() => setFocusedField('name')}
+                                    onBlur={() => setFocusedField(null)}
+                                    containerStyle={
+                                        focusedField === 'name' ? { borderColor: theme.primary } : {}
+                                    }
+                                />
+                            </View>
+
+                            {/* Campo de Deuda Inicial */}
+                            <View style={styles.inputGroup}>
+                                <Text style={[styles.label, { color: theme.textSecondary }]}>
+                                    Deuda Inicial
+                                </Text>
+                                <CustomInput
+                                    prefix="$"
+                                    placeholder="0"
+                                    value={initialDebt}
+                                    onChangeText={(text) =>
+                                        setInitialDebt(formatNumberWithCommas(text))
+                                    }
+                                    keyboardType="numeric"
+                                    onFocus={() => setFocusedField('debt')}
+                                    onBlur={() => setFocusedField(null)}
+                                    containerStyle={
+                                        focusedField === 'debt' ? { borderColor: theme.primary } : {}
+                                    }
+                                />
+                                <Text style={[styles.helperText, { color: theme.textSecondary }]}>
+                                    Opcional. Monto con el que empieza debiendo.
+                                </Text>
+                            </View>
+
+                            {/* Campo de Teléfono */}
+                            <View style={styles.inputGroup}>
+                                <Text style={[styles.label, { color: theme.textSecondary }]}>
+                                    Número de Teléfono
+                                </Text>
+                                <CustomInput
+                                    icon="call-outline"
+                                    placeholder="809-123-4567"
+                                    value={phone}
+                                    onChangeText={(text) => setPhone(formatPhoneNumber(text))}
+                                    keyboardType="phone-pad"
+                                    maxLength={12}
+                                    onFocus={() => setFocusedField('phone')}
+                                    onBlur={() => setFocusedField(null)}
+                                    containerStyle={
+                                        focusedField === 'phone' ? { borderColor: theme.primary } : {}
+                                    }
+                                />
+                                <Text style={[styles.helperText, { color: theme.textSecondary }]}>
+                                    Opcional.
+                                </Text>
+                            </View>
+
+                            <CustomButton
+                                title="Agregar Cliente"
+                                onPress={handleSave}
+                                disabled={!isFormValid}
+                                isLoading={isSaving}
+                                iconName="checkmark-circle-outline"
+                                buttonStyle={{ marginTop: 10 }}
                             />
                         </View>
-
-                        {/* Campo de Deuda Inicial */}
-                        <View style={styles.inputGroup}>
-                            <Text style={[styles.label, { color: theme.textSecondary }]}>
-                                Deuda Inicial
-                            </Text>
-                            <CustomInput
-                                prefix="$"
-                                placeholder="0"
-                                value={initialDebt}
-                                onChangeText={(text) =>
-                                    setInitialDebt(formatNumberWithCommas(text))
-                                }
-                                keyboardType="numeric"
-                                onFocus={() => setFocusedField('debt')}
-                                onBlur={() => setFocusedField(null)}
-                                containerStyle={
-                                    focusedField === 'debt' ? { borderColor: theme.primary } : {}
-                                }
-                            />
-                            <Text style={[styles.helperText, { color: theme.textSecondary }]}>
-                                Opcional. Monto con el que empieza debiendo.
-                            </Text>
-                        </View>
-
-                        {/* Campo de Teléfono */}
-                        <View style={styles.inputGroup}>
-                            <Text style={[styles.label, { color: theme.textSecondary }]}>
-                                Número de Teléfono
-                            </Text>
-                            <CustomInput
-                                icon="call-outline"
-                                placeholder="809-123-4567"
-                                value={phone}
-                                onChangeText={(text) => setPhone(formatPhoneNumber(text))}
-                                keyboardType="phone-pad"
-                                maxLength={12}
-                                onFocus={() => setFocusedField('phone')}
-                                onBlur={() => setFocusedField(null)}
-                                containerStyle={
-                                    focusedField === 'phone' ? { borderColor: theme.primary } : {}
-                                }
-                            />
-                            <Text style={[styles.helperText, { color: theme.textSecondary }]}>
-                                Opcional.
-                            </Text>
-                        </View>
-
-                        <CustomButton
-                            title="Agregar Cliente"
-                            onPress={handleSave}
-                            disabled={!isFormValid}
-                            isLoading={isSaving}
-                            iconName="checkmark-circle-outline"
-                            buttonStyle={{ marginTop: 10 }}
-                        />
-                    </View>
-                </ScrollView>
-            </TouchableWithoutFeedback>
+                        {/* Espacio extra al final para scroll fluido con teclado */}
+                        <View style={{ height: 120 }} />
+                    </ScrollView>
+                </TouchableWithoutFeedback>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
+
 
 // Estilos (sin cambios)
 const styles = StyleSheet.create({
     safeArea: { flex: 1 },
     scrollContainer: {
         flexGrow: 1,
+        flex: 1,
         padding: 24,
-        paddingTop: 100,
+        paddingTop: 20, // Reducido ya que el SafeArea ya maneja el top
+        paddingBottom: 40, // Espacio para que el contenido no quede pegado al TabBar al final
     },
     headerContainer: {
         alignItems: 'center',

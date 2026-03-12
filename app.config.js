@@ -36,6 +36,7 @@ export default {
         plugins: [
             'expo-router',
             'expo-font',
+            'expo-sqlite',
             ['@react-native-firebase/app', { ios: {} }],
             ['@react-native-firebase/auth', { ios: {} }],
             ['@react-native-firebase/crashlytics', { ios: {} }],

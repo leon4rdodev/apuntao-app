@@ -48,6 +48,7 @@ export interface Subscription {
 export interface ColmadoAccountInfo { 
     _id?: string;
     colmadoName: string;
+    email: string;
     phoneNumber: string;
     clients: Client[];
     subscription: Subscription;

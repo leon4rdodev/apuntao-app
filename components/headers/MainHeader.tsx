@@ -1,7 +1,7 @@
 import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
-import Constants from 'expo-constants';
 import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CustomInput from '../input/CustomInput';
 import SyncIndicator from '../ui/SyncIndicator';
 
@@ -26,6 +26,7 @@ export default function MainHeader({ setSearchQuery, setIsSearchOpen, isSearchOp
     };
 
     const theme = Colors[useColorScheme() || 'light'];
+    const insets = useSafeAreaInsets();
 
     return (
         <View
@@ -34,70 +35,107 @@ export default function MainHeader({ setSearchQuery, setIsSearchOpen, isSearchOp
                 {
                     backgroundColor: theme.surface,
                     borderBottomColor: theme.border,
-                    paddingTop: Constants.statusBarHeight,
+                    paddingTop: insets.top,
                 },
             ]}
         >
-            {isSearchOpen ? (
-                <View style={[styles.headerContent, { marginRight: 18 }]}>
-                    <CustomInput onChangeText={setSearchQuery} autoFocus placeholder='Buscar cliente...'/>
-                </View>
-            ) : (
-                <View style={styles.headerContent}>
-                    <Ionicons
-                        name="book-outline"
-                        size={24}
-                        color={theme.primary}
-                        style={styles.bookIcon}
-                    />
-                    <Text style={[styles.title, { color: theme.text }]}>Apunta&apos;o</Text>
-                    <SyncIndicator />
-                </View>
-            )}
+            <View style={styles.contentContainer}>
+                {isSearchOpen ? (
+                    <View style={styles.searchContainer}>
+                        <CustomInput 
+                            onChangeText={setSearchQuery} 
+                            autoFocus 
+                            placeholder='Buscar cliente...'
+                            containerStyle={styles.searchInput}
+                        />
+                    </View>
+                ) : (
+                    <>
+                        {/* Placeholder invisible a la izquierda para equilibrio si no fuera absoluto */}
+                        <View style={styles.leftSpace} />
+                        
+                        <View style={styles.absoluteCenter} pointerEvents="none">
+                            <View style={styles.headerContent}>
+                                <Ionicons
+                                    name="book-outline"
+                                    size={22}
+                                    color={theme.primary}
+                                    style={styles.bookIcon}
+                                />
+                                <Text style={[styles.title, { color: theme.text }]}>Apunta&apos;o</Text>
+                                <SyncIndicator />
+                            </View>
+                        </View>
+                    </>
+                )}
 
-            <TouchableOpacity
-                onPress={onSearchPress}
-                style={styles.searchButton}
-                accessibilityLabel="Buscar"
-                accessibilityRole="button"
-            >
-                <Ionicons
-                    name={isSearchOpen ? 'exit-outline' : 'search-outline'}
-                    size={28}
-                    color={theme.text}
-                />
-            </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={onSearchPress}
+                    style={styles.searchButton}
+                    accessibilityLabel="Buscar"
+                    accessibilityRole="button"
+                >
+                    <Ionicons
+                        name={isSearchOpen ? 'close-outline' : 'search-outline'}
+                        size={28}
+                        color={theme.text}
+                    />
+                </TouchableOpacity>
+            </View>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
     header: {
-        height: 100,
         width: '100%',
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        paddingHorizontal: 16,
+        paddingBottom: 12,
+    },
+    contentContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-evenly',
-        borderBottomWidth: 1,
-        paddingHorizontal: 18,
+        justifyContent: 'flex-end',
+        height: 60,
+        marginTop: 4,
+        position: 'relative',
+    },
+    leftSpace: {
+        width: 44,
+    },
+    absoluteCenter: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        top: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     searchButton: {
+        width: 44,
+        height: 44,
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 22,
+    },
+    searchContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        paddingRight: 8,
+    },
+    searchInput: {
+        height: 46,
     },
     headerContent: {
-        flex: 1,
         flexDirection: 'row',
-        justifyContent: 'center',
         alignItems: 'center',
     },
     bookIcon: {
-        marginRight: 8,
+        marginRight: 6,
     },
     title: {
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: '700',
-        textAlign: 'center',
     },
 });

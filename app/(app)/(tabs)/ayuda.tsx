@@ -89,7 +89,10 @@ export default function AyudaScreen() {
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+        <SafeAreaView 
+            style={[styles.container, { backgroundColor: theme.background }]}
+            edges={['top']}
+        >
             <ScrollView
                 contentContainerStyle={styles.scrollContainer}
                 showsVerticalScrollIndicator={false}
@@ -164,7 +167,8 @@ const styles = StyleSheet.create({
     },
     scrollContainer: {
         padding: 18,
-        paddingTop: Constants.statusBarHeight + 18,
+        paddingTop: 12,
+        paddingBottom: 40,
     },
     header: {
         alignItems: 'center',

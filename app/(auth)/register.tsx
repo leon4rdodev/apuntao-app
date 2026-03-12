@@ -1,18 +1,15 @@
 /**
  * @file app/(auth)/register.tsx
- * @description Pantalla de registro para nuevos dueños de colmados usando Firebase Phone Auth.
+ * @description Pantalla de registro para nuevos dueños de colmados usando Email/Password.
  */
 import CustomButton from '@/components/ui/CustomButton';
 import CustomInput from '@/components/input/CustomInput';
 import CustomText from '@/components/ui/CustomText';
 import { Colors } from '@/constants/Colors';
-import { useNotification } from '@/store/notificationStore';
-import { formatPhoneNumber } from '@/utils/formatters';
-import { useSessionStore } from '@/store/sessionStore';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { useRegister } from '@/hooks/useRegister';
+import { useEmailAuth } from '@/hooks/useEmailAuth';
 
 import {
     Keyboard,
@@ -33,16 +30,13 @@ export default function RegisterScreen() {
     const {
         colmadoName,
         setColmadoName,
-        phoneNumber,
-        setPhoneNumber,
-        code,
-        setCode,
+        email,
+        setEmail,
+        password,
+        setPassword,
         isLoading,
-        confirm,
         handleRegister,
-        handleConfirmCode,
-        resetConfirmation,
-    } = useRegister();
+    } = useEmailAuth();
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -62,82 +56,59 @@ export default function RegisterScreen() {
                                 Crea tu Cuenta
                             </CustomText>
                             <CustomText color={theme.textSecondary} style={styles.subtitle}>
-                                {!confirm 
-                                    ? 'Crea el perfil de tu colmado.' 
-                                    : 'Por seguridad, ingresa el código SMS que te enviamos.'}
+                                Configura el perfil de tu colmado.
                             </CustomText>
                         </View>
 
                         <View style={styles.form}>
-                            {!confirm ? (
-                                <>
-                                    <CustomInput
-                                        icon="storefront-outline"
-                                        placeholder="Nombre de tu Negocio"
-                                        value={colmadoName}
-                                        onChangeText={setColmadoName}
-                                        editable={!isLoading}
-                                    />
-                                    <CustomInput
-                                        icon="call-outline"
-                                        placeholder="Teléfono (Ej. 809-123-4567)"
-                                        value={phoneNumber}
-                                        onChangeText={(text) => setPhoneNumber(formatPhoneNumber(text))}
-                                        keyboardType="phone-pad"
-                                        maxLength={14}
-                                        editable={!isLoading}
-                                    />
-                                </>
-                            ) : (
-                                <CustomInput
-                                    icon="chatbubble-ellipses-outline"
-                                    placeholder="Código SMS de 6 dígitos"
-                                    value={code}
-                                    onChangeText={setCode}
-                                    keyboardType="number-pad"
-                                    maxLength={6}
-                                    editable={!isLoading}
-                                    returnKeyType="done"
-                                    onSubmitEditing={handleConfirmCode}
-                                />
-                            )}
+                            <CustomInput
+                                icon="storefront-outline"
+                                placeholder="Nombre de tu Negocio"
+                                value={colmadoName}
+                                onChangeText={setColmadoName}
+                                editable={!isLoading}
+                                returnKeyType="next"
+                            />
+                            
+                            <CustomInput
+                                icon="mail-outline"
+                                placeholder="Correo Electrónico"
+                                value={email}
+                                onChangeText={setEmail}
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                                editable={!isLoading}
+                                returnKeyType="next"
+                            />
+                            
+                            <CustomInput
+                                icon="lock-closed-outline"
+                                placeholder="Crea una Contraseña (min. 6 char)"
+                                value={password}
+                                onChangeText={setPassword}
+                                secureTextEntry
+                                editable={!isLoading}
+                                returnKeyType="done"
+                                onSubmitEditing={handleRegister}
+                            />
                         </View>
 
                         <View style={styles.footer}>
-                            {!confirm ? (
-                                <CustomButton
-                                    title={isLoading ? 'Enviando SMS...' : 'Enviar Código'}
-                                    onPress={handleRegister}
-                                    isLoading={isLoading}
-                                    iconName="send-outline"
-                                />
-                            ) : (
-                                <>
-                                    <CustomButton
-                                        title={isLoading ? 'Verificando...' : 'Verificar y Crear Cuenta'}
-                                        onPress={handleConfirmCode}
-                                        isLoading={isLoading}
-                                        iconName="checkmark-circle-outline"
-                                    />
-                                    <CustomButton
-                                        title="Volver atrás"
-                                        onPress={resetConfirmation}
-                                        disabled={isLoading}
-                                        buttonStyle={{ backgroundColor: 'transparent', marginTop: 16 }}
-                                        textStyle={{ color: theme.primary }}
-                                    />
-                                </>
-                            )}
-                            
-                            {!confirm && (
-                                <CustomButton
-                                    title="Ya tengo una cuenta"
-                                    onPress={() => router.replace('/(auth)/login')}
-                                    disabled={isLoading}
-                                    buttonStyle={{ backgroundColor: 'transparent', marginTop: 16 }}
-                                    textStyle={{ color: theme.primary }}
-                                />
-                            )}
+                            <CustomButton
+                                title={isLoading ? 'Creando Cuenta...' : 'Registrarse'}
+                                onPress={handleRegister}
+                                isLoading={isLoading}
+                                disabled={isLoading}
+                                iconName="person-add-outline"
+                            />
+
+                            <CustomButton
+                                title="Ya tengo una cuenta"
+                                onPress={() => router.replace('/(auth)/login')}
+                                disabled={isLoading}
+                                buttonStyle={{ backgroundColor: 'transparent', marginTop: 16 }}
+                                textStyle={{ color: theme.primary }}
+                            />
                         </View>
                     </ScrollView>
                 </TouchableWithoutFeedback>
@@ -149,10 +120,10 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
     safeArea: { flex: 1 },
     container: { flex: 1 },
-    scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 24 },
-    header: { alignItems: 'center', marginBottom: 40 },
+    scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 24, paddingVertical: 40 },
+    header: { alignItems: 'center', marginBottom: 30 },
     title: { marginTop: 16, marginBottom: 8 },
     subtitle: { textAlign: 'center' },
-    form: { gap: 16, marginBottom: 30 },
-    footer: { marginTop: 20 },
+    form: { gap: 16, marginBottom: 20 },
+    footer: { gap: 16 },
 });
