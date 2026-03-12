@@ -1,7 +1,7 @@
 /**
  * @file app/(auth)/_layout.tsx
  * @description Layout para las pantallas de autenticación.
- * La lógica de redirección es manejada por el layout raíz.
+ * Gestiona las redirecciones de onboarding y sesión activa.
  */
 import { Redirect, Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -25,13 +25,16 @@ export default function AuthLayout() {
         return null; 
     }
 
-    // Redirigir basado en el onboarding y la sesión
-    if (!hasOnboarded) {
-        // Permitimos montar las rutas de auth (que incluye onboarding)
-        // pero idealmente deberías manejar si está en login redirigir a onboarding manualmente si quieres.
-    } else if (session) {
+    // 1. Si el usuario ya inició sesión, mandarlo a la app principal
+    if (session) {
         return <Redirect href="/(app)/(tabs)" />;
     }
 
+    // 2. Si nunca hizo el onboarding, mostrarlo primero
+    if (!hasOnboarded) {
+        return <Redirect href="/(auth)/onboarding" />;
+    }
+
+    // 3. Si ya hizo el onboarding pero no tiene sesión, ir al login
     return <Stack screenOptions={{ headerShown: false, animation: 'fade_from_bottom' }} />;
 }

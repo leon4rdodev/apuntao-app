@@ -68,7 +68,10 @@ export function GlobalNotification() {
     if (!message) return null;
 
     return (
-        <Animated.View style={[styles.notification, { backgroundColor }, animatedStyle]}>
+        <Animated.View
+            pointerEvents={isVisible ? 'auto' : 'none'}
+            style={[styles.notification, { backgroundColor }, animatedStyle]}
+        >
             <Ionicons name={icon} size={24} color={iconColor} style={styles.icon} />
             <Text
                 style={[styles.message, { color: theme.text }]}

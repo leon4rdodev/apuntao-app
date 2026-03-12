@@ -125,9 +125,10 @@ export const useClientStore = create<ClientState>()((set, get) => ({
                 });
             }
 
-            const newClientData = {
+            // Firestore data: usa null para campos vacíos (Firestore rechaza undefined).
+            const firestoreData = {
                 name: clientData.name,
-                phone: clientData.phone || undefined,
+                phone: clientData.phone || null,
                 debt: initialDebt,
                 transactions,
                 lastModified: Date.now(),
@@ -136,14 +137,14 @@ export const useClientStore = create<ClientState>()((set, get) => ({
 
             const localClient: Client = {
                 id: docRef.id,
-                ...newClientData
+                ...firestoreData,
             };
 
             // 1. Actualización Optimista (Instantánea en la UI)
             set({ clients: [localClient, ...get().clients].sort((a,b) => b.lastModified - a.lastModified) });
 
             // 2. Sincronización en segundo plano (Fire-and-forget)
-            setDoc(docRef, newClientData).catch((e) => {
+            setDoc(docRef, firestoreData).catch((e) => {
                 if (
                     !e?.message?.toLowerCase().includes('offline') &&
                     !e?.message?.toLowerCase().includes('network')

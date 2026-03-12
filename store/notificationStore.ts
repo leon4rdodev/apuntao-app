@@ -50,7 +50,13 @@ export const useNotificationStore = create<NotificationState & NotificationActio
         if (timerId) {
             clearTimeout(timerId);
         }
+        // Primero ocultamos visualmente (dispara la animación de salida)
         set({ isVisible: false, timerId: undefined });
+        // Luego limpiamos el mensaje después de la animación de salida (~200ms)
+        // para que el componente se desmonte y no bloquee eventos de toque
+        setTimeout(() => {
+            set({ message: '' });
+        }, 250);
     },
 }));
 

@@ -26,7 +26,7 @@ export interface Client {
     /** Deuda total actual del cliente. Se calcula automáticamente. */
     debt: number;
     /** Número de teléfono del cliente (opcional). */
-    phone?: string;
+    phone?: string | null;
     /** Historial de transacciones del cliente. */
     transactions: Transaction[];
     /** Fecha de la última modificación en formato de timestamp (milisegundos). */
