@@ -103,20 +103,27 @@ export default function CustomButton({
 const styles = StyleSheet.create({
     button: {
         height: 56,
-        borderRadius: 14,
+        borderRadius: 16, // Más redondeado
         alignItems: 'center',
         justifyContent: 'center',
         width: '100%',
+        // Sombras premium
+        elevation: 6,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
     },
     content: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 10,
+        gap: 12,
     },
     text: {
-        fontSize: 17,
-        fontWeight: '600',
+        fontSize: 18,
+        fontWeight: '700',
+        letterSpacing: 0.3,
     },
     disabled: {
         opacity: 0.8,

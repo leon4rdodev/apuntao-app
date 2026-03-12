@@ -81,24 +81,26 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
-        borderRadius: 12,
+        borderRadius: 16, // Bordes más elegantes
         borderWidth: 1.5,
-        height: 52,
-        paddingHorizontal: 12,
+        height: 56, // Más alto para mobile-flow superior
+        paddingHorizontal: 16,
         width: '100%',
     },
     icon: {
-        marginRight: 8,
+        marginRight: 10,
     },
     prefix: {
         fontSize: 16,
-        fontWeight: '600',
-        marginRight: 4,
+        fontWeight: '700',
+        marginRight: 6,
     },
     input: {
         flex: 1,
         height: '100%',
-        fontSize: 16,
-        paddingVertical: 0, // Importante para centrado vertical en Android
+        fontSize: 17,
+        fontWeight: '500',
+        paddingVertical: 0,
+        letterSpacing: 0.2, // Mejor legibilidad
     },
 });

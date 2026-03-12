@@ -11,9 +11,8 @@ import { formatPhoneNumber } from '@/utils/formatters';
 import { useSessionStore } from '@/store/sessionStore';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import React from 'react';
+import { useRegister } from '@/hooks/useRegister';
 
 import {
     Keyboard,
@@ -30,98 +29,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function RegisterScreen() {
     const theme = Colors[useColorScheme() || 'light'];
     const router = useRouter();
-    const showNotification = useNotification();
-    const setAccount = useSessionStore((state) => state.setAccount);
 
-    const [colmadoName, setColmadoName] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
-    const [code, setCode] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    
-    // Estado para guardar la confirmación de Firebase
-    const [confirm, setConfirm] = useState<FirebaseAuthTypes.ConfirmationResult | null>(null);
-
-    // 1. Iniciar registro enviando la solicitud SMS
-    const handleRegister = async () => {
-        Keyboard.dismiss();
-        if (!colmadoName.trim() || !phoneNumber || phoneNumber.length < 10) {
-            showNotification({
-                message: 'Completa correctamente el nombre de tu colmado y el teléfono.',
-                type: 'error',
-            });
-            return;
-        }
-
-        setIsLoading(true);
-        try {
-            let formattedPhone = phoneNumber.replace(/-/g, '').replace(/ /g, '');
-            if (!formattedPhone.startsWith('+')) {
-                formattedPhone = '+1' + formattedPhone; 
-            }
-
-            const confirmation = await auth().signInWithPhoneNumber(formattedPhone);
-            setConfirm(confirmation);
-            
-            showNotification({
-                message: 'Código SMS enviado a tu teléfono.',
-                type: 'success',
-            });
-        } catch (error: any) {
-            console.error('Error enviando SMS de registro:', error);
-            showNotification({
-                message: 'Error al enviar el SMS. Revisa tu red o el formato del teléfono.',
-                type: 'error',
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // 2. Confirmar el SMS recibido y guardar el perfil del usuario
-    const handleConfirmCode = async () => {
-        Keyboard.dismiss();
-        if (!code || code.length !== 6) {
-            showNotification({
-                message: 'Por favor, ingresa el código de 6 dígitos que recibiste.',
-                type: 'error',
-            });
-            return;
-        }
-
-        setIsLoading(true);
-        try {
-            if (confirm) {
-                const credential = await confirm.confirm(code);
-                const user = credential?.user;
-                
-                if (user) {
-                    // Escribir el perfil en Firestore inmediatamente
-                    const defaultSub = { status: 'active', plan: 'free' };
-                    await firestore().collection('users').doc(user.uid).set({
-                        colmadoName: colmadoName.trim(),
-                        phoneNumber: user.phoneNumber,
-                        subscription: defaultSub,
-                        createdAt: firestore.FieldValue.serverTimestamp(),
-                    }, { merge: true });
-
-                    // Forzamos actualización en el store por si el AuthContext fue más rápido
-                    setAccount({
-                        colmadoName: colmadoName.trim(),
-                        phoneNumber: user.phoneNumber || '',
-                        subscription: defaultSub as any, // Bypass TS temporal
-                    });
-                }
-            }
-        } catch (error: any) {
-            console.error('Error confirmando código en registro:', error);
-            showNotification({
-                message: 'Código incorrecto o expirado.',
-                type: 'error',
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const {
+        colmadoName,
+        setColmadoName,
+        phoneNumber,
+        setPhoneNumber,
+        code,
+        setCode,
+        isLoading,
+        confirm,
+        handleRegister,
+        handleConfirmCode,
+        resetConfirmation,
+    } = useRegister();
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -200,10 +121,7 @@ export default function RegisterScreen() {
                                     />
                                     <CustomButton
                                         title="Volver atrás"
-                                        onPress={() => {
-                                            setConfirm(null);
-                                            setCode('');
-                                        }}
+                                        onPress={resetConfirmation}
                                         disabled={isLoading}
                                         buttonStyle={{ backgroundColor: 'transparent', marginTop: 16 }}
                                         textStyle={{ color: theme.primary }}

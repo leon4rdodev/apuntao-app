@@ -1,9 +1,9 @@
-// components/MyCustomTabBar.tsx
+// components/tabbar/MyCustomTabBar.tsx
 import { Colors } from '@/constants/Colors';
 import { AntDesign } from '@expo/vector-icons';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { StyleSheet, Text, TouchableOpacity, useColorScheme } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Platform, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type RouteConfig = {
     [key: string]: {
@@ -22,6 +22,7 @@ const ROUTE_CONFIG: RouteConfig = {
 export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme || 'light'];
+    const insets = useSafeAreaInsets();
 
     const handlePress = (route: any, isFocused: boolean) => {
         const event = navigation.emit({
@@ -45,26 +46,26 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
         return (
             <TouchableOpacity
                 key={route.key}
+                activeOpacity={0.7}
                 onPress={() => handlePress(route, isFocused)}
-                style={styles.tabButton} // El estilo del botón ya está aplicado aquí
+                style={styles.tabButton}
             >
-                <AntDesign
-                    name={routeConfig.icon}
-                    size={24}
-                    color={isFocused ? theme.primary : '#aaa'}
-                    style={[
-                        styles.icon,
-                        {
-                            backgroundColor: isFocused ? theme.primaryLight : theme.surface,
-                        },
-                    ]}
-                />
+                <View style={[
+                    styles.iconContainer, 
+                    isFocused && { backgroundColor: theme.primaryLight }
+                ]}>
+                    <AntDesign
+                        name={routeConfig.icon}
+                        size={24}
+                        color={isFocused ? theme.primary : theme.textSecondary}
+                    />
+                </View>
                 <Text
                     style={[
                         styles.label,
                         {
-                            color: isFocused ? theme.primary : '#888',
-                            fontWeight: isFocused ? '800' : '500',
+                            color: isFocused ? theme.primary : theme.textSecondary,
+                            fontWeight: isFocused ? '700' : '500',
                         },
                     ]}
                 >
@@ -75,39 +76,48 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     };
 
     return (
-        <SafeAreaView
+        <View
             style={[
                 styles.container,
-                { backgroundColor: theme.surface, borderColor: theme.border },
+                { 
+                    backgroundColor: theme.surface, 
+                    borderTopColor: theme.border,
+                    paddingBottom: Platform.OS === 'ios' ? insets.bottom : 12,
+                },
             ]}
         >
             {state.routes.map((route, index) => renderTab(route, index))}
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
-        // justifyContent: 'space-evenly', // <-- CAMBIO 1: Eliminamos esta línea
+        justifyContent: 'space-between',
+        alignItems: 'center',
         borderTopWidth: 1,
-        paddingBottom: 10,
-        paddingHorizontal: 10,
-        paddingTop: -10,
+        paddingTop: 12,
+        paddingHorizontal: 16,
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
     },
     tabButton: {
-        flex: 1, // <-- CAMBIO 2: Añadimos flex: 1
+        flex: 1,
         alignItems: 'center',
-        justifyContent: 'center', // <-- CAMBIO 3: Añadimos esto para centrar verticalmente
+        justifyContent: 'center',
     },
-    icon: {
-        paddingHorizontal: 24,
+    iconContainer: {
+        paddingHorizontal: 20,
         paddingVertical: 6,
-        borderRadius: 50,
-        // Opcional: un pequeño margen inferior para separar del texto
-        marginBottom: 2,
+        borderRadius: 20,
+        marginBottom: 4,
     },
     label: {
         fontSize: 12,
+        textAlign: 'center',
     },
 });

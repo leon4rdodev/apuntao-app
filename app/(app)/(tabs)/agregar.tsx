@@ -2,21 +2,11 @@
 
 import CustomInput from '@/components/input/CustomInput';
 import CustomButton from '@/components/ui/CustomButton';
-import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/constants';
 import { Colors } from '@/constants/Colors';
-import { useNotification } from '@/store/notificationStore';
-import { useClientStore } from '@/store/clientStore';
-import { useSubscriptionCheck } from '@/hooks/useSubscriptionCheck'; // <-- NUEVO
-
-import {
-    formatName,
-    formatNumberWithCommas,
-    formatPhoneNumber,
-    parseFormattedNumber,
-} from '@/utils/formatters';
-import { validateClientData } from '@/utils/validation';
+import { formatNumberWithCommas, formatPhoneNumber } from '@/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React from 'react';
+import { useAddClient } from '@/hooks/useAddClient';
 import {
     Keyboard,
     ScrollView,
@@ -47,95 +37,20 @@ const HeaderSection = () => {
 export default function AgregarClienteScreen() {
     const theme = Colors[useColorScheme() || 'light'];
 
-    // Obtenemos los datos y las acciones por separado para optimizar re-renders.
-    const clients = useClientStore((state) => state.clients);
-    const { addClient, addTransaction } = useClientStore((state) => state.actions);
-
-    const { checkAndAlert } = useSubscriptionCheck(); // <-- USO DEL HOOK
-
-    const showNotification = useNotification();
-
-    // Estados del formulario (sin cambios)
-    const [name, setName] = useState('');
-    const [phone, setPhone] = useState('');
-    const [initialDebt, setInitialDebt] = useState('');
-    const [focusedField, setFocusedField] = useState<string | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
-
-    // Deshabilita el botón si el nombre es muy corto
-    const isFormValid = name.trim().length >= 3;
-
-    /**
-     * Maneja la lógica de validación y guardado del cliente.
-     */
-    const handleSave = async () => {
-        Keyboard.dismiss();
-        if (!isFormValid) return;
-
-        // =======================================================
-        // <-- LÓGICA DE RESTRICCIÓN DE SUSCRIPCIÓN IMPLEMENTADA -->
-        if (!checkAndAlert()) {
-            return;
-        }
-        // =======================================================
-
-        setIsSaving(true);
-
-        const formattedName = formatName(name);
-        const debtAmount = initialDebt ? parseFormattedNumber(initialDebt) : 0;
-        const formattedPhone = phone.replaceAll('-', '');
-
-        // 1. Validar que el cliente no exista ya (lógica sin cambios)
-        if (clients.some((client) => client.name.toLowerCase() === formattedName.toLowerCase())) {
-            showNotification({
-                message: ERROR_MESSAGES.DUPLICATE_CLIENT,
-                type: 'error',
-            });
-            setIsSaving(false);
-            return;
-        }
-
-        // 2. Validar todos los datos del formulario (lógica sin cambios)
-        const validation = validateClientData(formattedName, debtAmount, formattedPhone);
-        if (!validation.isValid) {
-            showNotification({
-                message: validation.error || 'Por favor, revisa los datos ingresados.',
-                type: 'error',
-            });
-            setIsSaving(false);
-            return;
-        }
-
-        // 3. Intentar guardar el cliente (lógica sin cambios)
-        try {
-            const newClient = await addClient({ name: formattedName, phone: formattedPhone });
-
-            if (debtAmount > 0) {
-                await addTransaction(newClient.id, {
-                    amount: debtAmount,
-                    type: 'Deuda',
-                    date: Date.now(),
-                });
-            }
-
-            showNotification({
-                message: SUCCESS_MESSAGES.CLIENT_ADDED,
-                type: 'success',
-            });
-
-            // Limpiar el formulario
-            setName('');
-            setPhone('');
-            setInitialDebt('');
-        } catch (e: any) {
-            showNotification({
-                message: e.message || 'Ocurrió un error inesperado al guardar.',
-                type: 'error',
-            });
-        } finally {
-            setIsSaving(false);
-        }
-    };
+    // Custom Hook encapsula estado y UI Logic
+    const {
+        name,
+        setName,
+        phone,
+        setPhone,
+        initialDebt,
+        setInitialDebt,
+        focusedField,
+        setFocusedField,
+        isSaving,
+        isFormValid,
+        handleSave,
+    } = useAddClient();
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>

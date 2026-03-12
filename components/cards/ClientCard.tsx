@@ -78,16 +78,21 @@ const ClientCard: React.FC<ClientCardProps> = ({ item, onPress, isPending }) => 
 
 const styles = StyleSheet.create({
     card: {
-        marginVertical: 8,
-        borderRadius: 16,
+        marginVertical: 10,
+        borderRadius: 20,
         borderWidth: 1,
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
     },
     content: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 20,
-        paddingVertical: 20,
+        paddingVertical: 24,
     },
     info: {
         flex: 1,
@@ -95,31 +100,35 @@ const styles = StyleSheet.create({
     nameRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 6,
+        marginBottom: 8,
     },
     name: {
-        fontSize: 17,
-        fontWeight: '600',
+        fontSize: 18,
+        fontWeight: '700',
         flex: 1,
+        letterSpacing: -0.3,
     },
     badge: {
-        paddingHorizontal: 8,
-        paddingVertical: 4,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
         borderRadius: 12,
         marginLeft: 12,
     },
     badgeText: {
-        fontSize: 12,
-        fontWeight: '600',
+        fontSize: 11,
+        fontWeight: '800',
         textTransform: 'uppercase',
-        letterSpacing: 0.5,
+        letterSpacing: 0.8,
     },
     debt: {
-        fontSize: 16,
+        fontSize: 17,
         fontWeight: '500',
     },
     arrow: {
-        marginLeft: 12,
+        marginLeft: 16,
+        backgroundColor: '#f3f4f6', // Un pequeño círculo de fondo para la flecha
+        padding: 10,
+        borderRadius: 20,
     },
 });
 

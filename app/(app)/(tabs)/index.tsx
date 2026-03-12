@@ -3,70 +3,23 @@ import MainHeader from '@/components/headers/MainHeader';
 import ClientsSummary from '@/components/ui/ClientsSummary';
 import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
-import { useClientStore } from '@/store/clientStore';
-
-// Importa useFocusEffect de expo-router
-import { useRouter, useFocusEffect } from 'expo-router';
-// Importa useCallback de react
-import React, { useMemo, useState, useCallback } from 'react';
-import { BackHandler, FlatList, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { useClientsList } from '@/hooks/useClientsList';
+import React from 'react';
+import { FlatList, StyleSheet, Text, useColorScheme, View } from 'react-native';
 
 export default function Index() {
     const theme = Colors[useColorScheme() || 'light'];
-    const router = useRouter();
-    const clients = useClientStore((state) => state.clients); 
-    const [searchQuery, setSearchQuery] = useState('');
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
-
-    const summaryData = useMemo(() => {
-        // 🔥 SOFT DELETE FILTER: Ignoramos los borrados para el resumen
-        const validClients = clients.filter((c) => !c.deleted);
-        const clientsWithDebt = validClients.filter((c) => c.debt > 0);
-        const totalDebt = clientsWithDebt.reduce((sum, client) => sum + client.debt, 0);
-        return {
-            totalDebt,
-            clientsWithDebt: clientsWithDebt.length,
-        };
-    }, [clients]);
-
-    const displayedClients = useMemo(() => {
-        // 🔥 SOFT DELETE FILTER: Filtramos borrados de la vista principal
-        const validClients = clients.filter((c) => !c.deleted);
-
-        const lowerCaseQuery = searchQuery.toLowerCase().trim();
-        if (lowerCaseQuery) {
-            return validClients.filter(
-                (client) =>
-                    client.name.toLowerCase().includes(lowerCaseQuery) ||
-                    client.phone?.replace(/-/g, '').includes(lowerCaseQuery.replace(/-/g, ''))
-            );
-        }
-        return [...validClients]
-            .filter((c) => c.debt > 0)
-            .sort((a, b) => b.debt - a.debt)
-            .slice(0, 10);
-    }, [clients, searchQuery]);
-
-    const handleClientPress = (clientId: string) => {
-        router.push(`/(app)/clients/${clientId}`);
-    };
-
-    useFocusEffect(
-        useCallback(() => {
-            const onBackPress = () => {
-                if (isSearchOpen) {
-                    setIsSearchOpen(false);
-                    setSearchQuery('');
-                    return true;
-                }
-                return false;
-            };
-
-            const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-            return () => subscription.remove();
-        }, [isSearchOpen])
-    );
+    
+    // Custom Hook encapsula la Lógica (Búsqueda, Memoria, Botón Atrás)
+    const {
+        searchQuery,
+        setSearchQuery,
+        isSearchOpen,
+        setIsSearchOpen,
+        summaryData,
+        displayedClients,
+        handleClientPress,
+    } = useClientsList();
 
     const renderEmptyListComponent = () => (
         <View style={styles.emptyContainer}>

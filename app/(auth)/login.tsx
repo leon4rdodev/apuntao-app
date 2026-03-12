@@ -11,7 +11,7 @@ import { formatPhoneNumber } from '@/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import { useLogin } from '@/hooks/useLogin';
 
 import {
     Keyboard,
@@ -28,80 +28,22 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function LoginScreen() {
     const theme = Colors[useColorScheme() || 'light'];
     const router = useRouter();
-    const showNotification = useNotification();
+    
+    // Custom Hook encapsula toda la Lógica y el Estado
+    const {
+        code,
+        setCode,
+        isLoading,
+        confirm,
+        handleSendCode,
+        handleConfirmCode,
+        resetConfirmation,
+    } = useLogin();
 
     const [phoneNumber, setPhoneNumber] = useState('');
-    const [code, setCode] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    
-    // Estado para guardar la confirmación de Firebase
-    const [confirm, setConfirm] = useState<FirebaseAuthTypes.ConfirmationResult | null>(null);
 
-    // 1. Iniciar sesión con número de teléfono
-    const handleSendCode = async () => {
-        Keyboard.dismiss();
-        if (!phoneNumber || phoneNumber.length < 10) {
-            showNotification({
-                message: 'Por favor, ingresa un número de teléfono válido.',
-                type: 'error',
-            });
-            return;
-        }
-
-        setIsLoading(true);
-        try {
-            // Asegurar formato internacional (ej. +18091234567 para RD)
-            let formattedPhone = phoneNumber.replace(/-/g, '').replace(/ /g, '');
-            if (!formattedPhone.startsWith('+')) {
-                // Asumimos código de país +1 si no se provee (República Dominicana/USA)
-                // Ajustar según el target principal de la app
-                formattedPhone = '+1' + formattedPhone; 
-            }
-
-            const confirmation = await auth().signInWithPhoneNumber(formattedPhone);
-            setConfirm(confirmation);
-            
-            showNotification({
-                message: 'Código SMS enviado.',
-                type: 'success',
-            });
-        } catch (error: any) {
-            console.error('Error enviando SMS:', error);
-            showNotification({
-                message: 'Error al enviar el código. Verifica el número.',
-                type: 'error',
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // 2. Confirmar el código recibido por SMS
-    const handleConfirmCode = async () => {
-        Keyboard.dismiss();
-        if (!code || code.length !== 6) {
-            showNotification({
-                message: 'Por favor, ingresa el código de 6 dígitos.',
-                type: 'error',
-            });
-            return;
-        }
-
-        setIsLoading(true);
-        try {
-            if (confirm) {
-                await confirm.confirm(code);
-                // El AuthContext detectará el cambio y redirigirá lógicamente.
-            }
-        } catch (error: any) {
-            console.error('Error confirmando código:', error);
-            showNotification({
-                message: 'Código incorrecto o expirado.',
-                type: 'error',
-            });
-        } finally {
-            setIsLoading(false);
-        }
+    const onSubmitPhone = () => {
+        handleSendCode(phoneNumber);
     };
 
     return (
@@ -138,7 +80,7 @@ export default function LoginScreen() {
                                     maxLength={14}
                                     editable={!isLoading}
                                     returnKeyType="done"
-                                    onSubmitEditing={handleSendCode}
+                                    onSubmitEditing={onSubmitPhone}
                                 />
                             ) : (
                                 <CustomInput
@@ -159,7 +101,7 @@ export default function LoginScreen() {
                             {!confirm ? (
                                 <CustomButton
                                     title={isLoading ? 'Enviando...' : 'Enviar SMS'}
-                                    onPress={handleSendCode}
+                                    onPress={onSubmitPhone}
                                     isLoading={isLoading}
                                     disabled={isLoading}
                                     iconName="send-outline"
@@ -175,10 +117,7 @@ export default function LoginScreen() {
                                     />
                                     <CustomButton
                                         title="Volver a intentar"
-                                        onPress={() => {
-                                            setConfirm(null);
-                                            setCode('');
-                                        }}
+                                        onPress={resetConfirmation}
                                         disabled={isLoading}
                                         buttonStyle={{ backgroundColor: 'transparent', marginTop: 16 }}
                                         textStyle={{ color: theme.primary }}

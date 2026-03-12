@@ -36,17 +36,9 @@ export default {
         plugins: [
             'expo-router',
             'expo-font',
-            '@react-native-firebase/app',
-            '@react-native-firebase/auth',
-            '@react-native-firebase/crashlytics',
-            [
-                'expo-build-properties',
-                {
-                    ios: {
-                        useFrameworks: 'static',
-                    },
-                },
-            ],
+            ['@react-native-firebase/app', { ios: {} }],
+            ['@react-native-firebase/auth', { ios: {} }],
+            ['@react-native-firebase/crashlytics', { ios: {} }],
         ],
         experiments: {
             typedRoutes: true,
