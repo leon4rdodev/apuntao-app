@@ -4,7 +4,8 @@ import { Transaction } from '@/types';
 import { formatDate, formatMoney } from '@/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
-import { StyleSheet, TouchableOpacity, View, useColorScheme } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, useColorScheme, FlatList } from 'react-native';
+import Animated, { LinearTransition, FadeInDown, FadeOutDown } from 'react-native-reanimated';
 
 /**
  * @component TransactionHistory
@@ -18,9 +19,55 @@ const TransactionHistory = ({
     onDelete: (tx: Transaction) => void;
 }) => {
     const theme = Colors[useColorScheme() || 'light'];
+    
+    const handleDelete = (tx: Transaction) => {
+        onDelete(tx);
+    };
+
     const sortedTransactions = useMemo(
         () => [...transactions].sort((a, b) => b.date - a.date),
         [transactions]
+    );
+
+    const renderEmptyState = () => (
+        <View style={styles.emptyState}>
+            <Ionicons name="receipt-outline" size={48} color={theme.textSecondary} />
+            <CustomText color={theme.textSecondary} style={styles.emptyStateText}>
+                No hay movimientos registrados.
+            </CustomText>
+        </View>
+    );
+
+    const renderItem = ({ item: tx }: { item: Transaction }) => (
+        <Animated.View
+            entering={FadeInDown}
+            exiting={FadeOutDown}
+            layout={LinearTransition}
+            style={[styles.transactionRow, { borderTopColor: theme.border }]}
+        >
+            <View style={{ flex: 1 }}>
+                <CustomText size="medium" weight="medium" style={{ color: tx.type === 'Pago' ? theme.success : theme.error }}>
+                    {tx.type}
+                </CustomText>
+                <CustomText
+                    size="small"
+                    color={theme.textSecondary}
+                    style={{ marginTop: 2 }}
+                >
+                    {formatDate(tx.date)}
+                </CustomText>
+            </View>
+            <CustomText
+                size="medium"
+                weight="bold"
+                color={tx.type === 'Pago' ? theme.success : theme.error}
+            >
+                {tx.type === 'Pago' ? '-' : '+'}${formatMoney(tx.amount)}
+            </CustomText>
+            <TouchableOpacity onPress={() => handleDelete(tx)} style={styles.deleteIcon}>
+                <Ionicons name="trash-outline" size={20} color={theme.error} />
+            </TouchableOpacity>
+        </Animated.View>
     );
 
     return (
@@ -33,44 +80,21 @@ const TransactionHistory = ({
             >
                 Historial de Movimientos
             </CustomText>
-            {sortedTransactions.length > 0 ? (
-                sortedTransactions.map((tx) => (
-                    <View
-                        key={tx.id}
-                        style={[styles.transactionRow, { borderTopColor: theme.border }]}
-                    >
-                        <View style={{ flex: 1 }}>
-                            <CustomText size="medium" weight="medium" style={{ color: tx.type === 'Pago' ? theme.success : theme.error }}>
-                                {tx.type}
-                            </CustomText>
-                            <CustomText
-                                size="small"
-                                color={theme.textSecondary}
-                                style={{ marginTop: 2 }}
-                            >
-                                {formatDate(tx.date)}
-                            </CustomText>
-                        </View>
-                        <CustomText
-                            size="medium"
-                            weight="bold"
-                            color={tx.type === 'Pago' ? theme.success : theme.error}
-                        >
-                            {tx.type === 'Pago' ? '-' : '+'}${formatMoney(tx.amount)}
-                        </CustomText>
-                        <TouchableOpacity onPress={() => onDelete(tx)} style={styles.deleteIcon}>
-                            <Ionicons name="trash-outline" size={20} color={theme.error} />
-                        </TouchableOpacity>
-                    </View>
-                ))
-            ) : (
-                <View style={styles.emptyState}>
-                    <Ionicons name="receipt-outline" size={48} color={theme.textSecondary} />
-                    <CustomText color={theme.textSecondary} style={styles.emptyStateText}>
-                        No hay movimientos registrados.
-                    </CustomText>
-                </View>
-            )}
+            
+            <Animated.FlatList
+                data={sortedTransactions}
+                keyExtractor={(item) => item.id}
+                renderItem={renderItem}
+                ListEmptyComponent={renderEmptyState}
+                showsVerticalScrollIndicator={false}
+                // Previene que el FlatList intercepte el scroll del ScrollView padre
+                scrollEnabled={false} 
+                initialNumToRender={10}
+                maxToRenderPerBatch={10}
+                windowSize={5}
+                removeClippedSubviews={true}
+                itemLayoutAnimation={LinearTransition}
+            />
         </View>
     );
 };
@@ -110,4 +134,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default TransactionHistory;
+export default React.memo(TransactionHistory);

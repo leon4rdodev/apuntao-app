@@ -13,21 +13,22 @@ export function useClientsList() {
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchOpen, setIsSearchOpen] = useState(false);
 
+    // Filtramos borrados una sola vez y reutilizamos en ambos cálculos
+    const validClients = useMemo(
+        () => clients.filter((c) => !c.deleted),
+        [clients]
+    );
+
     const summaryData = useMemo(() => {
-        // Ignoramos los borrados (Soft Delete) para el resumen
-        const validClients = clients.filter((c) => !c.deleted);
         const clientsWithDebt = validClients.filter((c) => c.debt > 0);
         const totalDebt = clientsWithDebt.reduce((sum, client) => sum + client.debt, 0);
         return {
             totalDebt,
             clientsWithDebt: clientsWithDebt.length,
         };
-    }, [clients]);
+    }, [validClients]);
 
     const displayedClients = useMemo(() => {
-        // Filtrar borrados lógicos
-        const validClients = clients.filter((c) => !c.deleted);
-
         const lowerCaseQuery = searchQuery.toLowerCase().trim();
         if (lowerCaseQuery) {
             return validClients.filter(
@@ -36,17 +37,17 @@ export function useClientsList() {
                     client.phone?.replace(/-/g, '').includes(lowerCaseQuery.replace(/-/g, ''))
             );
         }
-        
-        // Si no hay búsqueda, mostramos los que tienen deuda, ordenados de mayor a menor y top 10 temporal
+
         return [...validClients]
             .filter((c) => c.debt > 0)
             .sort((a, b) => b.debt - a.debt)
-            .slice(0, 50); // Muestra hasta 50 clientes adeudados por defecto (o paginar en el futuro)
-    }, [clients, searchQuery]);
+            .slice(0, 50);
+    }, [validClients, searchQuery]);
 
-    const handleClientPress = (clientId: string) => {
+
+    const handleClientPress = useCallback((clientId: string) => {
         router.push(`/(app)/clients/${clientId}`);
-    };
+    }, [router]);
 
     useFocusEffect(
         useCallback(() => {

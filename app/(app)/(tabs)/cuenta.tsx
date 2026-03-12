@@ -7,10 +7,11 @@ import CustomText from '@/components/ui/CustomText';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
 import { formatPhoneNumber } from '@/utils/formatters';
+import { getFromStorage } from '@/utils/storage';
 import { Ionicons } from '@expo/vector-icons'; // <-- 1. Importa Ionicons
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -20,24 +21,24 @@ import {
     useColorScheme,
     View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function CuentaScreen() {
     const theme = Colors[useColorScheme() || 'light'];
+    const insets = useSafeAreaInsets();
     const router = useRouter();
     const { session: account, signOut } = useAuth();
     const [isExternalConfigured, setIsExternalConfigured] = React.useState(false);
 
     React.useEffect(() => {
         const checkConfig = async () => {
-             const { getFromStorage } = require('@/utils/storage');
-             const uri = await getFromStorage('EXTERNAL_BACKUP_URI');
-             setIsExternalConfigured(!!uri);
+            const uri = await getFromStorage('EXTERNAL_BACKUP_URI');
+            setIsExternalConfigured(!!uri);
         };
         checkConfig();
     }, []);
 
-    const handleSignOut = () => {
+    const handleSignOut = useCallback(() => {
         Alert.alert('Cerrar Sesión', '¿Estás seguro? Se cerrará tu sesión en este dispositivo.', [
             { text: 'Cancelar', style: 'cancel' },
             {
@@ -46,12 +47,11 @@ export default function CuentaScreen() {
                 onPress: signOut,
             },
         ]);
-    };
+    }, [signOut]);
 
     return (
-        <SafeAreaView 
-            style={[styles.container, { backgroundColor: theme.background }]}
-            edges={['top']}
+        <View 
+            style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}
         >
             <ScrollView
                 contentContainerStyle={styles.scrollContainer}
@@ -142,7 +142,7 @@ export default function CuentaScreen() {
                     Versión {Constants.expoConfig?.version || '1.0.0'}
                 </CustomText>
             </ScrollView>
-        </SafeAreaView>
+        </View>
     );
 }
 

@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getAuth, onAuthStateChanged } from '@react-native-firebase/auth';
-import { getFirestore, collection, doc, getDoc } from '@react-native-firebase/firestore';
+import { getFirestore, doc, onSnapshot } from '@react-native-firebase/firestore';
 import * as Font from 'expo-font';
 import { AntDesign, Entypo, FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useSessionStore } from '@/store/sessionStore';
@@ -31,31 +31,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isAuthReady, setIsAuthReady] = useState(false);
 
     useEffect(() => {
-        Font.loadAsync({
-            ...Ionicons.font,
-            ...MaterialIcons.font,
-            ...Entypo.font,
-            ...AntDesign.font,
-            ...FontAwesome.font,
-        }).then(() => setIsFontLoaded(true));
+        // Solo cargamos Ionicons de forma bloqueante (es el único usado en el primer frame).
+        // El resto se carga en segundo plano para no retrasar el splash screen.
+        Font.loadAsync({ ...Ionicons.font })
+            .then(() => setIsFontLoaded(true))
+            .then(() => {
+                // Carga diferida del resto — no bloquea la UI
+                Font.loadAsync({
+                    ...MaterialIcons.font,
+                    ...Entypo.font,
+                    ...AntDesign.font,
+                    ...FontAwesome.font,
+                }).catch(() => {/* Ignorar errores de fuentes secundarias */});
+            });
     }, []);
 
     useEffect(() => {
         const auth = getAuth();
         const db = getFirestore();
+        let unsubProfile: (() => void) | null = null;
 
         const subscriber = onAuthStateChanged(auth, async (user) => {
+            // Limpiar suscripción del perfil previo si existe
+            if (unsubProfile) {
+                unsubProfile();
+                unsubProfile = null;
+            }
+
             if (user) {
-                // Iniciar la sincronización en tiempo real a Clientes de inmediato.
-                // Firestore usará su propia persistencia local si no hay internet.
+                // Iniciar sincronización de clientes — Firestore entrega caché local primero.
                 startFirestoreSync(user.uid);
 
-                // Intentar actualizar el perfil desde Firestore en segundo plano
-                try {
-                    const userRef = doc(db, 'users', user.uid);
-                    const userSnap = await getDoc(userRef);
+                // IMPORTANTE: Establecemos un usuario temporal ANTES de marcar auth como lista.
+                // Esto evita que expo-router vea isLoading=false y session=null,
+                // lo que causaba el destello (flash) de la pantalla de login.
+                setAccount({
+                    colmadoName: 'Cargando...',
+                    email: user.email || '',
+                    phoneNumber: user.phoneNumber || '',
+                    subscription: { status: 'loading', plan: 'none' }, // Cambiado a loading
+                });
+
+                // Marcar auth como lista INMEDIATAMENTE para que la UI cargue
+                // con los datos locales sin esperar la red.
+                setIsAuthReady(true);
+                setInitialized(true);
+
+                // Usar onSnapshot en lugar de getDoc para el perfil.
+                // onSnapshot (Local-First): Entrega el perfil desde SQLite instantáneamente en ~5ms,
+                // y luego actualiza en background si hay cambios en la nube.
+                const userRef = doc(db, 'users', user.uid);
+                unsubProfile = onSnapshot(userRef, (userSnap) => {
                     const data = userSnap.data() as any;
-                    
                     if (data) {
                         setAccount({
                             colmadoName: data.colmadoName || 'Mi Colmado',
@@ -65,23 +92,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         });
                         setSubscription(data.subscription || { status: 'active', plan: 'none' });
                     }
-                } catch (error: any) {
-                    // Si falla (ej: estamos offline), no pasa nada, el 'sessionStore' 
-                    // ya tiene los últimos datos gracias al middleware 'persist'.
-                    console.log('Trabajando en modo offline o error al refrescar perfil:', error.message);
-                }
+                }, (error) => {
+                    console.log('Perfil en caché (offline o error de red):', error.message);
+                });
+
             } else {
                 setAccount(null);
                 stopFirestoreSync();
+                setIsAuthReady(true);
+                setInitialized(true);
             }
-            
-            setIsAuthReady(true);
-            setInitialized(true);
         });
 
         
         return () => {
             subscriber();
+            if (unsubProfile) unsubProfile();
             stopFirestoreSync();
         }; // unsubscribe on unmount
     }, [setAccount, setSubscription, setInitialized, startFirestoreSync, stopFirestoreSync]);

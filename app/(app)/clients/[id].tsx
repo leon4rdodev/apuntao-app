@@ -28,9 +28,9 @@ import {
 import { validateClientData } from '@/utils/validation';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, useColorScheme, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AmountInput } from '@/components/input/AmountInput';
 
 // --- Tipos para el estado del Modal ---
@@ -42,6 +42,7 @@ type ModalConfig = { type: 'transaction'; payload: TransactionType } | { type: '
  */
 export default function ClientDetailScreen() {
     const theme = Colors[useColorScheme() || 'light'];
+    const insets = useSafeAreaInsets();
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
     const showNotification = useNotification();
@@ -197,15 +198,10 @@ export default function ClientDetailScreen() {
         [client, deleteTransaction, showNotification, checkAndAlert]
     );
 
-    // --- Lógica del Modal ---
-    const openModal = (config: ModalConfig) => {
-        // <-- RESTRICCIÓN DE SUSCRIPCIÓN PARA AÑADIR TXN -->
+    const openModal = useCallback((config: ModalConfig) => {
         if (config?.type === 'transaction') {
-            if (!checkAndAlert()) {
-                return; // Bloquea y muestra el modal estilizado si está inactiva
-            }
+            if (!checkAndAlert()) return;
         }
-
         if (config?.type === 'edit' && client) {
             setEditName(client.name);
             setEditPhone(client.phone || '');
@@ -213,11 +209,14 @@ export default function ClientDetailScreen() {
             setAmount('');
         }
         setModalConfig(config);
-    };
+    }, [client, checkAndAlert]);
 
-    const renderModalContent = () => {
+    const handleEditOpen = useCallback(() => openModal({ type: 'edit' }), [openModal]);
+    const handlePayOpen = useCallback(() => openModal({ type: 'transaction', payload: 'Pago' }), [openModal]);
+    const handleAddDebtOpen = useCallback(() => openModal({ type: 'transaction', payload: 'Deuda' }), [openModal]);
+
+    const renderModalContent = useCallback(() => {
         if (!modalConfig) return null;
-
         if (modalConfig.type === 'transaction') {
             return (
                 <AmountInput
@@ -233,23 +232,13 @@ export default function ClientDetailScreen() {
             return (
                 <>
                     <View style={styles.inputGroup}>
-                        <CustomText
-                            size="small"
-                            weight="medium"
-                            color={theme.textSecondary}
-                            style={styles.label}
-                        >
+                        <CustomText size="small" weight="medium" color={theme.textSecondary} style={styles.label}>
                             Nombre del Cliente
                         </CustomText>
                         <CustomInput value={editName} onChangeText={setEditName} autoFocus />
                     </View>
                     <View style={styles.inputGroup}>
-                        <CustomText
-                            size="small"
-                            weight="medium"
-                            color={theme.textSecondary}
-                            style={styles.label}
-                        >
+                        <CustomText size="small" weight="medium" color={theme.textSecondary} style={styles.label}>
                             Teléfono (Opcional)
                         </CustomText>
                         <CustomInput
@@ -264,11 +253,10 @@ export default function ClientDetailScreen() {
             );
         }
         return null;
-    };
+    }, [modalConfig, amount, editName, editPhone, theme]);
 
-    const getModalConfig = () => {
+    const { title, actions } = useMemo(() => {
         if (!modalConfig) return { title: '', actions: [] };
-
         const baseActions = [
             {
                 title: 'Cancelar',
@@ -277,48 +265,32 @@ export default function ClientDetailScreen() {
                 textStyle: { color: theme.textSecondary },
             },
         ];
-
         if (modalConfig.type === 'transaction') {
             const isPayment = modalConfig.payload === 'Pago';
             return {
                 title: isPayment ? 'Registrar Pago' : 'Añadir Nueva Deuda',
                 actions: [
-                    {
-                        title: 'Guardar',
-                        onPress: handleSaveTransaction,
-                        buttonStyle: {
-                            backgroundColor: theme.primary,
-                            flex: 1,
-                        },
-                        textStyle: { color: theme.textOnPrimary },
-                    },
+                    { title: 'Guardar', onPress: handleSaveTransaction, buttonStyle: { backgroundColor: theme.primary, flex: 1 }, textStyle: { color: theme.textOnPrimary } },
                     ...baseActions,
                 ],
             };
         }
-
         if (modalConfig.type === 'edit') {
             return {
                 title: 'Editar Cliente',
                 actions: [
-                    {
-                        title: 'Actualizar',
-                        onPress: handleUpdateClient,
-                        buttonStyle: { backgroundColor: theme.primary, flex: 1 },
-                        textStyle: { color: theme.textOnPrimary },
-                    },
+                    { title: 'Actualizar', onPress: handleUpdateClient, buttonStyle: { backgroundColor: theme.primary, flex: 1 }, textStyle: { color: theme.textOnPrimary } },
                     ...baseActions,
                 ],
             };
         }
-
         return { title: '', actions: [] };
-    };
+    }, [modalConfig, theme, handleSaveTransaction, handleUpdateClient]);
 
     // --- Renderizado ---
     if (!client) {
         return (
-            <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+            <View style={[styles.container, { backgroundColor: theme.background, paddingBottom: insets.bottom }]}>
                 <View style={styles.notFoundContainer}>
                     <Ionicons name="alert-circle-outline" size={60} color={theme.error} />
                     <CustomText size="large" weight="bold" style={{ marginVertical: 16 }}>
@@ -326,14 +298,13 @@ export default function ClientDetailScreen() {
                     </CustomText>
                     <CustomButton title="Volver al inicio" onPress={() => router.back()} />
                 </View>
-            </SafeAreaView>
+            </View>
         );
     }
 
-    const { title, actions } = getModalConfig();
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={[styles.container, { backgroundColor: theme.background, paddingBottom: insets.bottom }]}>
             <Stack.Screen options={{ headerShown: false }} />
             <BackButton />
 
@@ -341,11 +312,10 @@ export default function ClientDetailScreen() {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                <ClientSummaryCard client={client} onEdit={() => openModal({ type: 'edit' })} />
+                <ClientSummaryCard client={client} onEdit={handleEditOpen} />
                 <MainActionButtons
-                    // Llama a openModal (con check de suscripción)
-                    onPay={() => openModal({ type: 'transaction', payload: 'Pago' })}
-                    onAddDebt={() => openModal({ type: 'transaction', payload: 'Deuda' })}
+                    onPay={handlePayOpen}
+                    onAddDebt={handleAddDebtOpen}
                 />
                 <DangerZone
                     debt={client.debt}
@@ -369,7 +339,7 @@ export default function ClientDetailScreen() {
             >
                 {renderModalContent()}
             </ActionModal>
-        </SafeAreaView>
+        </View>
     );
 }
 

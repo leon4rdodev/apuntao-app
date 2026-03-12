@@ -8,8 +8,8 @@ import { StyleSheet, Text, TouchableOpacity, useColorScheme } from 'react-native
 import Animated, {
     useAnimatedStyle,
     useSharedValue,
-    withSpring,
-    withTiming
+    withTiming,
+    Easing,
 } from 'react-native-reanimated';
 
 export function GlobalNotification() {
@@ -19,19 +19,16 @@ export function GlobalNotification() {
     const { isVisible, message, type, hide } = useNotificationStore();
 
     // 2. Usamos `useSharedValue` para las animaciones
-    const translateY = useSharedValue(-150);
+    const translateY = useSharedValue(-24);
     const opacity = useSharedValue(0);
 
-    // 3. Efecto para manejar la entrada y salida de la animación
     useEffect(() => {
         if (isVisible) {
-            // Animación de entrada
-            translateY.value = withSpring(0, { damping: 15, stiffness: 120 });
-            opacity.value = withTiming(1, { duration: 300 });
+            opacity.value = withTiming(1, { duration: 200, easing: Easing.out(Easing.cubic) });
+            translateY.value = withTiming(0, { duration: 250, easing: Easing.out(Easing.cubic) });
         } else {
-            // Animación de salida
-            translateY.value = withTiming(-150, { duration: 250 });
-            opacity.value = withTiming(0, { duration: 200 });
+            opacity.value = withTiming(0, { duration: 180, easing: Easing.in(Easing.cubic) });
+            translateY.value = withTiming(-24, { duration: 200, easing: Easing.in(Easing.cubic) });
         }
     }, [isVisible, translateY, opacity]);
 

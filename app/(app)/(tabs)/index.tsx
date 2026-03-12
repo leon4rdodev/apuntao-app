@@ -4,7 +4,7 @@ import ClientsSummary from '@/components/ui/ClientsSummary';
 import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useClientsList } from '@/hooks/useClientsList';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { FlatList, StyleSheet, Text, useColorScheme, View } from 'react-native';
 
 export default function Index() {
@@ -48,8 +48,11 @@ export default function Index() {
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
-                // ✨ SOLUCIÓN PARA TOCAR LAS CARDS CON EL TECLADO ABIERTO ✨
                 keyboardShouldPersistTaps="handled"
+                removeClippedSubviews={true}
+                initialNumToRender={10}
+                maxToRenderPerBatch={10}
+                windowSize={5}
                 ListHeaderComponent={
                     !isSearchOpen ? (
                         <ClientsSummary
@@ -58,15 +61,13 @@ export default function Index() {
                         />
                     ) : null
                 }
-                renderItem={({ item }) => {
-                    return (
-                        <ClientCard
-                            item={item}
-                            onPress={() => handleClientPress(item.id)}
-                            isPending={false}
-                        />
-                    );
-                }}
+                renderItem={useCallback(({ item }: { item: any }) => (
+                    <ClientCard
+                        item={item}
+                        onPress={() => handleClientPress(item.id)}
+                        isPending={false}
+                    />
+                ), [handleClientPress])}
                 ListEmptyComponent={renderEmptyListComponent}
             />
         </View>

@@ -127,4 +127,11 @@ const styles = StyleSheet.create({
     },
 });
 
-export default ClientSummaryCard;
+export default React.memo(ClientSummaryCard, (prevProps, nextProps) => {
+    return (
+        prevProps.client.id === nextProps.client.id &&
+        prevProps.client.debt === nextProps.client.debt &&
+        prevProps.client.phone === nextProps.client.phone &&
+        prevProps.client.name === nextProps.client.name
+    );
+});

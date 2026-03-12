@@ -3,8 +3,7 @@
  * @description Layout raíz de la aplicación. Ensambla los proveedores
  * y utiliza un hook para manejar la navegación protegida.
  */
-import { AuthProvider, useAuth } from '@/context/AuthContext'; // Importamos el nuevo AuthProvider
-import { useProtectedRoute } from '@/hooks/useProtectedRoute'; // Importamos el nuevo hook
+import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { SplashScreen as ExpoSplashScreen, Stack } from 'expo-router';
@@ -12,25 +11,41 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
 import 'react-native-reanimated';
 import { GlobalNotification } from '@/components/ui/GlobalNotification';
+import { getFromStorage } from '@/utils/storage';
+import { STORAGE_KEYS } from '@/constants';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 
 ExpoSplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
     const colorScheme = useColorScheme();
+    const { session, isLoading } = useAuth();
+    const navigationTheme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
+    
+    const [hasOnboarded, setHasOnboarded] = React.useState<boolean | null>(null);
 
-    // 1. Usar nuestros hooks de autenticación y protección.
-    const { isReady } = useProtectedRoute();
+    // Leer onboarding desde AsyncStorage una vez
+    useEffect(() => {
+        (async () => {
+            const onboarded = await getFromStorage<boolean>(STORAGE_KEYS.HAS_ONBOARDED);
+            setHasOnboarded(!!onboarded);
+        })();
+    }, []);
+
+    const isAppReady = !isLoading && hasOnboarded !== null;
 
     useEffect(() => {
-        // Ocultar el splash screen nativo solo cuando el hook nos diga que es seguro.
-        if (isReady) {
+        if (isAppReady) {
             ExpoSplashScreen.hideAsync();
         }
-    }, [isReady]);
+    }, [isAppReady]);
 
-    const navigationTheme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
+    // Si la app no está lista (cargando auth o fonts), no renderizamos NADA de la UI,
+    // garantizando que el usuario solo ve el Splash Screen nativo.
+    if (!isAppReady) {
+        return null;
+    }
 
-    // 3. Renderizar el Stack de forma segura.
     return (
         <ThemeProvider value={navigationTheme}>
             <GlobalNotification />
@@ -45,9 +60,12 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
     return (
-        // Envolvemos toda la app en los proveedores. El orden importa.
-        <AuthProvider>
-            <RootLayoutNav />
-        </AuthProvider>
+        // Proveedor de márgenes seguros absoluto para evitar el "salto" de UI
+        <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+            {/* Envolvemos toda la app en los proveedores. El orden importa. */}
+            <AuthProvider>
+                <RootLayoutNav />
+            </AuthProvider>
+        </SafeAreaProvider>
     );
 }

@@ -13,8 +13,8 @@ interface SubscriptionModalState {
 // 2. Crear el store
 export const useSubscriptionModalStore = create<SubscriptionModalState>((set) => ({
     isVisible: false,
-    status: 'unknown', // <-- CAMBIO: Usamos 'unknown' como valor por defecto de restricción.
+    status: 'trial', // <-- CAMBIO: Usamos 'unknown' como valor por defecto de restricción.
 
     showModal: (status) => set({ isVisible: true, status }),
-    hideModal: () => set({ isVisible: false, status: 'unknown' }),
+    hideModal: () => set({ isVisible: false, status: 'trial' }),
 }));

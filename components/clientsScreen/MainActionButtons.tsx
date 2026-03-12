@@ -50,4 +50,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default MainActionButtons;
+export default React.memo(MainActionButtons);

@@ -5,7 +5,7 @@ import CustomButton from '@/components/ui/CustomButton';
 import { Colors } from '@/constants/Colors';
 import { formatNumberWithCommas, formatPhoneNumber } from '@/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAddClient } from '@/hooks/useAddClient';
 import {
     Keyboard,
@@ -18,7 +18,7 @@ import {
     useColorScheme,
     View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // --- Sub-componente de la Cabecera ---
 const HeaderSection = () => {
@@ -38,6 +38,7 @@ const HeaderSection = () => {
 
 export default function AgregarClienteScreen() {
     const theme = Colors[useColorScheme() || 'light'];
+    const insets = useSafeAreaInsets();
 
     const {
         name,
@@ -53,10 +54,20 @@ export default function AgregarClienteScreen() {
         handleSave,
     } = useAddClient();
 
+    const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+    useEffect(() => {
+        const show = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+        const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+        return () => {
+            show.remove();
+            hide.remove();
+        };
+    }, []);
+
     return (
-        <SafeAreaView 
-            style={[styles.safeArea, { backgroundColor: theme.background }]}
-            edges={['top']} 
+        <View 
+            style={[styles.safeArea, { backgroundColor: theme.background, paddingTop: insets.top }]}
         >
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -67,6 +78,7 @@ export default function AgregarClienteScreen() {
                         contentContainerStyle={styles.scrollContainer}
                         keyboardShouldPersistTaps="handled"
                         showsVerticalScrollIndicator={false}
+                        scrollEnabled={keyboardVisible}
                     >
                         <HeaderSection />
 
@@ -145,12 +157,12 @@ export default function AgregarClienteScreen() {
                                 buttonStyle={{ marginTop: 10 }}
                             />
                         </View>
-                        {/* Espacio extra al final para scroll fluido con teclado */}
-                        <View style={{ height: 120 }} />
+                        {/* Espacio extra al final solo cuando el teclado está abierto */}
+                        {keyboardVisible && <View style={{ height: 280 }} />}
                     </ScrollView>
                 </TouchableWithoutFeedback>
             </KeyboardAvoidingView>
-        </SafeAreaView>
+        </View>
     );
 }
 
@@ -160,10 +172,9 @@ const styles = StyleSheet.create({
     safeArea: { flex: 1 },
     scrollContainer: {
         flexGrow: 1,
-        flex: 1,
         padding: 24,
-        paddingTop: 20, // Reducido ya que el SafeArea ya maneja el top
-        paddingBottom: 40, // Espacio para que el contenido no quede pegado al TabBar al final
+        paddingTop: 20,
+        paddingBottom: 80,
     },
     headerContainer: {
         alignItems: 'center',

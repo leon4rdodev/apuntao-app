@@ -57,4 +57,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default DangerZone;
+export default React.memo(DangerZone);
