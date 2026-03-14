@@ -9,8 +9,8 @@ import {
     ScrollView,
     StyleSheet,
     View,
-    useColorScheme,
 } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import ActionRow from '@/components/ui/ActionRow';
@@ -69,7 +69,10 @@ export default function AyudaScreen() {
         const message = "Hola, necesito ayuda con la aplicación Apunta'o.";
         const url = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
         Linking.openURL(url).catch(() => {
-            Alert.alert('Error', 'Asegúrate de tener WhatsApp instalado en tu dispositivo.');
+            showNotification({
+                message: 'Asegúrate de tener WhatsApp instalado',
+                type: 'error',
+            });
         });
     }, []);
 
@@ -95,9 +98,11 @@ export default function AyudaScreen() {
             >
                 {/* --- Cabecera --- */}
                 <View style={styles.header}>
-                    <Ionicons name="help-buoy-outline" size={48} color={theme.primary} />
-                    <CustomText size="xlarge" weight="bold" style={styles.title}>
-                        Centro de Ayuda
+                    <View style={[styles.iconWrapper, { backgroundColor: theme.primaryLight }]}>
+                        <Ionicons name="help-buoy-outline" size={32} color={theme.primary} />
+                    </View>
+                    <CustomText size="xxlarge" weight="bold" style={styles.title}>
+                        Soporte
                     </CustomText>
                     <CustomText size="medium" color={theme.textSecondary} style={styles.subtitle}>
                         Encuentra respuestas a tus dudas o contáctanos directamente.
@@ -125,7 +130,7 @@ export default function AyudaScreen() {
                 </View>
 
                 {/* --- Tarjeta de Contacto --- */}
-                <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }]}>
                     <CustomText
                         size="small"
                         weight="bold"
@@ -136,13 +141,13 @@ export default function AyudaScreen() {
                     </CustomText>
                     <ActionRow
                         icon="logo-whatsapp"
-                        text="Contactar por WhatsApp"
+                        text="WhatsApp"
                         onPress={handleWhatsAppPress}
                         theme={theme}
                     />
                     <ActionRow
                         icon="mail-outline"
-                        text="Enviar un Email"
+                        text="Email de Soporte"
                         onPress={handleEmailPress}
                         theme={theme}
                     />
@@ -154,19 +159,36 @@ export default function AyudaScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    scrollContainer: { padding: 18, paddingTop: 12, paddingBottom: 40 },
+    scrollContainer: { 
+        padding: 20, 
+        paddingTop: 60, 
+        paddingBottom: 40 
+    },
     header: { alignItems: 'center', marginBottom: 32 },
-    title: { marginTop: 16, marginBottom: 8 },
-    subtitle: { textAlign: 'center', maxWidth: '85%' },
+    iconWrapper: {
+        width: 72,
+        height: 72,
+        borderRadius: 36,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    title: { marginBottom: 10, textAlign: 'center' },
+    subtitle: { textAlign: 'center', maxWidth: '85%', lineHeight: 22 },
     card: {
-        borderRadius: 16,
-        paddingHorizontal: 20,
-        paddingTop: 20,
+        borderRadius: 24,
+        paddingHorizontal: 24,
+        paddingTop: 24,
         marginBottom: 24,
         borderWidth: 1,
     },
-    cardTitle: { textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
+    cardTitle: { 
+        textTransform: 'uppercase', 
+        letterSpacing: 0.5, 
+        marginBottom: 12,
+        marginLeft: 4,
+    },
     faqItem: { paddingVertical: 16, borderTopWidth: 1 },
     faqQuestion: { marginBottom: 6 },
-    faqAnswer: { lineHeight: 22 },
+    faqAnswer: { lineHeight: 22, opacity: 0.9 },
 });

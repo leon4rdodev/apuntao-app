@@ -4,7 +4,8 @@ import { Client } from '@/types';
 import { formatMoney, formatPhoneNumber } from '@/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Linking, StyleSheet, TouchableOpacity, View, useColorScheme } from 'react-native';
+import { Linking, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import CustomButton from '../ui/CustomButton';
 
 /**
@@ -21,34 +22,36 @@ const ClientSummaryCard = ({ client, onEdit }: { client: Client; onEdit: () => v
     const debtColor = client.debt > 0 ? theme.error : theme.success;
 
     return (
-        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }]}>
             <View style={styles.summaryHeader}>
                 <CustomText size="xlarge" weight="bold" style={styles.clientName}>
                     {client.name}
                 </CustomText>
-                <TouchableOpacity onPress={onEdit}>
-                    <Ionicons name="pencil-outline" size={22} color={theme.primary} />
+                <TouchableOpacity onPress={onEdit} style={styles.editButton}>
+                    <Ionicons name="create-outline" size={20} color={theme.textSecondary} />
                 </TouchableOpacity>
             </View>
 
-            <CustomText
-                size="small"
-                weight="medium"
-                color={theme.textSecondary}
-                style={styles.debtLabel}
-            >
-                Deuda Total
-            </CustomText>
+            <View style={[styles.debtContainer, { backgroundColor: theme.background }]}>
+                 <CustomText
+                    size="small"
+                    weight="medium"
+                    color={theme.textSecondary}
+                    style={styles.debtLabel}
+                >
+                    Deuda Total
+                </CustomText>
 
-            <CustomText size="xxlarge" weight="bold" color={debtColor} style={styles.debtAmount}>
-                ${formatMoney(client.debt)}
-            </CustomText>
+                <CustomText size="xxlarge" weight="bold" color={debtColor} style={styles.debtAmount}>
+                    ${formatMoney(client.debt)}
+                </CustomText>
+            </View>
 
             {client.phone && (
-                <View style={[styles.contactSection, { borderTopColor: theme.border }]}>
+                <View style={[styles.contactSection]}>
                     <View style={styles.infoRow}>
                         <Ionicons name="call-outline" size={20} color={theme.textSecondary} />
-                        <CustomText size="medium" weight="medium">
+                        <CustomText size="medium" weight="medium" color={theme.textSecondary}>
                             {formatPhoneNumber(client.phone)}
                         </CustomText>
                     </View>
@@ -57,17 +60,17 @@ const ClientSummaryCard = ({ client, onEdit }: { client: Client; onEdit: () => v
                             title="Llamar"
                             onPress={handleCall}
                             iconName="call"
-                            buttonStyle={[styles.contactButton, { backgroundColor: theme.info }]}
-                            textStyle={{ color: theme.textOnPrimary }}
-                            iconColor={theme.textOnPrimary}
+                            buttonStyle={[styles.contactButton, { backgroundColor: theme.background, borderWidth: 1, borderColor: theme.borderSubtle }]}
+                            textStyle={{ color: theme.textSecondary }}
+                            iconColor={theme.textSecondary}
                         />
                         <CustomButton
-                            title="WhatsApp"
+                            title="Mensaje"
                             onPress={handleWhatsApp}
                             iconName="logo-whatsapp"
-                            buttonStyle={[styles.contactButton, { backgroundColor: '#25D366' }]}
-                            textStyle={{ color: theme.textOnPrimary }}
-                            iconColor={theme.textOnPrimary}
+                            buttonStyle={[styles.contactButton, { backgroundColor: '#dcfce7', borderWidth: 0 }]}
+                            textStyle={{ color: '#166534' }}
+                            iconColor="#166534"
                         />
                     </View>
                 </View>
@@ -76,44 +79,53 @@ const ClientSummaryCard = ({ client, onEdit }: { client: Client; onEdit: () => v
     );
 };
 
-// Se han agregado los estilos faltantes para que el componente funcione
 const styles = StyleSheet.create({
     card: {
-        borderRadius: 16,
-        padding: 20,
-        marginBottom: 18,
+        borderRadius: 24,
+        padding: 24,
+        marginBottom: 32, // Mayor espaciado hacia abajo
         borderWidth: 1,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 8,
+        elevation: 1, // Para Android
     },
     summaryHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 16,
+        alignItems: 'center',
+        marginBottom: 20,
     },
     clientName: {
         flex: 1,
         marginRight: 10,
-        lineHeight: 34, // Ajusta la altura de línea para textos grandes
+    },
+    editButton: {
+        padding: 8,
+        borderRadius: 100,
+    },
+    debtContainer: {
+        alignItems: 'center',
+        paddingVertical: 16,
+        borderRadius: 16,
+        marginBottom: 4,
     },
     debtLabel: {
-        textAlign: 'center',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
+        marginBottom: 4,
     },
     debtAmount: {
-        fontSize: 48, // Se mantiene un tamaño grande específico para la deuda
-        textAlign: 'center',
-        marginBottom: 16,
+        fontSize: 42, 
     },
     contactSection: {
-        borderTopWidth: 1,
-        marginTop: 12,
-        paddingTop: 16,
+        marginTop: 20, // Mayor espaciado interno antes de contacto
     },
     infoRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        gap: 8,
         marginBottom: 16,
         justifyContent: 'center',
     },
@@ -124,6 +136,7 @@ const styles = StyleSheet.create({
     contactButton: {
         flex: 1,
         paddingVertical: 12,
+        borderRadius: 100,
     },
 });
 

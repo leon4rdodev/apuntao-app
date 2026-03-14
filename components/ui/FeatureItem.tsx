@@ -3,7 +3,8 @@ import { Colors } from '@/constants/Colors';
 // incluir un campo opcional 'description' de tipo string.
 import { Feature } from '@/constants/FeatureItems';
 import React from 'react';
-import { StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 interface FeatureItemProps {
     // Objeto de la característica, que ahora puede incluir una descripción opcional.

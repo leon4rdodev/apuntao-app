@@ -5,19 +5,21 @@ import CustomButton from '@/components/ui/CustomButton';
 import { Colors } from '@/constants/Colors';
 import { formatNumberWithCommas, formatPhoneNumber } from '@/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAddClient } from '@/hooks/useAddClient';
+import { TextInput } from 'react-native';
 import {
     Keyboard,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
     StyleSheet,
-    Text,
     TouchableWithoutFeedback,
-    useColorScheme,
     View,
 } from 'react-native';
+import { Stack } from 'expo-router';
+import CustomText from '@/components/ui/CustomText';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // --- Sub-componente de la Cabecera ---
@@ -26,12 +28,14 @@ const HeaderSection = () => {
     return (
         <View style={styles.headerContainer}>
             <View style={[styles.iconWrapper, { backgroundColor: theme.primaryLight }]}>
-                <Ionicons name="person-add-outline" size={32} color={theme.primary} />
+                <Ionicons name="person-add" size={32} color={theme.primary} />
             </View>
-            <Text style={[styles.title, { color: theme.text }]}>Nuevo Cliente</Text>
-            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-                Añade a alguien a tu lista de fiado.
-            </Text>
+            <CustomText size="xxlarge" weight="bold" style={[styles.title, { color: theme.text }]}>
+                Nuevo Cliente
+            </CustomText>
+            <CustomText size="medium" color={theme.textSecondary} style={styles.subtitle}>
+                Crea un perfil para tu nuevo cliente.
+            </CustomText>
         </View>
     );
 };
@@ -47,12 +51,13 @@ export default function AgregarClienteScreen() {
         setPhone,
         initialDebt,
         setInitialDebt,
-        focusedField,
-        setFocusedField,
         isSaving,
         isFormValid,
         handleSave,
     } = useAddClient();
+
+    const initialDebtRef = useRef<TextInput>(null!);
+    const phoneRef = useRef<TextInput>(null!);
 
     const [keyboardVisible, setKeyboardVisible] = useState(false);
 
@@ -67,8 +72,9 @@ export default function AgregarClienteScreen() {
 
     return (
         <View 
-            style={[styles.safeArea, { backgroundColor: theme.background, paddingTop: insets.top }]}
+            style={[styles.safeArea, { backgroundColor: theme.background }]}
         >
+            <Stack.Screen options={{ headerShown: false }} />
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 style={{ flex: 1 }}
@@ -82,30 +88,27 @@ export default function AgregarClienteScreen() {
                     >
                         <HeaderSection />
 
-                        <View style={[styles.formContainer, { backgroundColor: theme.surface }]}>
+                        <View style={[styles.formContainer, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }]}>
                             {/* Campo de Nombre */}
                             <View style={styles.inputGroup}>
-                                <Text style={[styles.label, { color: theme.textSecondary }]}>
-                                    Nombre del Cliente <Text style={{ color: theme.error }}>*</Text>
-                                </Text>
+                                <CustomText size="small" weight="medium" style={[styles.label, { color: theme.textSecondary }]}>
+                                    Nombre del Cliente <CustomText color={theme.error}>*</CustomText>
+                                </CustomText>
                                 <CustomInput
                                     icon="person-outline"
                                     placeholder="Ej: Juan Pérez"
                                     value={name}
                                     onChangeText={setName}
-                                    onFocus={() => setFocusedField('name')}
-                                    onBlur={() => setFocusedField(null)}
-                                    containerStyle={
-                                        focusedField === 'name' ? { borderColor: theme.primary } : {}
-                                    }
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => initialDebtRef.current?.focus()}
                                 />
                             </View>
 
                             {/* Campo de Deuda Inicial */}
                             <View style={styles.inputGroup}>
-                                <Text style={[styles.label, { color: theme.textSecondary }]}>
-                                    Deuda Inicial
-                                </Text>
+                                <CustomText size="small" weight="medium" style={[styles.label, { color: theme.textSecondary }]}>
+                                    Deuda Inicial (Opcional)
+                                </CustomText>
                                 <CustomInput
                                     prefix="$"
                                     placeholder="0"
@@ -114,22 +117,17 @@ export default function AgregarClienteScreen() {
                                         setInitialDebt(formatNumberWithCommas(text))
                                     }
                                     keyboardType="numeric"
-                                    onFocus={() => setFocusedField('debt')}
-                                    onBlur={() => setFocusedField(null)}
-                                    containerStyle={
-                                        focusedField === 'debt' ? { borderColor: theme.primary } : {}
-                                    }
+                                    returnKeyType="next"
+                                    inputRef={initialDebtRef}
+                                    onSubmitEditing={() => phoneRef.current?.focus()}
                                 />
-                                <Text style={[styles.helperText, { color: theme.textSecondary }]}>
-                                    Opcional. Monto con el que empieza debiendo.
-                                </Text>
                             </View>
 
                             {/* Campo de Teléfono */}
                             <View style={styles.inputGroup}>
-                                <Text style={[styles.label, { color: theme.textSecondary }]}>
-                                    Número de Teléfono
-                                </Text>
+                                <CustomText size="small" weight="medium" style={[styles.label, { color: theme.textSecondary }]}>
+                                    Número de Teléfono (Opcional)
+                                </CustomText>
                                 <CustomInput
                                     icon="call-outline"
                                     placeholder="(809) 123-4567"
@@ -137,24 +135,19 @@ export default function AgregarClienteScreen() {
                                     onChangeText={(text) => setPhone(formatPhoneNumber(text))}
                                     keyboardType="phone-pad"
                                     maxLength={14}
-                                    onFocus={() => setFocusedField('phone')}
-                                    onBlur={() => setFocusedField(null)}
-                                    containerStyle={
-                                        focusedField === 'phone' ? { borderColor: theme.primary } : {}
-                                    }
+                                    returnKeyType="done"
+                                    inputRef={phoneRef}
+                                    onSubmitEditing={handleSave}
                                 />
-                                <Text style={[styles.helperText, { color: theme.textSecondary }]}>
-                                    Opcional.
-                                </Text>
                             </View>
 
                             <CustomButton
-                                title="Agregar Cliente"
+                                title="Guardar Cliente"
                                 onPress={handleSave}
                                 disabled={!isFormValid}
                                 isLoading={isSaving}
-                                iconName="checkmark-circle-outline"
-                                buttonStyle={{ marginTop: 10 }}
+                                iconName="person-add"
+                                buttonStyle={{ marginTop: 20 }}
                             />
                         </View>
                         {/* Espacio extra al final solo cuando el teclado está abierto */}
@@ -172,46 +165,47 @@ const styles = StyleSheet.create({
     safeArea: { flex: 1 },
     scrollContainer: {
         flexGrow: 1,
-        padding: 24,
-        paddingTop: 20,
+        paddingHorizontal: 20,
+        paddingTop: 60,
         paddingBottom: 80,
     },
     headerContainer: {
         alignItems: 'center',
         marginBottom: 32,
+        paddingHorizontal: 10,
     },
     iconWrapper: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
+        width: 72,
+        height: 72,
+        borderRadius: 36,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 16,
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: '700',
-        marginBottom: 8,
-    },
-    subtitle: {
-        fontSize: 16,
-        textAlign: 'center',
-        maxWidth: '80%',
-    },
-    formContainer: {
-        borderRadius: 16,
-        padding: 24,
-    },
-    inputGroup: {
         marginBottom: 20,
     },
+    title: {
+        marginBottom: 10,
+        textAlign: 'center',
+    },
+    subtitle: {
+        textAlign: 'center',
+        lineHeight: 22,
+        maxWidth: '90%',
+    },
+    formContainer: {
+        borderRadius: 24, // Consistente con ClientSummaryCard
+        padding: 24,
+        borderWidth: 1,
+    },
+    inputGroup: {
+        marginBottom: 24,
+    },
     label: {
-        fontSize: 14,
-        fontWeight: '500',
-        marginBottom: 8,
+        marginBottom: 10,
+        marginLeft: 4,
     },
     helperText: {
-        fontSize: 12,
-        marginTop: 6,
+        marginTop: 8,
+        marginLeft: 4,
+        lineHeight: 16,
     },
 });

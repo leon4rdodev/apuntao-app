@@ -7,7 +7,8 @@ import { useSubscriptionModalStore } from '@/store/subscriptionModalStore';
 import { Subscription } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Linking, StyleSheet, Alert, View, useColorScheme } from 'react-native';
+import { Linking, StyleSheet, Alert, View } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 const getStatusText = (status: Subscription['status']) => {
     switch (status) {

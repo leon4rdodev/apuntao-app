@@ -3,7 +3,8 @@ import { Feature } from '@/constants/FeatureItems';
 import { Colors } from '@/constants/Colors';
 import { Entypo, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
-import { Dimensions, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import { Dimensions, StyleSheet, Text, View } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import Animated from 'react-native-reanimated';
 
 const { height } = Dimensions.get('window');

@@ -7,7 +7,8 @@ import { saveToStorage } from '@/utils/storage';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, useColorScheme, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import Animated, {
     runOnJS,
     useAnimatedStyle,

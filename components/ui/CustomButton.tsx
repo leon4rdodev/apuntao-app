@@ -75,7 +75,10 @@ export default function CustomButton({
 
     return (
         <TouchableOpacity
-            style={[defaultButtonStyle, buttonStyle]}
+            style={[
+                defaultButtonStyle, 
+                buttonStyle
+            ]}
             onPress={onPress}
             // ✅ CORRECCIÓN: Usamos la prop activeOpacity.
             activeOpacity={activeOpacity}
@@ -93,7 +96,13 @@ export default function CustomButton({
                             color={finalIconColor as string}
                         />
                     )}
-                    <Text style={[defaultTextStyle, textStyle]}>{title}</Text>
+                    <Text 
+                        style={[defaultTextStyle, textStyle]} 
+                        numberOfLines={1} 
+                        adjustsFontSizeToFit
+                    >
+                        {title}
+                    </Text>
                 </View>
             )}
         </TouchableOpacity>
@@ -102,8 +111,8 @@ export default function CustomButton({
 
 const styles = StyleSheet.create({
     button: {
-        height: 56,
-        borderRadius: 16, // Más redondeado
+        height: 52,
+        borderRadius: 100, // Forma de píldora para coincidir con los inputs
         alignItems: 'center',
         justifyContent: 'center',
         width: '100%',

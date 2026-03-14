@@ -1,13 +1,10 @@
-/**
- * Muestra una tarjeta con información resumida de un cliente.
- */
-
 import { Colors } from '@/constants/Colors';
 import type { Client } from '@/types';
 import { formatMoney } from '@/utils/formatters';
-import { FontAwesome } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, useColorScheme } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 /**
  * Props del componente ClientCard
@@ -29,11 +26,12 @@ const ClientCard: React.FC<ClientCardProps> = ({ item, onPress, isPending }) => 
     const theme = Colors[colorScheme || 'light'];
 
     /**
-     * Retorna el nivel de deuda con su color asociado.
+     * Retorna el nivel de deuda con su color asociado y texto descriptivo.
      */
     const getDebtLevel = (debt: number) => {
-        if (debt < 1000) return { text: 'Baja', color: theme.success };
-        if (debt < 5000) return { text: 'Media', color: theme.warning };
+        if (debt === 0) return { text: 'Al día', color: theme.success };
+        if (debt < 2000) return { text: 'Baja', color: theme.success };
+        if (debt < 7000) return { text: 'Media', color: theme.warning };
         return { text: 'Alta', color: theme.error };
     };
 
@@ -46,30 +44,35 @@ const ClientCard: React.FC<ClientCardProps> = ({ item, onPress, isPending }) => 
                 styles.card,
                 {
                     backgroundColor: theme.surface,
-                    borderColor: theme.border,
+                    borderColor: theme.borderSubtle,
                 },
             ]}
             onPress={() => onPress(item.id)}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
         >
             <View style={styles.content}>
                 <View style={styles.info}>
                     <View style={styles.nameRow}>
-                        <Text style={[styles.name, { color: theme.text }]}>{item.name}</Text>
+                        <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
+                            {item.name}
+                        </Text>
                         {isPending && (
-                            <View style={{ marginLeft: 6 }}>
-                                <FontAwesome name="cloud-upload" size={14} color={theme.warning} />
-                            </View>
+                            <Ionicons name="cloud-upload-outline" size={16} color={theme.warning} style={{ marginLeft: 6 }} />
                         )}
-                        <View style={[styles.badge, { backgroundColor: `${color}15` }]}>
-                            <Text style={[styles.badgeText, { color }]}>{text}</Text>
-                        </View>
                     </View>
-                    <Text style={[styles.debt, {color: theme.textSecondary}]}>Debe: ${formattedDebt}</Text>
+                    <View style={styles.debtRow}>
+                        <Text style={[styles.debtLabel, { color: theme.textSecondary }]}>Debe</Text>
+                        <Text style={[styles.debtAmount, { color: item.debt > 0 ? theme.error : theme.success }]}>
+                            ${formattedDebt}
+                        </Text>
+                    </View>
                 </View>
 
-                <View style={styles.arrow}>
-                    <FontAwesome name="chevron-right" size={16} color="#9CA3AF" />
+                <View style={styles.rightSection}>
+                    <View style={[styles.badge, { backgroundColor: `${color}15` }]}>
+                        <Text style={[styles.badgeText, { color }]}>{text}</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={theme.border} style={styles.chevron} />
                 </View>
             </View>
         </TouchableOpacity>
@@ -78,56 +81,65 @@ const ClientCard: React.FC<ClientCardProps> = ({ item, onPress, isPending }) => 
 
 const styles = StyleSheet.create({
     card: {
-        marginVertical: 10,
-        borderRadius: 20,
+        marginBottom: 12,
+        borderRadius: 24, // Consistencia con perfiles
         borderWidth: 1,
-        elevation: 4,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 8,
+        elevation: 1,
     },
     content: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
         paddingHorizontal: 20,
-        paddingVertical: 24,
+        paddingVertical: 20,
     },
     info: {
         flex: 1,
+        marginRight: 12,
     },
     nameRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 8,
+        marginBottom: 6,
     },
     name: {
         fontSize: 18,
         fontWeight: '700',
-        flex: 1,
-        letterSpacing: -0.3,
+        letterSpacing: -0.5,
+    },
+    debtRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    debtLabel: {
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    debtAmount: {
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    rightSection: {
+        alignItems: 'flex-end',
+        gap: 10,
     },
     badge: {
         paddingHorizontal: 10,
-        paddingVertical: 6,
+        paddingVertical: 5,
         borderRadius: 12,
-        marginLeft: 12,
     },
     badgeText: {
-        fontSize: 11,
+        fontSize: 10,
         fontWeight: '800',
         textTransform: 'uppercase',
-        letterSpacing: 0.8,
+        letterSpacing: 0.5,
     },
-    debt: {
-        fontSize: 17,
-        fontWeight: '500',
-    },
-    arrow: {
-        marginLeft: 16,
-        padding: 10,
-        borderRadius: 20,
+    chevron: {
+        marginRight: -4,
     },
 });
 

@@ -9,15 +9,15 @@
 
 import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useState } from 'react';
 import {
     TextInput as RNTextInput,
     StyleSheet,
     Text,
     TextInputProps,
-    useColorScheme,
     View,
 } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 /**
  * Props para el componente CustomInput, extendiendo las de TextInput.
@@ -47,12 +47,26 @@ export default function CustomInput({
     ...rest
 }: CustomInputProps) {
     const theme = Colors[useColorScheme() || 'light'];
+    const [isFocused, setIsFocused] = useState(false);
+
+    const handleFocus = (e: any) => {
+        setIsFocused(true);
+        if (rest.onFocus) rest.onFocus(e);
+    };
+
+    const handleBlur = (e: any) => {
+        setIsFocused(false);
+        if (rest.onBlur) rest.onBlur(e);
+    };
 
     return (
         <View
             style={[
                 styles.container,
-                { backgroundColor: theme.inputBackground, borderColor: theme.border },
+                { 
+                    backgroundColor: theme.inputBackground, 
+                    borderColor: isFocused ? theme.primary : theme.borderSubtle,
+                },
                 containerStyle, // Estilo del contenedor principal
             ]}
         >
@@ -71,6 +85,8 @@ export default function CustomInput({
                 ref={inputRef}
                 style={[styles.input, { color: theme.text }, style]} // Combina estilos base y personalizados
                 placeholderTextColor={theme.textSecondary}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
                 {...rest}
             />
         </View>
@@ -81,9 +97,9 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
-        borderRadius: 16, // Bordes más elegantes
-        borderWidth: 1.5,
-        height: 56, // Más alto para mobile-flow superior
+        borderRadius: 100, // Look tipo píldora moderno
+        borderWidth: 1.5, // Borde constante para evitar saltos de layout
+        height: 50, // Altura estándar más limpia
         paddingHorizontal: 16,
         width: '100%',
     },
@@ -98,9 +114,9 @@ const styles = StyleSheet.create({
     input: {
         flex: 1,
         height: '100%',
-        fontSize: 17,
+        fontSize: 16,
         fontWeight: '500',
         paddingVertical: 0,
-        letterSpacing: 0.2, // Mejor legibilidad
+        letterSpacing: 0.1,
     },
 });

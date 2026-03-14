@@ -25,6 +25,7 @@ export default function OnboardingFooter({
 
     return (
         <SafeAreaView
+            edges={['bottom']}
             style={[
                 styles.container,
                 { backgroundColor: theme.surface, borderTopColor: theme.border },
@@ -40,7 +41,12 @@ export default function OnboardingFooter({
                 title={isLast ? 'EMPEZAR PRUEBA GRATIS' : 'Siguiente'}
                 onPress={isLast ? onRegisterPress : onNext}
                 iconName={isLast ? 'rocket-outline' : 'arrow-forward'}
-                buttonStyle={[styles.primaryButton, { backgroundColor: theme.primary }]}
+                buttonStyle={[
+                    styles.primaryButton,
+                    { 
+                        backgroundColor: theme.primary,
+                    }
+                ]}
                 textStyle={{ color: theme.textOnPrimary }}
                 iconColor={theme.textOnPrimary}
             />
@@ -59,35 +65,35 @@ export default function OnboardingFooter({
 const styles = StyleSheet.create({
     container: {
         paddingHorizontal: 24,
-        paddingBottom: 16,
+        paddingTop: 16,
         borderTopWidth: 1,
     },
     dotsContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        height: 40,
-        marginBottom: 10,
+        height: 24,
+        marginBottom: 12,
     },
     primaryButton: {
-        paddingVertical: 16,
-        borderRadius: 12,
+        paddingVertical: 14,
+        borderRadius: 100,
         alignItems: 'center',
         flexDirection: 'row',
         justifyContent: 'center',
-        gap: 10,
+        gap: 8,
     },
     buttonText: {
         fontSize: 16,
         fontWeight: '700',
     },
     secondaryButton: {
-        paddingVertical: 12,
-        marginTop: 8,
+        paddingVertical: 8,
+        marginTop: 4,
         alignItems: 'center',
     },
     secondaryButtonText: {
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: '600',
     },
 });

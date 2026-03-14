@@ -2,13 +2,14 @@ import { Colors } from '@/constants/Colors';
 import { useSessionStore } from '@/store/sessionStore';
 import { formatDate } from '@/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
-import { Alert, StyleSheet, useColorScheme, View, Linking } from 'react-native';
-// 1. Importamos React para usar useState y useEffect
-import React, { useState, useEffect } from 'react';
+import { Alert, StyleSheet, View, Linking } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import React from 'react';
 import CustomButton from '../ui/CustomButton';
 import CustomText from '../ui/CustomText';
 import { Subscription } from '@/types';
 import { SUPPORT_CONTACT } from '@/constants';
+import { useNotification } from '@/store/notificationStore';
 
 const planNames: Record<Subscription['plan'], string> = {
     none: 'Ninguno',
@@ -19,32 +20,27 @@ const planNames: Record<Subscription['plan'], string> = {
 
 const SubscriptionCard = () => {
     const theme = Colors[useColorScheme() || 'light'];
+    const showNotification = useNotification();
 
-    // 2. Creamos un estado local para "congelar" la información de la suscripción
-    const [localSubscription, setLocalSubscription] = useState<Subscription | null>(null);
+    // Obtenemos la suscripción reactivamente del store
+    const subscription = useSessionStore((state) => state.subscription);
 
-    // 3. Usamos un efecto para cargar los datos del store al estado local UNA SOLA VEZ
-    useEffect(() => {
-        // Obtenemos el estado actual del store al montar el componente
-        const initialSubscription = useSessionStore.getState().subscription;
-        // Lo guardamos en nuestro estado local
-        setLocalSubscription(initialSubscription);
-    }, []); // El array vacío [] asegura que esto se ejecute solo al montar.
-
-    const handleGetSubscription = () => {
-        const { WHATSAPP_NUMBER } = SUPPORT_CONTACT;
-        const message = `Hola, estoy interesado en obtener una suscripción para Apunta'o.`;
+    const handleWhatsAppContact = (customMessage?: string) => {
+        const { WHATSAPP_NUMBER, WHATSAPP_MESSAGE } = SUPPORT_CONTACT;
+        const message = customMessage || WHATSAPP_MESSAGE;
         const url = `whatsapp://send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(message)}`;
 
         Linking.openURL(url).catch(() => {
-            Alert.alert('Error', 'Asegúrate de tener WhatsApp instalado en tu dispositivo.');
+            showNotification({
+                message: 'Asegúrate de tener WhatsApp instalado',
+                type: 'error',
+            });
         });
     };
 
-    // 4. TODA LA LÓGICA AHORA USA `localSubscription` EN LUGAR DE LEER DEL STORE
     const getStatusInfo = () => {
-        // Si el estado local aún no se ha cargado, mostramos 'Cargando...'
-        if (!localSubscription) {
+        // ... (resto de la función getStatusInfo igual)
+        if (!subscription || subscription.status === 'loading') {
             return {
                 icon: 'hourglass-outline' as const,
                 color: theme.textSecondary,
@@ -52,7 +48,7 @@ const SubscriptionCard = () => {
             };
         }
 
-        switch (localSubscription.status) {
+        switch (subscription.status) {
             case 'active':
                 return {
                     icon: 'shield-checkmark-outline' as const,
@@ -77,7 +73,6 @@ const SubscriptionCard = () => {
                     color: theme.error,
                     text: 'Cancelada',
                 };
-            // El caso 'loading' se maneja con la comprobación de !localSubscription
             default:
                 return {
                     icon: 'help-circle-outline' as const,
@@ -89,11 +84,11 @@ const SubscriptionCard = () => {
 
     const statusInfo = getStatusInfo();
     const dateToShow =
-        localSubscription?.status === 'trial'
-            ? localSubscription?.trialEndDate
-            : localSubscription?.endDate;
+        subscription?.status === 'trial'
+            ? subscription?.trialEndDate
+            : subscription?.endDate;
 
-    const translatedPlanName = localSubscription?.plan ? planNames[localSubscription.plan] : '';
+    const translatedPlanName = subscription?.plan ? planNames[subscription.plan] : '';
 
     return (
         <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -115,7 +110,7 @@ const SubscriptionCard = () => {
                 >
                     {statusInfo.text}
                 </CustomText>
-                {localSubscription?.plan && localSubscription.plan !== 'none' && (
+                {subscription?.plan && subscription.plan !== 'none' && (
                     <CustomText size="medium" color={theme.textSecondary}>
                         Plan: {translatedPlanName}
                     </CustomText>
@@ -128,29 +123,24 @@ const SubscriptionCard = () => {
                 )}
             </View>
 
-            {localSubscription?.status === 'trial' && (
+            {subscription?.status === 'trial' && (
                 <CustomButton
                     title="Obtener Suscripción"
-                    onPress={handleGetSubscription}
+                    onPress={() => handleWhatsAppContact("Hola, estoy interesado en obtener una suscripción para Apunta'o.")}
                     buttonStyle={{ marginTop: 16, backgroundColor: theme.primary }}
                     textStyle={{ color: theme.textOnPrimary }}
                     iconName="logo-whatsapp"
                 />
             )}
 
-            {(localSubscription?.status === 'expired' ||
-                localSubscription?.status === 'cancelled') && (
+            {(subscription?.status === 'expired' ||
+                subscription?.status === 'cancelled') && (
                 <CustomButton
                     title="Renovar Suscripción"
-                    onPress={() =>
-                        Alert.alert(
-                            'Contactar Soporte',
-                            'Por favor, contacta a soporte para renovar tu suscripción.'
-                        )
-                    }
+                    onPress={() => handleWhatsAppContact("Hola, mi suscripción ha vencido y quiero renovarla.")}
                     buttonStyle={{ marginTop: 16, backgroundColor: theme.primary }}
                     textStyle={{ color: theme.textOnPrimary }}
-                    iconName="rocket-outline"
+                    iconName="logo-whatsapp"
                 />
             )}
         </View>
@@ -160,7 +150,7 @@ const SubscriptionCard = () => {
 export default SubscriptionCard;
 
 const styles = StyleSheet.create({
-    card: { borderRadius: 16, padding: 20, marginBottom: 18, borderWidth: 1 },
+    card: { borderRadius: 24, padding: 20, marginBottom: 18, borderWidth: 1 },
     cardTitle: { textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 16 },
     statItem: { alignItems: 'center', gap: 6 },
 });

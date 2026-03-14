@@ -3,7 +3,8 @@ import { Colors } from '@/constants/Colors';
 import { useNotificationStore } from '@/store/notificationStore';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, TouchableOpacity, useColorScheme } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 // Usaremos Reanimated para animaciones más fluidas
 import Animated, {
     useAnimatedStyle,

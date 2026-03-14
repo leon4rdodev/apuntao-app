@@ -4,7 +4,6 @@ export default {
     expo: {
         name: "Apunta'o",
         slug: 'apuntao-app',
-        version: '1.0.0',
         orientation: 'portrait',
         icon: './assets/images/icon.png',
         scheme: 'apuntaoapp',

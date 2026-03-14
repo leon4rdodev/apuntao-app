@@ -1,7 +1,8 @@
 import { Colors } from '@/constants/Colors';
 import { Entypo, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 export interface Feature {
     icon: string;

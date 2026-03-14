@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, TextInput, StyleSheet, TextInputProps, useColorScheme } from 'react-native';
+import { View, TextInput, StyleSheet, TextInputProps } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 
 interface AmountInputProps extends Omit<TextInputProps, 'onChangeText' | 'value'> {
@@ -33,11 +34,11 @@ export const AmountInput: React.FC<AmountInputProps> = ({
     return (
         <View style={styles.container}>
             <TextInput
-                style={[styles.input, { color: theme.primary }]}
+                style={[styles.input, { color: theme.text }]}
                 value={displayValue}
                 onChangeText={handleChangeText}
                 placeholder={placeholder}
-                placeholderTextColor={theme.primary}
+                placeholderTextColor={theme.textSecondary}
                 keyboardType="decimal-pad"
                 autoFocus
                 caretHidden={true}
@@ -51,10 +52,13 @@ const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 16,
+        paddingVertical: 12, // Ligeramente reducido
+        backgroundColor: 'transparent',
+        borderRadius: 20,
+        marginBottom: 8,
     },
     input: {
-        fontSize: 48,
+        fontSize: 56, // Un poco más grande para el impacto visual pero con color tenue
         fontWeight: '700',
         backgroundColor: 'transparent',
         minWidth: 120,
@@ -63,5 +67,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         includeFontPadding: false,
         textAlignVertical: 'center',
+        letterSpacing: -1,
     },
 });

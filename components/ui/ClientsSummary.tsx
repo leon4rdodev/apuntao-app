@@ -2,7 +2,8 @@ import { Colors } from '@/constants/Colors';
 import { formatMoney } from '@/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
 import type React from 'react';
-import { StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 /**
  * Props del componente ClientsSummary
@@ -28,7 +29,7 @@ export default function ClientsSummary({ totalDebt, clientsWithDebt }: ClientsSu
     return (
         <View>
             <View
-                style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}
+                style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }]}
             >
                 {/* Sección Principal: Monto de la Deuda */}
                 <View style={styles.amountSection}>
@@ -60,31 +61,38 @@ export default function ClientsSummary({ totalDebt, clientsWithDebt }: ClientsSu
 
 const styles = StyleSheet.create({
     card: {
-        borderRadius: 16,
+        borderRadius: 24, // Bordes más suaves
         borderWidth: 1,
-        overflow: 'hidden', // Asegura que los bordes redondeados se apliquen a los hijos
-        marginBottom: 18,
+        overflow: 'hidden',
+        marginBottom: 24,
+        marginTop: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.03, // Sombra muy sutil
+        shadowRadius: 12,
+        elevation: 2,
     },
     amountSection: {
         alignItems: 'center',
-        paddingVertical: 24,
+        paddingVertical: 32, // Más aire
     },
     amount: {
-        fontSize: 40, // <-- AUMENTADO: Texto de la deuda más grande
+        fontSize: 44, // Un poco más grande
         fontWeight: 'bold',
         marginBottom: 4,
+        letterSpacing: -1,
     },
     subtitle: {
-        fontSize: 14,
-        fontWeight: '500',
-        textTransform: 'uppercase', // Estilo adicional para diferenciar
-        letterSpacing: 0.5,
+        fontSize: 13,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
     },
     statsSection: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 14,
+        paddingVertical: 16,
         borderTopWidth: 1,
     },
     statsText: {
@@ -93,9 +101,11 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     separatorText: {
-        fontSize: 16,
-        fontWeight: '600',
+        fontSize: 14,
+        fontWeight: '700',
         textAlign: 'center',
-        marginBottom: 8,
+        marginBottom: 16,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
 });

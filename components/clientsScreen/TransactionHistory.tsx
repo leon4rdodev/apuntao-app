@@ -4,7 +4,8 @@ import { Transaction } from '@/types';
 import { formatDate, formatMoney } from '@/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
-import { StyleSheet, TouchableOpacity, View, useColorScheme, FlatList } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, FlatList } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import Animated, { LinearTransition, FadeInDown, FadeOutDown } from 'react-native-reanimated';
 
 /**
@@ -44,10 +45,10 @@ const TransactionHistory = ({
             entering={FadeInDown}
             exiting={FadeOutDown}
             layout={LinearTransition}
-            style={[styles.transactionRow, { borderTopColor: theme.border }]}
+            style={[styles.transactionRow, { borderTopColor: theme.borderSubtle }]}
         >
             <View style={{ flex: 1 }}>
-                <CustomText size="medium" weight="medium" style={{ color: tx.type === 'Pago' ? theme.success : theme.error }}>
+                <CustomText size="medium" weight="medium" style={{ color: tx.type === 'Pago' ? theme.success : theme.text }}>
                     {tx.type}
                 </CustomText>
                 <CustomText
@@ -61,7 +62,7 @@ const TransactionHistory = ({
             <CustomText
                 size="medium"
                 weight="bold"
-                color={tx.type === 'Pago' ? theme.success : theme.error}
+                color={tx.type === 'Pago' ? theme.success : theme.text}
             >
                 {tx.type === 'Pago' ? '-' : '+'}${formatMoney(tx.amount)}
             </CustomText>
@@ -72,7 +73,7 @@ const TransactionHistory = ({
     );
 
     return (
-        <View style={[styles.card, { backgroundColor: theme.surface,borderColor: theme.border }]}>
+        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }]}>
             <CustomText
                 size="small"
                 weight="bold"
@@ -95,12 +96,17 @@ const TransactionHistory = ({
 
 const styles = StyleSheet.create({
     card: {
-        borderRadius: 16,
-        paddingHorizontal: 20,
-        paddingTop: 20,
-        marginBottom: 16,
+        borderRadius: 24,
+        paddingHorizontal: 24,
+        paddingTop: 24,
+        paddingBottom: 8,
+        marginBottom: 40,
         borderWidth: 1,
-        marginVertical:18,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 8,
+        elevation: 1, // Para Android
     },
     cardTitle: {
         marginBottom: 12,
@@ -111,7 +117,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 14,
+        paddingVertical: 16,
         borderTopWidth: 1,
     },
     deleteIcon: {

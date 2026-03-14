@@ -7,6 +7,7 @@
 // --- Claves de Almacenamiento Local (AsyncStorage) ---
 export const STORAGE_KEYS = {
     HAS_ONBOARDED: '@has_onboarded',
+    BIOMETRICS_ENABLED: '@biometrics_enabled',
 } as const;
 
 
@@ -35,7 +36,7 @@ export const SUPPORT_CONTACT = {
     /** Mensaje predeterminado para iniciar conversación de soporte por WhatsApp. */
     WHATSAPP_MESSAGE: "Hola, necesito ayuda con la aplicación Apunta'o.",
     /** Dirección de correo electrónico para soporte. */
-    EMAIL_ADDRESS: 'soporte@apuntao.app',
+    EMAIL_ADDRESS: 'apuntaord@gmail.com',
     /** Asunto predeterminado para correos de soporte. */
     EMAIL_SUBJECT: "Soporte App Apunta'o",
 } as const;

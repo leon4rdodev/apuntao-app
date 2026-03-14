@@ -9,8 +9,8 @@ import {
     StyleSheet,
     TouchableWithoutFeedback,
     View,
-    useColorScheme,
 } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import Animated, {
     FadeIn,
     FadeOut,
@@ -47,14 +47,11 @@ const ActionModal = ({
         });
     }, [translateY, onClose]);
 
-    // SOLUCIÓN 1: Spring más controlado
+    // Sincronización de velocidad con el teclado nativo (aprox 250ms)
     useEffect(() => {
         if (isVisible) {
-            translateY.value = withSpring(0, {
-                damping: 20, // Aumentado para menos rebote
-                stiffness: 120, // Reducido para movimiento más suave
-                overshootClamping: true, // CLAVE: Evita que sobrepase el valor objetivo
-            });
+            // Cambiamos de spring a timing para un ascenso linear a la par del teclado
+            translateY.value = withTiming(0, { duration: 250 });
         } else {
             translateY.value = withTiming(500, { duration: 200 });
         }
@@ -116,7 +113,7 @@ const ActionModal = ({
                         keyboardShouldPersistTaps="always"
                     >
                         <View style={styles.handleContainer}>
-                            <View style={[styles.handle, { backgroundColor: theme.border }]} />
+                            <View style={[styles.handle, { backgroundColor: theme.borderSubtle }]} />
                         </View>
 
                         <CustomText size="large" weight="bold" style={styles.modalTitle}>
@@ -127,7 +124,16 @@ const ActionModal = ({
 
                         <View style={styles.modalActions}>
                             {actions.map((action, index) => (
-                                <CustomButton key={action.title || index} {...action} />
+                                <View key={action.title || index} style={{ flex: 1 }}>
+                                    <CustomButton
+                                        title={action.title}
+                                        onPress={action.onPress}
+                                        buttonStyle={[action.buttonStyle]}
+                                        textStyle={[{ fontSize: 16 }, action.textStyle]}
+                                        iconName={action.iconName}
+                                        iconColor={action.iconColor}
+                                    />
+                                </View>
                             ))}
                         </View>
                     </ScrollView>
@@ -144,7 +150,7 @@ const styles = StyleSheet.create({
     },
     modalOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(0, 0, 0, 0.4)', // Overlay un poco más suave
     },
     modalPositioner: {
         flex: 1,
@@ -153,13 +159,13 @@ const styles = StyleSheet.create({
     modalContent: {
         width: '100%',
         maxHeight: '100%',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
+        borderTopLeftRadius: 32, // Bordes mucho más redondeados
+        borderTopRightRadius: 32,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: -5 },
-        shadowOpacity: 0.1,
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.05, // Sombra más sutil
         shadowRadius: 10,
-        elevation: 10,
+        elevation: 8,
         overflow: 'hidden',
     },
     scrollContentContainer: {
@@ -167,10 +173,10 @@ const styles = StyleSheet.create({
     },
     handleContainer: {
         alignItems: 'center',
-        paddingVertical: 12,
+        paddingVertical: 16, // Más espacio para respirar
     },
     handle: {
-        width: 40,
+        width: 48,
         height: 5,
         borderRadius: 2.5,
     },
@@ -179,10 +185,13 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     modalActions: {
-        flexDirection: 'column',
-        marginTop: 24,
+        flexDirection: 'row', // Botones lado a lado en lugar de apilados
+        marginTop: 32,
         width: '100%',
-        gap: 12,
+        gap: 8,
+    },
+    actionButton: {
+        // Eliminado para usar estilos de CustomButton (pill-shaped)
     },
 });
 

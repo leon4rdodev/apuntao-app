@@ -2,7 +2,8 @@ import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Platform, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
+import { Platform, StyleSheet, TouchableOpacity } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import CustomText from '../ui/CustomText';
 
 /**
@@ -38,7 +39,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 8, // Espacio entre el icono y el texto
         borderRadius: 30,
-        elevation: 2,
         opacity: 0.99, // Añade un poco de opacidad para el efecto hover
     },
 });

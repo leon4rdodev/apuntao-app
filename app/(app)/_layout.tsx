@@ -23,13 +23,10 @@ export default function AppStackLayout() {
 
     return (
         <>
-            {/* <-- Envolvemos en un Fragmento para incluir el modal --> */}
             <Stack screenOptions={{ animation: 'fade_from_bottom' }}>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen name="clients/[id]" options={{ headerShown: false }} />
             </Stack>
-            {/* <-- AÑADIDO: El modal de renovación de suscripción ahora está disponible
-               para (tabs) y clients/[id] --> */}
             <SubscriptionRenewalModal />
         </>
     );

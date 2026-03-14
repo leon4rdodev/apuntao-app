@@ -8,8 +8,9 @@ import CustomText from '@/components/ui/CustomText';
 import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useRef } from 'react';
 import { useEmailAuth } from '@/hooks/useEmailAuth';
+import { TextInput } from 'react-native';
 
 import {
     Keyboard,
@@ -18,9 +19,9 @@ import {
     ScrollView,
     StyleSheet,
     TouchableWithoutFeedback,
-    useColorScheme,
     View,
 } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LoginScreen() {
@@ -35,6 +36,8 @@ export default function LoginScreen() {
         isLoading,
         handleLogin,
     } = useEmailAuth();
+
+    const passwordRef = useRef<TextInput>(null!);
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -68,6 +71,7 @@ export default function LoginScreen() {
                                 autoCapitalize="none"
                                 editable={!isLoading}
                                 returnKeyType="next"
+                                onSubmitEditing={() => passwordRef.current?.focus()}
                             />
                             
                             <CustomInput
@@ -78,6 +82,7 @@ export default function LoginScreen() {
                                 secureTextEntry
                                 editable={!isLoading}
                                 returnKeyType="done"
+                                inputRef={passwordRef}
                                 onSubmitEditing={handleLogin}
                             />
                         </View>
@@ -92,7 +97,7 @@ export default function LoginScreen() {
                             />
                             
                             <CustomButton
-                                title="No tengo cuenta, quiero registrarme"
+                                title="Crear una cuenta"
                                 onPress={() => router.replace('/(auth)/register')}
                                 disabled={isLoading}
                                 buttonStyle={{ backgroundColor: 'transparent', marginTop: 16 }}
@@ -113,6 +118,6 @@ const styles = StyleSheet.create({
     header: { alignItems: 'center', marginBottom: 30 },
     title: { marginTop: 16, marginBottom: 8 },
     subtitle: { textAlign: 'center' },
-    form: { gap: 16, marginBottom: 20 },
-    footer: { gap: 16 },
+    form: { gap: 12, marginBottom: 28 },
+    footer: { gap: 12 },
 });

@@ -29,9 +29,13 @@ import { validateClientData } from '@/utils/validation';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, useColorScheme, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AmountInput } from '@/components/input/AmountInput';
+import { authenticateBiometrics } from '@/utils/biometrics';
+import { STORAGE_KEYS } from '@/constants';
+import { getFromStorage } from '@/utils/storage';
 
 // --- Tipos para el estado del Modal ---
 type ModalConfig = { type: 'transaction'; payload: TransactionType } | { type: 'edit' } | null;
@@ -63,7 +67,7 @@ export default function ClientDetailScreen() {
 
     // --- Handlers (Lógica de la pantalla) ---
 
-    const handleSaveTransaction = useCallback(() => {
+    const handleSaveTransaction = useCallback(async () => {
         if (!client || modalConfig?.type !== 'transaction') return;
         const numericAmount = parseFormattedNumber(amount);
         if (!numericAmount || numericAmount <= 0) {
@@ -74,6 +78,14 @@ export default function ClientDetailScreen() {
             showNotification({ message: ERROR_MESSAGES.PAYMENT_EXCEEDS_DEBT, type: 'error' });
             return;
         }
+
+        // Verificación Biométrica
+        const biometricsEnabled = await getFromStorage<boolean>(STORAGE_KEYS.BIOMETRICS_ENABLED);
+        if (biometricsEnabled) {
+            const success = await authenticateBiometrics(`Confirmar ${modalConfig.payload} de $${amount}`);
+            if (!success) return;
+        }
+
         addTransaction(client.id, {
             amount: numericAmount,
             type: modalConfig.payload,
@@ -103,7 +115,7 @@ export default function ClientDetailScreen() {
     }, [client, editName, editPhone, updateClient, showNotification]);
 
     // ... (handler handleDeleteClient sin cambios)
-    const handleDeleteClient = useCallback(() => {
+    const handleDeleteClient = useCallback(async () => {
         if (!client) return;
 
         if (client.debt > 0) {
@@ -119,7 +131,14 @@ export default function ClientDetailScreen() {
                 {
                     text: 'Eliminar',
                     style: 'destructive',
-                    onPress: () => {
+                    onPress: async () => {
+                        // Verificación Biométrica
+                        const biometricsEnabled = await getFromStorage<boolean>(STORAGE_KEYS.BIOMETRICS_ENABLED);
+                        if (biometricsEnabled) {
+                            const success = await authenticateBiometrics(`Confirmar eliminación de ${client.name}`);
+                            if (!success) return;
+                        }
+
                         deleteClient(client.id);
                         showNotification({
                             message: `${client.name} fue eliminado.`,
@@ -132,7 +151,7 @@ export default function ClientDetailScreen() {
         );
     }, [client, deleteClient, router, showNotification]);
 
-    const handleSettleDebt = useCallback(() => {
+    const handleSettleDebt = useCallback(async () => {
         if (!client || client.debt <= 0) return;
 
         // =======================================================
@@ -149,7 +168,14 @@ export default function ClientDetailScreen() {
                 { text: 'Cancelar', style: 'cancel' },
                 {
                     text: 'Confirmar Pago',
-                    onPress: () => {
+                    onPress: async () => {
+                        // Verificación Biométrica
+                        const biometricsEnabled = await getFromStorage<boolean>(STORAGE_KEYS.BIOMETRICS_ENABLED);
+                        if (biometricsEnabled) {
+                            const success = await authenticateBiometrics(`Confirmar saldo total de ${client.name}`);
+                            if (!success) return;
+                        }
+
                         addTransaction(client.id, {
                             amount: client.debt,
                             type: 'Pago',
@@ -199,7 +225,7 @@ export default function ClientDetailScreen() {
     );
 
     const openModal = useCallback((config: ModalConfig) => {
-        if (config?.type === 'transaction') {
+        if (config?.type === 'transaction' || config?.type === 'edit') {
             if (!checkAndAlert()) return;
         }
         if (config?.type === 'edit' && client) {
@@ -261,8 +287,10 @@ export default function ClientDetailScreen() {
             {
                 title: 'Cancelar',
                 onPress: () => setModalConfig(null),
-                buttonStyle: { backgroundColor: theme.border, flex: 1 },
+                buttonStyle: { backgroundColor: theme.inputBackground, flex: 1, borderWidth: 1, borderColor: theme.borderSubtle },
                 textStyle: { color: theme.textSecondary },
+                iconName: 'close-outline',
+                iconColor: theme.textSecondary,
             },
         ];
         if (modalConfig.type === 'transaction') {
@@ -270,8 +298,15 @@ export default function ClientDetailScreen() {
             return {
                 title: isPayment ? 'Registrar Pago' : 'Añadir Nueva Deuda',
                 actions: [
-                    { title: 'Guardar', onPress: handleSaveTransaction, buttonStyle: { backgroundColor: theme.primary, flex: 1 }, textStyle: { color: theme.textOnPrimary } },
                     ...baseActions,
+                    { 
+                        title: 'Guardar', 
+                        onPress: handleSaveTransaction, 
+                        buttonStyle: { backgroundColor: theme.primary, flex: 1 }, 
+                        textStyle: { color: theme.textOnPrimary },
+                        iconName: 'checkmark-outline',
+                        iconColor: theme.textOnPrimary,
+                    },
                 ],
             };
         }
@@ -279,8 +314,15 @@ export default function ClientDetailScreen() {
             return {
                 title: 'Editar Cliente',
                 actions: [
-                    { title: 'Actualizar', onPress: handleUpdateClient, buttonStyle: { backgroundColor: theme.primary, flex: 1 }, textStyle: { color: theme.textOnPrimary } },
                     ...baseActions,
+                    { 
+                        title: 'Actualizar', 
+                        onPress: handleUpdateClient, 
+                        buttonStyle: { backgroundColor: theme.primary, flex: 1 }, 
+                        textStyle: { color: theme.textOnPrimary },
+                        iconName: 'save-outline',
+                        iconColor: theme.textOnPrimary,
+                    },
                 ],
             };
         }
@@ -346,7 +388,7 @@ export default function ClientDetailScreen() {
 // Estilos
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    scrollContent: { paddingTop: 110, padding: 16, paddingBottom: 40 },
+    scrollContent: { paddingTop: 110, paddingHorizontal: 20, paddingBottom: 60 },
     inputGroup: { marginBottom: 16 },
     label: { marginBottom: 8 },
     notFoundContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },

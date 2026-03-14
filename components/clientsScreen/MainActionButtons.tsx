@@ -1,6 +1,7 @@
 import { Colors } from '@/constants/Colors';
 import React from 'react';
-import { StyleSheet, View, useColorScheme } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import CustomButton from '../ui/CustomButton';
 
 /**
@@ -12,26 +13,25 @@ const MainActionButtons = ({ onPay, onAddDebt }: { onPay: () => void; onAddDebt:
     return (
         <View style={styles.actionsContainer}>
             <CustomButton
-                title="Añadir Pago"
+                title="Pago"
                 onPress={onPay}
                 iconName="arrow-down-circle-outline"
                 buttonStyle={[
                     styles.mainActionButton,
-                    { backgroundColor: theme.successLight, height: 90 },
+                    { backgroundColor: theme.background, borderColor: theme.border, borderWidth: 1 },
                 ]}
-                textStyle={{ color: theme.success, fontSize: 20 }}
+                textStyle={{ color: theme.success, fontSize: 18, fontWeight: '600' }}
                 iconColor={theme.success}
             />
             <CustomButton
-                title="Añadir Deuda"
+                title="Deuda"
                 onPress={onAddDebt}
                 iconName="arrow-up-circle-outline"
                 buttonStyle={[
                     styles.mainActionButton,
-
-                    { backgroundColor: theme.errorLight, height: 90 },
+                    { backgroundColor: theme.background, borderColor: theme.border, borderWidth: 1 },
                 ]}
-                textStyle={{ color: theme.error, fontSize: 20 }}
+                textStyle={{ color: theme.error, fontSize: 18, fontWeight: '600' }}
                 iconColor={theme.error}
             />
         </View>
@@ -40,13 +40,15 @@ const MainActionButtons = ({ onPay, onAddDebt }: { onPay: () => void; onAddDebt:
 
 const styles = StyleSheet.create({
     actionsContainer: {
-        flexDirection: 'column',
-        gap: 16,
-        marginBottom: 18,
+        flexDirection: 'row',
+        gap: 12,
+        marginBottom: 24,
     },
     mainActionButton: {
         flex: 1,
-        paddingVertical: 24,
+        paddingVertical: 18,
+        borderRadius: 100,
+        height: 'auto',
     },
 });
 

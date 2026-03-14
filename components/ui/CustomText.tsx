@@ -1,6 +1,7 @@
 import { Colors } from '@/constants/Colors';
 import React from 'react';
-import { Text, TextProps, TextStyle, useColorScheme } from 'react-native';
+import { Text, TextProps, TextStyle } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 // 1. Añadimos 'xxlarge' al tipo para que sea una opción válida.
 type TextSize = 'small' | 'medium' | 'large' | 'xlarge' | 'xxlarge';

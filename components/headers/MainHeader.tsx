@@ -1,10 +1,12 @@
 import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CustomInput from '../input/CustomInput';
 import SyncIndicator from '../ui/SyncIndicator';
 import { useState, useEffect } from 'react';
+import { useUIStore } from '@/store/uiStore';
 
 interface MainHeaderProps {
     setSearchQuery: (query: string) => void;
@@ -18,6 +20,9 @@ interface MainHeaderProps {
  */
 export default function MainHeader({ setSearchQuery, setIsSearchOpen, isSearchOpen }: MainHeaderProps) {
     const [inputValue, setInputValue] = useState('');
+    const toggleTheme = useUIStore((state) => state.toggleTheme);
+    const themeMode = useUIStore((state) => state.themeMode);
+    const systemColorScheme = useColorScheme(); // Usamos el hook local
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -36,7 +41,8 @@ export default function MainHeader({ setSearchQuery, setIsSearchOpen, isSearchOp
         }
     };
 
-    const theme = Colors[useColorScheme() || 'light'];
+    const colorScheme = useColorScheme();
+    const theme = Colors[colorScheme || 'light'];
     const insets = useSafeAreaInsets();
 
     return (
@@ -45,7 +51,7 @@ export default function MainHeader({ setSearchQuery, setIsSearchOpen, isSearchOp
                 styles.header,
                 {
                     backgroundColor: theme.surface,
-                    borderBottomColor: theme.border,
+                    borderBottomColor: theme.borderSubtle,
                     paddingTop: insets.top,
                 },
             ]}
@@ -59,12 +65,23 @@ export default function MainHeader({ setSearchQuery, setIsSearchOpen, isSearchOp
                             autoFocus 
                             placeholder='Buscar cliente...'
                             containerStyle={styles.searchInput}
+                            icon="search-outline"
                         />
                     </View>
                 ) : (
                     <>
-                        {/* Placeholder invisible a la izquierda para equilibrio si no fuera absoluto */}
-                        <View style={styles.leftSpace} />
+                        {/* Botón de Cambio de Tema */}
+                        <TouchableOpacity 
+                            onPress={toggleTheme}
+                            style={styles.themeButton}
+                            accessibilityLabel="Cambiar tema"
+                        >
+                            <Ionicons 
+                                name={colorScheme === 'dark' ? 'sunny-outline' : 'moon-outline'} 
+                                size={24} 
+                                color={theme.text} 
+                            />
+                        </TouchableOpacity>
                         
                         <View style={styles.absoluteCenter} pointerEvents="none">
                             <View style={styles.headerContent}>
@@ -108,13 +125,17 @@ const styles = StyleSheet.create({
     contentContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'flex-end',
+        justifyContent: 'space-between', // Cambiado para separar los botones
         height: 60,
         marginTop: 4,
         position: 'relative',
     },
-    leftSpace: {
+    themeButton: {
         width: 44,
+        height: 44,
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 10,
     },
     absoluteCenter: {
         position: 'absolute',
@@ -137,7 +158,8 @@ const styles = StyleSheet.create({
         paddingRight: 8,
     },
     searchInput: {
-        height: 46,
+        height: 48,
+        borderWidth: 0, // Quitamos el borde extra si el header ya tiene
     },
     headerContent: {
         flexDirection: 'row',
