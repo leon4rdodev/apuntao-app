@@ -1,27 +1,24 @@
 import CustomButton from '@/components/ui/CustomButton';
 import CustomText from '@/components/ui/CustomText';
 import { Colors } from '@/constants/Colors';
-import React, { useCallback, useEffect, memo, useState } from 'react';
+import React, { useCallback, memo, useEffect } from 'react';
 import {
-    BackHandler,
-    Keyboard,
-    ScrollView,
     StyleSheet,
     TouchableWithoutFeedback,
     View,
-    InteractionManager,
+    Modal,
+    ScrollView,
+    Keyboard,
 } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import Animated, {
-    FadeIn,
-    FadeOut,
-    runOnJS,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
+import Animated, { 
+    useAnimatedStyle, 
+    useAnimatedKeyboard,
     withTiming,
-    Easing,
+    useSharedValue,
+    interpolate
 } from 'react-native-reanimated';
+import { useWindowDimensions } from 'react-native';
 
 interface ActionModalProps {
     isVisible: boolean;
@@ -34,8 +31,8 @@ interface ActionModalProps {
 
 /**
  * @component ActionModal
- * @description Modal optimizado para alto rendimiento y animaciones fluidas.
- * Utiliza React.memo y Reanimated 3 para garantizar 60fps.
+ * @description Clean Modal implementation.
+ * Focuses on stability and smooth positioning without interfering with child inputs.
  */
 const ActionModal = memo(({
     isVisible,
@@ -46,101 +43,79 @@ const ActionModal = memo(({
     paddingBottom,
 }: ActionModalProps) => {
     const theme = Colors[useColorScheme() || 'light'];
-    const translateY = useSharedValue(600);
-    const [shouldRender, setShouldRender] = useState(isVisible);
-
-    // Sincronización de montaje/desmontaje con animaciones
-    useEffect(() => {
-        if (isVisible) {
-            setShouldRender(true);
-            // Pequeño delay para asegurar que el componente esté montado antes de animar
-            InteractionManager.runAfterInteractions(() => {
-                translateY.value = withSpring(0, {
-                    damping: 20,
-                    stiffness: 90,
-                    mass: 0.5,
-                });
-            });
-        } else {
-            translateY.value = withTiming(600, { 
-                duration: 250,
-                easing: Easing.out(Easing.cubic)
-            }, (finished) => {
-                if (finished) {
-                    runOnJS(setShouldRender)(false);
-                }
-            });
-        }
-    }, [isVisible, translateY]);
+    const { height: screenHeight } = useWindowDimensions();
+    const isPresented = useSharedValue(0);
+    const keyboard = useAnimatedKeyboard();
 
     const handleClose = useCallback(() => {
-        // Primero animamos localmente, el efecto de arriba se encargará de setShouldRender(false)
-        translateY.value = withTiming(600, { 
-            duration: 250,
-            easing: Easing.out(Easing.cubic)
-        }, (finished) => {
-            if (finished) {
-                runOnJS(onClose)();
-            }
-        });
-    }, [translateY, onClose]);
+        Keyboard.dismiss();
+        onClose();
+    }, [onClose]);
 
-    const animatedStyle = useAnimatedStyle(() => ({
-        transform: [{ translateY: translateY.value }],
+    // Cerrar modal si el teclado desaparece manualmente
+    useEffect(() => {
+        if (!isVisible) return;
+        
+        const subscription = Keyboard.addListener('keyboardDidHide', () => {
+            onClose();
+        });
+
+        return () => subscription.remove();
+    }, [isVisible, onClose]);
+
+    useEffect(() => {
+        if (isVisible) {
+            isPresented.value = withTiming(1, { duration: 300 });
+        } else {
+            isPresented.value = withTiming(0, { duration: 250 });
+        }
+    }, [isVisible]);
+
+    const overlayStyle = useAnimatedStyle(() => ({
+        opacity: isPresented.value,
     }));
 
-    useEffect(() => {
-        const backAction = () => {
-            if (isVisible) {
-                handleClose();
-                return true;
-            }
-            return false;
+    const contentStyle = useAnimatedStyle(() => {
+        const translateY = interpolate(
+            isPresented.value,
+            [0, 1],
+            [screenHeight, 0]
+        );
+        return {
+            transform: [
+                { translateY: translateY - keyboard.height.value }
+            ],
         };
-
-        const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
-        return () => backHandler.remove();
-    }, [handleClose, isVisible]);
-
-    useEffect(() => {
-        const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
-            if (isVisible) {
-                handleClose();
-            }
-        });
-
-        return () => {
-            keyboardDidHideListener?.remove();
-        };
-    }, [handleClose, isVisible]);
-
-    if (!shouldRender) return null;
+    });
 
     return (
-        <View style={styles.container} pointerEvents={isVisible ? 'auto' : 'none'}>
-            <TouchableWithoutFeedback onPress={handleClose}>
-                <Animated.View
-                    style={styles.modalOverlay}
-                    entering={FadeIn.duration(200)}
-                    exiting={FadeOut.duration(200)}
-                />
-            </TouchableWithoutFeedback>
+        <Modal
+            visible={isVisible}
+            onRequestClose={handleClose}
+            transparent={true}
+            animationType="none"
+            statusBarTranslucent
+        >
+            <View style={styles.container}>
+                <TouchableWithoutFeedback onPress={handleClose}>
+                    <Animated.View style={[styles.modalOverlay, overlayStyle]} />
+                </TouchableWithoutFeedback>
 
-            <View style={styles.modalPositioner} pointerEvents="box-none">
-                <Animated.View
-                    style={[styles.modalContent, { backgroundColor: theme.surface }, animatedStyle]}
-                    onTouchStart={(e) => e.stopPropagation()}
+                <Animated.View 
+                    style={[
+                        styles.modalContent, 
+                        { backgroundColor: theme.surface }, 
+                        contentStyle
+                    ]}
                 >
                     <ScrollView
                         showsVerticalScrollIndicator={false}
-                        bounces={false}
-                        overScrollMode="never"
                         contentContainerStyle={[
-                            styles.scrollContentContainer,
-                            { paddingBottom: paddingBottom },
+                            styles.scrollContent,
+                            { paddingBottom: Math.max(paddingBottom, 24) }
                         ]}
-                        keyboardShouldPersistTaps="always"
-                        scrollEventThrottle={16}
+                        keyboardShouldPersistTaps="handled"
+                        bounces={false}
                     >
                         <View style={styles.handleContainer}>
                             <View style={[styles.handle, { backgroundColor: theme.borderSubtle }]} />
@@ -150,7 +125,7 @@ const ActionModal = memo(({
                             {title}
                         </CustomText>
 
-                        <View>{children}</View>
+                        <View style={styles.childrenContainer}>{children}</View>
 
                         <View style={styles.modalActions}>
                             {actions.map((action, index) => (
@@ -169,26 +144,22 @@ const ActionModal = memo(({
                     </ScrollView>
                 </Animated.View>
             </View>
-        </View>
+        </Modal>
     );
 });
 
 const styles = StyleSheet.create({
     container: {
-        ...StyleSheet.absoluteFillObject,
-        zIndex: 1000,
-    },
-    modalOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0, 0, 0, 0.45)', 
-    },
-    modalPositioner: {
         flex: 1,
         justifyContent: 'flex-end',
     },
+    modalOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    },
     modalContent: {
         width: '100%',
-        maxHeight: '100%',
+        maxHeight: '90%',
         borderTopLeftRadius: 32,
         borderTopRightRadius: 32,
         shadowColor: '#000',
@@ -198,7 +169,7 @@ const styles = StyleSheet.create({
         elevation: 10,
         overflow: 'hidden',
     },
-    scrollContentContainer: {
+    scrollContent: {
         paddingHorizontal: 24,
     },
     handleContainer: {
@@ -214,15 +185,17 @@ const styles = StyleSheet.create({
     modalTitle: {
         marginBottom: 24,
         textAlign: 'center',
-        letterSpacing: -0.2,
+    },
+    childrenContainer: {
+        width: '100%',
     },
     modalActions: {
         flexDirection: 'row',
         marginTop: 32,
         width: '100%',
         gap: 12,
+        marginBottom: 10,
     },
 });
 
 export default ActionModal;
-

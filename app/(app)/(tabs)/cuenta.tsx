@@ -20,6 +20,7 @@ import {
     Switch,
     TouchableOpacity,
     View,
+    TextInput,
 } from 'react-native';
 import { authenticateBiometrics, isBiometricsAvailable } from '@/utils/biometrics';
 import { STORAGE_KEYS } from '@/constants';
@@ -50,6 +51,19 @@ export default function CuentaScreen() {
     const [isEditing, setIsEditing] = useState(false);
     const [newName, setNewName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+
+    // --- Refs para Foco ---
+    const newNameInputRef = React.useRef<TextInput>(null);
+
+    // --- Lógica de Autofocus con Delay de 100ms ---
+    React.useEffect(() => {
+        if (isEditing) {
+            const timer = setTimeout(() => {
+                newNameInputRef.current?.focus();
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [isEditing]);
 
     // Biometría
     const [biometricsEnabled, setBiometricsEnabled] = useState(false);
@@ -293,7 +307,7 @@ export default function CuentaScreen() {
                 isVisible={isEditing}
                 onClose={() => setIsEditing(false)}
                 title="Editar Perfil"
-                paddingBottom={350}
+                paddingBottom={400}
                 actions={[
                     {
                         title: 'Cancelar',
@@ -314,10 +328,11 @@ export default function CuentaScreen() {
                         Nombre de tu Negocio
                     </CustomText>
                     <CustomInput
+                        inputRef={newNameInputRef as any}
                         value={newName}
                         onChangeText={setNewName}
                         placeholder="Ej. Colmado El Sol"
-                        autoFocus
+                        autoFocus={false}
                     />
                 </View>
             </ActionModal>

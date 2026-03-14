@@ -28,8 +28,8 @@ import {
 import { validateClientData } from '@/utils/validation';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useCallback, useMemo, useState, useRef, useEffect } from 'react';
+import { Alert, ScrollView, StyleSheet, View, TextInput } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AmountInput } from '@/components/input/AmountInput';
@@ -64,6 +64,24 @@ export default function ClientDetailScreen() {
     const [amount, setAmount] = useState('');
     const [editName, setEditName] = useState('');
     const [editPhone, setEditPhone] = useState('');
+
+    // --- Refs para Foco programático ---
+    const amountInputRef = useRef<TextInput>(null);
+    const editNameInputRef = useRef<TextInput>(null);
+
+    // --- Lógica de Autofocus con Delay de 100ms ---
+    useEffect(() => {
+        if (modalConfig) {
+            const timer = setTimeout(() => {
+                if (modalConfig.type === 'transaction') {
+                    amountInputRef.current?.focus();
+                } else if (modalConfig.type === 'edit') {
+                    editNameInputRef.current?.focus();
+                }
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [modalConfig]);
 
     // --- Handlers (Lógica de la pantalla) ---
 
@@ -253,11 +271,12 @@ export default function ClientDetailScreen() {
         if (modalConfig.type === 'transaction') {
             return (
                 <AmountInput
+                    ref={amountInputRef as any}
                     value={amount}
                     onChangeText={(text) => setAmount(formatNumberWithCommas(text))}
                     placeholder="0"
                     keyboardType="numeric"
-                    autoFocus
+                    autoFocus={false}
                 />
             );
         }
@@ -268,7 +287,12 @@ export default function ClientDetailScreen() {
                         <CustomText size="small" weight="medium" color={theme.textSecondary} style={styles.label}>
                             Nombre del Cliente
                         </CustomText>
-                        <CustomInput value={editName} onChangeText={setEditName} autoFocus />
+                        <CustomInput 
+                            inputRef={editNameInputRef as any} 
+                            value={editName} 
+                            onChangeText={setEditName} 
+                            autoFocus={false} 
+                        />
                     </View>
                     <View style={styles.inputGroup}>
                         <CustomText size="small" weight="medium" color={theme.textSecondary} style={styles.label}>
