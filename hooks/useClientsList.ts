@@ -34,7 +34,7 @@ export function useClientsList() {
             return validClients.filter(
                 (client) =>
                     client.name.toLowerCase().includes(lowerCaseQuery) ||
-                    client.phone?.replace(/-/g, '').includes(lowerCaseQuery.replace(/-/g, ''))
+                    client.phone?.replace(/\D/g, '').includes(lowerCaseQuery.replace(/\D/g, ''))
             );
         }
 

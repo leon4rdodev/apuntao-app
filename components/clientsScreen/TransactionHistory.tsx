@@ -40,6 +40,7 @@ const TransactionHistory = ({
 
     const renderItem = ({ item: tx }: { item: Transaction }) => (
         <Animated.View
+            key={tx.id}
             entering={FadeInDown}
             exiting={FadeOutDown}
             layout={LinearTransition}
@@ -81,20 +82,13 @@ const TransactionHistory = ({
                 Historial de Movimientos
             </CustomText>
             
-            <Animated.FlatList
-                data={sortedTransactions}
-                keyExtractor={(item) => item.id}
-                renderItem={renderItem}
-                ListEmptyComponent={renderEmptyState}
-                showsVerticalScrollIndicator={false}
-                // Previene que el FlatList intercepte el scroll del ScrollView padre
-                scrollEnabled={false} 
-                initialNumToRender={10}
-                maxToRenderPerBatch={10}
-                windowSize={5}
-                removeClippedSubviews={true}
-                itemLayoutAnimation={LinearTransition}
-            />
+            <View style={{ marginTop: 12 }}>
+                {sortedTransactions.length === 0 ? (
+                    renderEmptyState()
+                ) : (
+                    sortedTransactions.map((tx) => renderItem({ item: tx }))
+                )}
+            </View>
         </View>
     );
 };

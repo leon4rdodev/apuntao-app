@@ -132,11 +132,11 @@ export default function AgregarClienteScreen() {
                                 </Text>
                                 <CustomInput
                                     icon="call-outline"
-                                    placeholder="809-123-4567"
+                                    placeholder="(809) 123-4567"
                                     value={phone}
                                     onChangeText={(text) => setPhone(formatPhoneNumber(text))}
                                     keyboardType="phone-pad"
-                                    maxLength={12}
+                                    maxLength={14}
                                     onFocus={() => setFocusedField('phone')}
                                     onBlur={() => setFocusedField(null)}
                                     containerStyle={

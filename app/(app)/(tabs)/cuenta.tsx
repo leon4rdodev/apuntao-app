@@ -22,6 +22,8 @@ import {
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 
 export default function CuentaScreen() {
     const theme = Colors[useColorScheme() || 'light'];
@@ -48,6 +50,66 @@ export default function CuentaScreen() {
             },
         ]);
     }, [signOut]);
+
+    const handleExportDatabase = useCallback(async () => {
+        try {
+            const fs: any = FileSystem;
+            const documentDirectory = fs.documentDirectory;
+            if (!documentDirectory) {
+                Alert.alert('Error', 'No se pudo acceder al sistema de archivos.');
+                return;
+            }
+
+            // La ruta base de la aplicación (en Android) suele estar un nivel arriba de files/
+            const dbDirPath = documentDirectory.replace('files/', 'databases/');
+            
+            const dirInfo = await FileSystem.getInfoAsync(dbDirPath);
+            if (!dirInfo.exists) {
+                Alert.alert('Error', 'No se encontró la carpeta de bases de datos local.');
+                return;
+            }
+
+            // Leer todos los archivos en el directorio databases/
+            const files = await FileSystem.readDirectoryAsync(dbDirPath);
+            
+            // Buscar la base de datos de Firestore. Suele llamarse firestore.[app_id] o firestore.%2F...
+            // Ignoramos los archivos temporales tipo -journal o -wal
+            const dbFileName = files.find(f => f.startsWith('firestore.') && !f.endsWith('-journal') && !f.endsWith('-wal'));
+
+            if (!dbFileName) {
+                Alert.alert('Error', 'No se encontró el archivo de la caché de Firestore.');
+                return;
+            }
+
+            const dbPath = `${dbDirPath}${dbFileName}`;
+
+            // Copiamos la base de datos al CacheDirectory para poder compartirla de forma segura
+            const dateStr = new Date().toISOString().split('T')[0];
+            const exportFileName = `apuntao_backup_${dateStr}.sqlite`;
+            const cacheDirectory = fs.cacheDirectory;
+            const exportPath = `${cacheDirectory}${exportFileName}`;
+
+            await FileSystem.copyAsync({
+                from: dbPath,
+                to: exportPath
+            });
+
+            // Compartir el archivo
+            const canShare = await Sharing.isAvailableAsync();
+            if (canShare) {
+                await Sharing.shareAsync(exportPath, {
+                    dialogTitle: 'Exportar Base de Datos Apuntao',
+                    mimeType: 'application/x-sqlite3',
+                });
+            } else {
+                Alert.alert('Error', 'La función de compartir no está disponible en este dispositivo.');
+            }
+
+        } catch (error) {
+            console.error('Error al exportar la BD:', error);
+            Alert.alert('Error', 'Hubo un problema al exportar la base de datos.');
+        }
+    }, []);
 
     return (
         <View 
@@ -121,6 +183,12 @@ export default function CuentaScreen() {
                         onPress={() =>
                             Linking.openURL('market://details?id=com.leon4rdodev.apuntao')
                         }
+                        theme={theme}
+                    />
+                    <ActionRow
+                        icon="server-outline"
+                        text="Exportar Base de Datos"
+                        onPress={handleExportDatabase}
                         theme={theme}
                     />
                     

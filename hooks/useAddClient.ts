@@ -35,7 +35,7 @@ export function useAddClient() {
         setIsSaving(true);
         const formattedName = formatName(name);
         const debtAmount = initialDebt ? parseFormattedNumber(initialDebt) : 0;
-        const formattedPhone = phone.replaceAll('-', '');
+        const formattedPhone = phone.replace(/\D/g, '');
 
         // 1. Validar duplicidad
         if (clients.some((client) => client.name.toLowerCase() === formattedName.toLowerCase())) {

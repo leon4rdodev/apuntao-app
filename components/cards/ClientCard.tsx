@@ -16,7 +16,7 @@ interface ClientCardProps {
     /** Cliente a mostrar */
     item: Client;
     /** Acción al presionar la tarjeta */
-    onPress: () => void;
+    onPress: (id: string) => void;
     /** Indicar si tiene cambios pendientes de subir */
     isPending?: boolean;
 }
@@ -49,7 +49,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ item, onPress, isPending }) => 
                     borderColor: theme.border,
                 },
             ]}
-            onPress={onPress}
+            onPress={() => onPress(item.id)}
             activeOpacity={0.8}
         >
             <View style={styles.content}>

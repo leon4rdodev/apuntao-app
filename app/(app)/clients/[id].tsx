@@ -88,7 +88,7 @@ export default function ClientDetailScreen() {
         if (!client) return;
 
         const formattedName = formatName(editName);
-        const formattedPhone = editPhone.replaceAll('-', '');
+        const formattedPhone = editPhone.replace(/\D/g, '');
         const validation = validateClientData(formattedName, 0, formattedPhone);
 
         if (!validation.isValid) {
@@ -245,8 +245,8 @@ export default function ClientDetailScreen() {
                             value={formatPhoneNumber(editPhone)}
                             onChangeText={(text) => setEditPhone(text)}
                             keyboardType="phone-pad"
-                            placeholder="809-123-4567"
-                            maxLength={12}
+                            placeholder="(809) 123-4567"
+                            maxLength={14}
                         />
                     </View>
                 </>

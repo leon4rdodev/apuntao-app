@@ -4,6 +4,7 @@ import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CustomInput from '../input/CustomInput';
 import SyncIndicator from '../ui/SyncIndicator';
+import { useState, useEffect } from 'react';
 
 interface MainHeaderProps {
     setSearchQuery: (query: string) => void;
@@ -16,11 +17,21 @@ interface MainHeaderProps {
  * @param {MainHeaderProps} props - Props que contiene la función a ejecutar al presionar el botón de búsqueda.
  */
 export default function MainHeader({ setSearchQuery, setIsSearchOpen, isSearchOpen }: MainHeaderProps) {
+    const [inputValue, setInputValue] = useState('');
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setSearchQuery(inputValue);
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [inputValue, setSearchQuery]);
 
     const onSearchPress = () => {
         setIsSearchOpen(!isSearchOpen);
 
         if (isSearchOpen) {
+            setInputValue('');
             setSearchQuery(''); // Limpiar la búsqueda al abrir
         }
     };
@@ -43,7 +54,8 @@ export default function MainHeader({ setSearchQuery, setIsSearchOpen, isSearchOp
                 {isSearchOpen ? (
                     <View style={styles.searchContainer}>
                         <CustomInput 
-                            onChangeText={setSearchQuery} 
+                            value={inputValue}
+                            onChangeText={setInputValue} 
                             autoFocus 
                             placeholder='Buscar cliente...'
                             containerStyle={styles.searchInput}

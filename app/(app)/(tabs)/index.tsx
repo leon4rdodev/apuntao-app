@@ -64,7 +64,7 @@ export default function Index() {
                 renderItem={useCallback(({ item }: { item: any }) => (
                     <ClientCard
                         item={item}
-                        onPress={() => handleClientPress(item.id)}
+                        onPress={handleClientPress}
                         isPending={false}
                     />
                 ), [handleClientPress])}
