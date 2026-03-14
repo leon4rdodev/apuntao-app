@@ -1,7 +1,13 @@
 /**
  * @file app/(auth)/_layout.tsx
  * @description Layout para las pantallas de autenticación.
- * Gestiona las redirecciones de onboarding y sesión activa.
+ * 
+ * IMPORTANTE: Siempre renderizamos el <Stack>. Nunca retornamos un <Redirect>
+ * a una ruta dentro del mismo grupo (auth), porque el Stack no estaría montado
+ * todavía y provoca un bucle infinito de re-renders (parpadeo).
+ * 
+ * La pantalla inicial se controla con `initialRouteName` basado en si
+ * el usuario ya completó el onboarding o no.
  */
 import { Redirect, Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -20,21 +26,23 @@ export default function AuthLayout() {
         })();
     }, []);
 
-    // Evitar montajes prematuros
+    // Esperar hasta tener ambos estados resueltos antes de renderizar
     if (isLoading || hasOnboarded === null) {
-        return null; 
+        return null;
     }
 
-    // 1. Si el usuario ya inició sesión, mandarlo a la app principal
+    // Si hay sesión activa, salir del grupo auth hacia la app principal.
+    // Esto es seguro porque (app) es un grupo diferente y su Stack ya está montado.
     if (session) {
         return <Redirect href="/(app)/(tabs)" />;
     }
 
-    // 2. Si nunca hizo el onboarding, mostrarlo primero
-    if (!hasOnboarded) {
-        return <Redirect href="/(auth)/onboarding" />;
-    }
-
-    // 3. Si ya hizo el onboarding pero no tiene sesión, ir al login
-    return <Stack screenOptions={{ headerShown: false, animation: 'fade_from_bottom' }} />;
+    // Siempre renderizar el Stack. Controlamos la pantalla inicial con
+    // `initialRouteName` para evitar bucles de redirección dentro del mismo grupo.
+    return (
+        <Stack
+            initialRouteName={hasOnboarded ? 'login' : 'onboarding'}
+            screenOptions={{ headerShown: false, animation: 'fade_from_bottom' }}
+        />
+    );
 }
