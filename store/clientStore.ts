@@ -23,6 +23,7 @@ import { useNotificationStore } from './notificationStore';
 interface ClientState {
     clients: Client[];
     isLoading: boolean;
+    hasPendingWrites: boolean;
     unsubscribeSnapshot: (() => void) | null;
     actions: {
         startFirestoreSync: (uid: string) => void;
@@ -44,6 +45,7 @@ let currentUid: string | null = null;
 export const useClientStore = create<ClientState>()((set, get) => ({
     clients: [],
     isLoading: false,
+    hasPendingWrites: false,
     unsubscribeSnapshot: null,
     actions: {
 
@@ -65,7 +67,7 @@ export const useClientStore = create<ClientState>()((set, get) => ({
 
             const unsubscribe = onSnapshot(
                 q,
-                { includeMetadataChanges: false },
+                { includeMetadataChanges: true },
                 (querySnapshot) => {
                     const clientsList: Client[] = [];
                     querySnapshot.forEach((docSnap: any) => {
@@ -82,7 +84,11 @@ export const useClientStore = create<ClientState>()((set, get) => ({
                     });
 
                     clientsList.sort((a, b) => b.lastModified - a.lastModified);
-                    set({ clients: clientsList, isLoading: false });
+                    set({ 
+                        clients: clientsList, 
+                        isLoading: false, 
+                        hasPendingWrites: querySnapshot.metadata.hasPendingWrites 
+                    });
                 },
                 (error) => {
                     console.error('[clientStore] Error en onSnapshot:', error);

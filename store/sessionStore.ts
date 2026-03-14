@@ -13,10 +13,12 @@ interface SessionState {
     account: Omit<ColmadoAccountInfo, 'clients'> | null;
     subscription: Subscription;
     isInitialized: boolean;
+    lastSyncTimestamp: number; // Nuevo: Para detectar retrocesos de reloj
 
     setAccount: (account: Omit<ColmadoAccountInfo, 'clients'> | null) => void;
     setSubscription: (subscription: Subscription) => void;
     setInitialized: (val: boolean) => void;
+    setSyncTimestamp: (timestamp: number) => void; // Nuevo
 
     logout: () => Promise<void>;
 }
@@ -25,10 +27,12 @@ export const useSessionStore = create<SessionState>((set) => ({
     account: null,
     subscription: { status: 'loading', plan: 'none' },
     isInitialized: false,
+    lastSyncTimestamp: 0,
 
     setAccount: (account) => set({ account }),
     setSubscription: (subscription) => set({ subscription }),
     setInitialized: (val) => set({ isInitialized: val }),
+    setSyncTimestamp: (timestamp) => set({ lastSyncTimestamp: timestamp }),
 
     logout: async () => {
         try {

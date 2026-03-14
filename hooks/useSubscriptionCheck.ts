@@ -1,6 +1,8 @@
 import { useSessionStore } from '@/store/sessionStore';
 import { useSubscriptionModalStore } from '@/store/subscriptionModalStore';
 import { Subscription } from '@/types';
+import { isSubscriptionExpired, hasClockBeenRolledBack } from '@/utils/subscription';
+import { useNotification } from '@/store/notificationStore';
 
 /**
  * Mapea el estado de la suscripción a un texto legible para el usuario.
@@ -23,8 +25,10 @@ const getStatusText = (status: Subscription['status']) => {
  * @returns Función booleana que retorna true si la acción es permitida, false si fue bloqueada.
  */
 export function useSubscriptionCheck() {
-    const subscription = useSessionStore((state) => state.subscription);
+    const subscription = useSessionStore((state: any) => state.subscription);
+    const lastSyncTimestamp = useSessionStore((state: any) => state.lastSyncTimestamp);
     const showSubscriptionModal = useSubscriptionModalStore((state) => state.showModal);
+    const showNotification = useNotification();
 
     const restrictedStatuses: Subscription['status'][] = [
         'expired',
@@ -36,9 +40,24 @@ export function useSubscriptionCheck() {
      * @returns {boolean} true si puede proceder, false si fue bloqueado y se mostró el modal.
      */
     const checkAndAlert = (): boolean => {
-        if (restrictedStatuses.includes(subscription.status)) {
-            // Muestra el modal estilizado en lugar del Alert simple
-            showSubscriptionModal(subscription.status);
+        // 1. Detección de Fraude por Reloj (Anti-Clock-Rollback)
+        if (hasClockBeenRolledBack(lastSyncTimestamp)) {
+            showNotification({
+                message: 'Se detectó una fecha incorrecta en tu dispositivo. Por favor, ajústala a la hora real.',
+                type: 'error',
+            });
+            showSubscriptionModal('unknown');
+            return false;
+        }
+
+        // 2. Validación por Fecha de Expiración Autómática
+        const isExpired = isSubscriptionExpired(subscription);
+        
+        if (restrictedStatuses.includes(subscription.status) || isExpired) {
+            // Si expiró por fecha pero el estatus aún dice 'trial'/'active',
+            // forzamos la visualización del modal de expiración.
+            const displayStatus = isExpired ? 'expired' : subscription.status;
+            showSubscriptionModal(displayStatus);
             return false;
         }
         return true;

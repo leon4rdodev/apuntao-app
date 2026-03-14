@@ -7,6 +7,7 @@ import * as Font from 'expo-font';
 import { AntDesign, Entypo, FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useSessionStore } from '@/store/sessionStore';
 import { useClientStore } from '@/store/clientStore';
+import { useUIStore } from '@/store/uiStore';
 
 interface AuthContextData {
     signOut: () => Promise<void>;
@@ -22,6 +23,7 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { account, logout, setAccount, setSubscription, setInitialized } = useSessionStore();
+    const checkBiometrics = useUIStore((state) => state.checkBiometrics);
     
     // Función que implementaremos en clientStore.ts para sincronizar con Firestore
     const startFirestoreSync = useClientStore((state) => state.actions.startFirestoreSync);
@@ -43,8 +45,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     ...AntDesign.font,
                     ...FontAwesome.font,
                 }).catch(() => {/* Ignorar errores de fuentes secundarias */});
+                
+                // Verificar biometría una sola vez al inicio
+                checkBiometrics();
             });
-    }, []);
+    }, [checkBiometrics]);
 
     useEffect(() => {
         const auth = getAuth();
@@ -83,6 +88,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 const userRef = doc(db, 'users', user.uid);
                 unsubProfile = onSnapshot(userRef, (userSnap) => {
                     const data = userSnap.data() as any;
+                    
+                    // Si el snapshot no es del caché, es una confirmación de la hora real del servidor.
+                    if (!userSnap.metadata.fromCache) {
+                        useSessionStore.getState().setSyncTimestamp(Date.now());
+                    }
+
                     if (data) {
                         setAccount({
                             colmadoName: data.colmadoName || 'Mi Colmado',

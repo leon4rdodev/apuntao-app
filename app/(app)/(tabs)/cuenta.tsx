@@ -21,10 +21,11 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import { isBiometricsAvailable } from '@/utils/biometrics';
+import { authenticateBiometrics, isBiometricsAvailable } from '@/utils/biometrics';
 import { STORAGE_KEYS } from '@/constants';
 import { saveToStorage } from '@/utils/storage';
 import { useNotification } from '@/store/notificationStore';
+import { useUIStore } from '@/store/uiStore';
 import { ERROR_MESSAGES } from '@/constants';
 import { getAuth } from '@react-native-firebase/auth';
 import { getFirestore, doc, updateDoc } from '@react-native-firebase/firestore';
@@ -34,12 +35,15 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
+import { useClientStore } from '@/store/clientStore';
+
 export default function CuentaScreen() {
     const theme = Colors[useColorScheme() || 'light'];
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const { session: account, signOut } = useAuth();
     const showNotification = useNotification();
+    const hasPendingWrites = useClientStore((state) => state.hasPendingWrites);
     const [isExternalConfigured, setIsExternalConfigured] = React.useState(false);
     
     // Perfil
@@ -49,7 +53,7 @@ export default function CuentaScreen() {
 
     // Biometría
     const [biometricsEnabled, setBiometricsEnabled] = useState(false);
-    const [isBiometricsSupported, setIsBiometricsSupported] = useState(false);
+    const isBiometricsSupported = useUIStore((state) => state.isBiometricsSupported);
 
     React.useEffect(() => {
         const checkConfig = async () => {
@@ -59,15 +63,19 @@ export default function CuentaScreen() {
             // Cargar preferencia de biometría
             const enabled = await getFromStorage<boolean>(STORAGE_KEYS.BIOMETRICS_ENABLED);
             setBiometricsEnabled(!!enabled);
-
-            // Verificar soporte de hardware
-            const supported = await isBiometricsAvailable();
-            setIsBiometricsSupported(supported);
         };
         checkConfig();
     }, []);
 
     const handleSignOut = useCallback(() => {
+        if (hasPendingWrites) {
+            showNotification({
+                message: 'No puedes cerrar sesión. Hay datos sincronizándose.',
+                type: 'error',
+            });
+            return;
+        }
+
         Alert.alert('Cerrar Sesión', '¿Estás seguro? Se cerrará tu sesión en este dispositivo.', [
             { text: 'Cancelar', style: 'cancel' },
             {
@@ -76,7 +84,7 @@ export default function CuentaScreen() {
                 onPress: signOut,
             },
         ]);
-    }, [signOut]);
+    }, [signOut, hasPendingWrites, showNotification]);
 
     const handleEditProfile = useCallback(() => {
         if (account) {
@@ -124,15 +132,22 @@ export default function CuentaScreen() {
 
     const toggleBiometrics = useCallback(async (value: boolean) => {
         try {
-            if (value) {
-                const supported = await isBiometricsAvailable();
-                if (!supported) {
-                    showNotification({
-                        message: 'Tu dispositivo no soporta biometría o no está configurada',
-                        type: 'error',
-                    });
-                    return;
-                }
+            const supported = await isBiometricsAvailable();
+            if (!supported) {
+                showNotification({
+                    message: 'Tu dispositivo no soporta biometría o no está configurada',
+                    type: 'error',
+                });
+                return;
+            }
+
+            // Pedir verificación antes de cambiar el estado (ya sea activar o desactivar)
+            const actionLabel = value ? 'activar' : 'desactivar';
+            const authSuccess = await authenticateBiometrics(`Confirma para ${actionLabel} la seguridad biométrica`);
+            
+            if (!authSuccess) {
+                // Si falla o cancela, mantenemos el estado actual del Switch (no hacemos nada)
+                return;
             }
             
             await saveToStorage(STORAGE_KEYS.BIOMETRICS_ENABLED, value);
@@ -242,12 +257,18 @@ export default function CuentaScreen() {
                                 <Ionicons name="finger-print-outline" size={22} color={theme.text} style={styles.settingIcon} />
                                 <CustomText size="medium" weight="medium">Seguridad Biométrica</CustomText>
                             </View>
-                            <Switch
-                                value={biometricsEnabled}
-                                onValueChange={toggleBiometrics}
-                                trackColor={{ false: theme.border, true: theme.primary }}
-                                thumbColor={Platform.OS === 'ios' ? undefined : '#fff'}
-                            />
+                            <TouchableOpacity 
+                                activeOpacity={0.7}
+                                onPress={() => toggleBiometrics(!biometricsEnabled)}
+                            >
+                                <View pointerEvents="none">
+                                    <Switch
+                                        value={biometricsEnabled}
+                                        trackColor={{ false: theme.border, true: theme.primary }}
+                                        thumbColor={Platform.OS === 'ios' ? undefined : '#fff'}
+                                    />
+                                </View>
+                            </TouchableOpacity>
                         </View>
                     )}
                 </View>

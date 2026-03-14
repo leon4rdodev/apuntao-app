@@ -43,10 +43,10 @@ export const formatPhoneNumber = (value: string): string => {
 // --- FUNCIÓN MODIFICADA ---
 /**
  * Formatea una fecha para mostrar en formato legible para República Dominicana.
- * @param dateInput - La fecha como un timestamp numérico (de Date.now()) o un objeto Date.
- * @returns Fecha formateada como "Martes, 5 de mayo del 2026, 8:30 a. m."
+ * @param dateInput - La fecha como timestamp, objeto Date o string ISO.
+ * @returns Fecha formateada legible.
  */
-export const formatDate = (dateInput: number | Date): string => {
+export const formatDate = (dateInput: number | Date | string): string => {
     try {
         const date = new Date(dateInput);
 

@@ -210,7 +210,14 @@ export default function ClientDetailScreen() {
                     {
                         text: 'Eliminar',
                         style: 'destructive',
-                        onPress: () => {
+                        onPress: async () => {
+                            // Verificación Biométrica
+                            const biometricsEnabled = await getFromStorage<boolean>(STORAGE_KEYS.BIOMETRICS_ENABLED);
+                            if (biometricsEnabled) {
+                                const success = await authenticateBiometrics(`Confirmar eliminación de movimiento por $${formatMoney(tx.amount)}`);
+                                if (!success) return;
+                            }
+
                             deleteTransaction(client.id, tx.id);
                             showNotification({
                                 message: SUCCESS_MESSAGES.TRANSACTION_DELETED,

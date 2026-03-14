@@ -23,23 +23,23 @@ export const LoginFeatures: Feature[] = [
     {
         icon: 'book-outline',
         iconLib: Ionicons,
-        text: 'Adiós al Cuaderno de Papel',
+        text: 'Adiós al Caos del Papel',
         description:
-            'Tu información se respalda automáticamente en la nube. ¡Nunca más pierdas una cuenta!',
+            'Digitaliza tus cuentas y libérate del cuaderno. Tu información, siempre segura y a mano.',
     },
     {
         icon: 'cash-outline',
         iconLib: Ionicons,
-        text: 'Control Total de tu Dinero',
+        text: 'Control de tus Finanzas',
         description:
-            'Registra deudas y pagos al instante. Mira quién te debe y cuánto con un solo toque.',
+            'Visualiza deudas y abonos en tiempo real. Ten la claridad de cuánto tienes por cobrar.',
     },
     {
-        icon: 'people-circle-outline',
+        icon: 'shield-checkmark-outline',
         iconLib: Ionicons,
-        text: 'Únete a la Comunidad',
+        text: 'Seguridad de Clase Mundial',
         description:
-            "Más de 1,000 colmaderos y negociantes ya usan y confían en Apunta'o para crecer.",
+            "Tus datos están protegidos y respaldados automáticamente. Tu negocio nunca se detiene.",
     },
 ];
 
@@ -51,89 +51,89 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     {
         icon: 'wallet-outline',
         iconLib: Ionicons,
-        title: '¡Que no se te escape ni un peso!',
+        title: 'Tu Negocio en la\nPalma de tu Mano',
         subtitle:
-            'Digitaliza tu cuaderno de fiado y ten el control total de tus cuentas por cobrar, sin enredos.',
+            'Digitaliza tu cuaderno de fiado y recupera la tranquilidad. Maneja tus cuentas con precisión profesional.',
         features: [
             {
                 icon: 'person-add-outline',
                 iconLib: Ionicons,
-                text: 'Anota Quién te Debe',
+                text: 'Registro Inteligente',
                 description:
-                    'Crea un perfil para cada cliente con su nombre y teléfono. ¡Todo organizado!',
+                    'Crea perfiles para tus clientes y mantén su historial de pagos bajo control.',
             },
             {
                 icon: 'bar-chart-outline',
                 iconLib: Ionicons,
-                text: 'Registra Cada Movimiento',
+                text: 'Balance al Instante',
                 description:
-                    'Apunta las deudas nuevas y los pagos (abonos) en segundos. Cero errores.',
+                    'Apunta deudas y abonos en segundos. Nuestra app calcula los totales automáticamente.',
             },
             {
                 icon: 'logo-whatsapp',
                 iconLib: Ionicons,
-                text: 'Cobra con un Toque',
-                description: 'Envía recordatorios de pago por WhatsApp directamente desde la app.',
+                text: 'Cobros Efectivos',
+                description: 'Envía estados de cuenta por WhatsApp con un solo toque. Más profesional.',
             },
         ],
     },
     {
         icon: 'shield-checkmark-outline',
         iconLib: Ionicons,
-        title: 'Tu Negocio, Seguro y Siempre Contigo',
+        title: 'Información Blindada\ny Segura',
         subtitle:
-            "El cuaderno se puede mojar, perder o dañar. Con Apunta'o, tu información está protegida y accesible 24/7.",
+            "El cuaderno se pierde, Apunta'o no. Tus datos se sincronizan en la nube para que nunca pierdas ni un centavo.",
         features: [
             {
                 icon: 'cloud-upload-outline',
                 iconLib: Ionicons,
-                text: 'Respaldo en la Nube',
+                text: 'Respaldo Infinito',
                 description:
-                    'Toda tu data se guarda automáticamente en la nube. ¡Seguridad total!',
+                    'Toda tu data se guarda automáticamente en servidores seguros. Protección 24/7.',
             },
             {
                 icon: 'phone-portrait-outline',
                 iconLib: Ionicons,
-                text: 'Sincronización Mágica',
+                text: 'Acceso en Cualquier Lugar',
                 description:
-                    'Usa la app en tu teléfono o tablet. Si cambias de equipo, tu información viaja contigo.',
+                    'Cambia de teléfono sin miedo. Al iniciar sesión, todo tu progreso estará esperando por ti.',
             },
             {
                 icon: 'lock-closed-outline',
                 iconLib: Ionicons,
-                text: 'Privacidad Garantizada',
+                text: 'Seguridad Biométrica',
                 description:
-                    'Tus datos son tuyos y de nadie más. Protegidos en tu cuenta personal.',
+                    'Asegura tus transacciones con Huella o Rostro. Solo tú tienes el control final.',
             },
         ],
     },
     {
         icon: 'rocket-outline',
         iconLib: Ionicons,
-        title: 'Listo para Crecer tu Negocio',
+        title: 'Lleva tu Negocio al\nSiguiente Nivel',
         subtitle:
-            "Únete a más de mil comerciantes que han transformado su negocio con Apunta'o. ¡Es tu turno de dejar de perder dinero!",
+            "Únete a miles de comerciantes que han dejado atrás el caos y hoy disfrutan de un negocio más rentable.",
         features: [
             {
                 icon: 'trending-up-outline',
                 iconLib: Ionicons,
-                text: 'Menos Pérdidas, Más Ganancias',
+                text: 'Adiós a las Deudas Olvidadas',
                 description:
-                    'Al tener un control claro, reduces las deudas olvidadas y aumentas tus ingresos.',
+                    'Recupera ese dinero que antes se quedaba en el olvido y aumenta tus ganancias.',
             },
             {
                 icon: 'time-outline',
                 iconLib: Ionicons,
-                text: 'Ahorra Tiempo Valioso',
+                text: 'Máxima Eficiencia',
                 description:
-                    'La app calcula los totales por ti para que te dediques a lo más importante: vender.',
+                    'Ahorra horas de cálculos manuales al final del día. Enfócate en vender.',
             },
             {
                 icon: 'sparkles-outline',
                 iconLib: Ionicons,
-                text: 'Imagen Profesional',
+                text: 'Prestigio y Confianza',
                 description:
-                    'Impresiona a tus clientes con un sistema moderno y transparente. ¡Genera más confianza!',
+                    'Impresiona a tus clientes con un sistema moderno y transparente. ¡Véndeles confianza!',
             },
         ],
     },

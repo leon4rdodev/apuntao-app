@@ -14,7 +14,6 @@ import {
 } from '@react-native-firebase/firestore';
 import { useNotification } from '@/store/notificationStore';
 import { useSessionStore } from '@/store/sessionStore';
-import { formatDate } from '@/utils/formatters';
 
 export function useEmailAuth() {
     const showNotification = useNotification();
@@ -56,7 +55,7 @@ export function useEmailAuth() {
             const now = new Date();
             const expirationDate = new Date(now);
             expirationDate.setDate(now.getDate() + trialDays);
-            const formattedTrialEnd = formatDate(expirationDate);
+            const formattedTrialEnd = expirationDate.toISOString(); // Formato ISO para comparar fácilmente
 
             const defaultSub = { 
                 status: 'trial', 
