@@ -1,7 +1,7 @@
 import CustomButton from '@/components/ui/CustomButton';
 import CustomText from '@/components/ui/CustomText';
 import { Colors } from '@/constants/Colors';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, memo, useState } from 'react';
 import {
     BackHandler,
     Keyboard,
@@ -9,6 +9,7 @@ import {
     StyleSheet,
     TouchableWithoutFeedback,
     View,
+    InteractionManager,
 } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import Animated, {
@@ -19,52 +20,79 @@ import Animated, {
     useSharedValue,
     withSpring,
     withTiming,
+    Easing,
 } from 'react-native-reanimated';
 
-const ActionModal = ({
-    isVisible,
-    onClose,
-    title,
-    children,
-    actions,
-    paddingBottom,
-}: {
+interface ActionModalProps {
     isVisible: boolean;
     onClose: () => void;
     title: string;
     children: React.ReactNode;
     actions: any[];
     paddingBottom: number;
-}) => {
-    const theme = Colors[useColorScheme() || 'light'];
-    const translateY = useSharedValue(500);
+}
 
-    const closeModal = useCallback(() => {
-        translateY.value = withTiming(500, { duration: 200 }, (finished) => {
+/**
+ * @component ActionModal
+ * @description Modal optimizado para alto rendimiento y animaciones fluidas.
+ * Utiliza React.memo y Reanimated 3 para garantizar 60fps.
+ */
+const ActionModal = memo(({
+    isVisible,
+    onClose,
+    title,
+    children,
+    actions,
+    paddingBottom,
+}: ActionModalProps) => {
+    const theme = Colors[useColorScheme() || 'light'];
+    const translateY = useSharedValue(600);
+    const [shouldRender, setShouldRender] = useState(isVisible);
+
+    // Sincronización de montaje/desmontaje con animaciones
+    useEffect(() => {
+        if (isVisible) {
+            setShouldRender(true);
+            // Pequeño delay para asegurar que el componente esté montado antes de animar
+            InteractionManager.runAfterInteractions(() => {
+                translateY.value = withSpring(0, {
+                    damping: 20,
+                    stiffness: 90,
+                    mass: 0.5,
+                });
+            });
+        } else {
+            translateY.value = withTiming(600, { 
+                duration: 250,
+                easing: Easing.out(Easing.cubic)
+            }, (finished) => {
+                if (finished) {
+                    runOnJS(setShouldRender)(false);
+                }
+            });
+        }
+    }, [isVisible, translateY]);
+
+    const handleClose = useCallback(() => {
+        // Primero animamos localmente, el efecto de arriba se encargará de setShouldRender(false)
+        translateY.value = withTiming(600, { 
+            duration: 250,
+            easing: Easing.out(Easing.cubic)
+        }, (finished) => {
             if (finished) {
                 runOnJS(onClose)();
             }
         });
     }, [translateY, onClose]);
 
-    // Sincronización de velocidad con el teclado nativo (aprox 250ms)
-    useEffect(() => {
-        if (isVisible) {
-            // Cambiamos de spring a timing para un ascenso linear a la par del teclado
-            translateY.value = withTiming(0, { duration: 250 });
-        } else {
-            translateY.value = withTiming(500, { duration: 200 });
-        }
-    }, [isVisible, translateY]);
-
     const animatedStyle = useAnimatedStyle(() => ({
-        transform: [{ translateY: Math.max(0, translateY.value) }], // CLAVE: Limita valores negativos
+        transform: [{ translateY: translateY.value }],
     }));
 
     useEffect(() => {
         const backAction = () => {
             if (isVisible) {
-                closeModal();
+                handleClose();
                 return true;
             }
             return false;
@@ -72,29 +100,29 @@ const ActionModal = ({
 
         const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
         return () => backHandler.remove();
-    }, [closeModal, isVisible]);
+    }, [handleClose, isVisible]);
 
     useEffect(() => {
         const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
             if (isVisible) {
-                closeModal();
+                handleClose();
             }
         });
 
         return () => {
             keyboardDidHideListener?.remove();
         };
-    }, [closeModal, isVisible]);
+    }, [handleClose, isVisible]);
 
-    if (!isVisible) return null;
+    if (!shouldRender) return null;
 
     return (
-        <View style={styles.container}>
-            <TouchableWithoutFeedback onPress={closeModal}>
+        <View style={styles.container} pointerEvents={isVisible ? 'auto' : 'none'}>
+            <TouchableWithoutFeedback onPress={handleClose}>
                 <Animated.View
                     style={styles.modalOverlay}
-                    entering={FadeIn.duration(250)}
-                    exiting={FadeOut.duration(250)}
+                    entering={FadeIn.duration(200)}
+                    exiting={FadeOut.duration(200)}
                 />
             </TouchableWithoutFeedback>
 
@@ -106,11 +134,13 @@ const ActionModal = ({
                     <ScrollView
                         showsVerticalScrollIndicator={false}
                         bounces={false}
+                        overScrollMode="never"
                         contentContainerStyle={[
                             styles.scrollContentContainer,
                             { paddingBottom: paddingBottom },
                         ]}
                         keyboardShouldPersistTaps="always"
+                        scrollEventThrottle={16}
                     >
                         <View style={styles.handleContainer}>
                             <View style={[styles.handle, { backgroundColor: theme.borderSubtle }]} />
@@ -141,7 +171,7 @@ const ActionModal = ({
             </View>
         </View>
     );
-};
+});
 
 const styles = StyleSheet.create({
     container: {
@@ -150,7 +180,7 @@ const styles = StyleSheet.create({
     },
     modalOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0, 0, 0, 0.4)', // Overlay un poco más suave
+        backgroundColor: 'rgba(0, 0, 0, 0.45)', 
     },
     modalPositioner: {
         flex: 1,
@@ -159,13 +189,13 @@ const styles = StyleSheet.create({
     modalContent: {
         width: '100%',
         maxHeight: '100%',
-        borderTopLeftRadius: 32, // Bordes mucho más redondeados
+        borderTopLeftRadius: 32,
         borderTopRightRadius: 32,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.05, // Sombra más sutil
-        shadowRadius: 10,
-        elevation: 8,
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 10,
         overflow: 'hidden',
     },
     scrollContentContainer: {
@@ -173,26 +203,26 @@ const styles = StyleSheet.create({
     },
     handleContainer: {
         alignItems: 'center',
-        paddingVertical: 16, // Más espacio para respirar
+        paddingVertical: 14,
     },
     handle: {
-        width: 48,
+        width: 44,
         height: 5,
         borderRadius: 2.5,
+        opacity: 0.6,
     },
     modalTitle: {
         marginBottom: 24,
         textAlign: 'center',
+        letterSpacing: -0.2,
     },
     modalActions: {
-        flexDirection: 'row', // Botones lado a lado en lugar de apilados
+        flexDirection: 'row',
         marginTop: 32,
         width: '100%',
-        gap: 8,
-    },
-    actionButton: {
-        // Eliminado para usar estilos de CustomButton (pill-shaped)
+        gap: 12,
     },
 });
 
 export default ActionModal;
+

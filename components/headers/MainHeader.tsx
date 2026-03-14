@@ -85,12 +85,6 @@ export default function MainHeader({ setSearchQuery, setIsSearchOpen, isSearchOp
                         
                         <View style={styles.absoluteCenter} pointerEvents="none">
                             <View style={styles.headerContent}>
-                                <Ionicons
-                                    name="book-outline"
-                                    size={22}
-                                    color={theme.primary}
-                                    style={styles.bookIcon}
-                                />
                                 <Text style={[styles.title, { color: theme.text }]}>Apunta&apos;o</Text>
                                 <SyncIndicator />
                             </View>

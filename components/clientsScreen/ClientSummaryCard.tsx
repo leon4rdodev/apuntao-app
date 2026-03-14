@@ -1,5 +1,5 @@
 import CustomText from '@/components/ui/CustomText';
-import { Colors } from '@/constants/Colors';
+import { useSessionStore } from '@/store/sessionStore';
 import { Client } from '@/types';
 import { formatMoney, formatPhoneNumber } from '@/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,6 +7,7 @@ import React from 'react';
 import { Linking, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import CustomButton from '../ui/CustomButton';
+import { Colors } from '@/constants/Colors';
 
 /**
  * @component ClientSummaryCard
@@ -16,8 +17,21 @@ const ClientSummaryCard = ({ client, onEdit }: { client: Client; onEdit: () => v
     const theme = Colors[useColorScheme() || 'light'];
     const handleCall = () =>
         client.phone && Linking.openURL(`tel:${client.phone.replace(/-/g, '')}`);
-    const handleWhatsApp = () =>
-        client.phone && Linking.openURL(`https://wa.me/1${client.phone.replace(/-/g, '')}`);
+    const handleWhatsApp = () => {
+        if (!client.phone) return;
+        
+        const colmadoName = useSessionStore.getState().account?.colmadoName || "el colmado";
+        const cleanPhone = client.phone.replace(/\D/g, '');
+        
+        let message = `Hola ${client.name}, te saludo de ${colmadoName}. `;
+        if (client.debt > 0) {
+            message += `Te escribo para recordarte tu balance pendiente de $${formatMoney(client.debt)}. ¡Muchas gracias!`;
+        } else {
+            message += `¡Muchas gracias por estar al día con tu cuenta!`;
+        }
+
+        Linking.openURL(`whatsapp://send?phone=1${cleanPhone}&text=${encodeURIComponent(message)}`);
+    };
 
     const debtColor = client.debt > 0 ? theme.error : theme.success;
 
