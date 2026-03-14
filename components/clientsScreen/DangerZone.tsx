@@ -31,14 +31,14 @@ const DangerZone = ({
                 />
             )}
             {debt === 0 && (
-            <CustomButton
-                title="Eliminar Cliente"
-                onPress={onDeleteClient}
-                buttonStyle={[styles.secondaryButton, { backgroundColor: 'transparent', borderColor: theme.border, borderWidth: 1 }]}
-                iconName="trash-outline"
-                iconColor={theme.error}
-                textStyle={{ color: theme.error, fontWeight: '500' }}
-            />
+                <CustomButton
+                    title="Eliminar Cliente"
+                    onPress={onDeleteClient}
+                    buttonStyle={[styles.secondaryButton, { backgroundColor: 'transparent', borderColor: theme.border, borderWidth: 1 }]}
+                    iconName="trash-outline"
+                    iconColor={theme.error}
+                    textStyle={{ color: theme.error, fontWeight: '500' }}
+                />
             )}
         </View>
     );

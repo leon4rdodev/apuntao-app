@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { Appearance } from 'react-native';
+
 type ThemeMode = 'light' | 'dark' | 'system';
 
 interface UIState {
@@ -19,10 +21,20 @@ export const useUIStore = create<UIState>()(
       isBiometricsSupported: false,
       setThemeMode: (mode) => set({ themeMode: mode }),
       toggleTheme: () => {
-        const current = get().themeMode;
-        if (current === 'light') set({ themeMode: 'dark' });
-        else if (current === 'dark') set({ themeMode: 'light' });
-        else set({ themeMode: 'dark' }); // De sistema a oscuro por defecto al tocar
+        const currentMode = get().themeMode;
+        
+        let nextMode: ThemeMode;
+        if (currentMode === 'light') {
+          nextMode = 'dark';
+        } else if (currentMode === 'dark') {
+          nextMode = 'light';
+        } else {
+          // Si es 'system', detectamos el tema actual real
+          const systemTheme = Appearance.getColorScheme();
+          nextMode = systemTheme === 'dark' ? 'light' : 'dark';
+        }
+        
+        set({ themeMode: nextMode });
       },
       checkBiometrics: async () => {
         const { isBiometricsAvailable } = require('@/utils/biometrics');

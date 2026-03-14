@@ -392,7 +392,6 @@ export default function ClientDetailScreen() {
                 />
                 <DangerZone
                     debt={client.debt}
-                    // Llama a handleSettleDebt (con check de suscripción)
                     onSettleDebt={handleSettleDebt}
                     onDeleteClient={handleDeleteClient}
                 />

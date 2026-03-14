@@ -20,6 +20,8 @@ const TransactionHistory = ({
     onDelete: (tx: Transaction) => void;
 }) => {
     const theme = Colors[useColorScheme() || 'light'];
+    const [page, setPage] = React.useState(1);
+    const itemsPerPage = 10;
     
     const handleDelete = (tx: Transaction) => {
         onDelete(tx);
@@ -29,6 +31,19 @@ const TransactionHistory = ({
         () => [...transactions].sort((a, b) => b.date - a.date),
         [transactions]
     );
+
+    const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
+    const paginatedTransactions = useMemo(
+        () => sortedTransactions.slice((page - 1) * itemsPerPage, page * itemsPerPage),
+        [sortedTransactions, page]
+    );
+
+    // Reset page if transactions change and current page becomes empty
+    React.useEffect(() => {
+        if (page > 1 && paginatedTransactions.length === 0 && totalPages > 0) {
+            setPage(totalPages);
+        }
+    }, [paginatedTransactions, totalPages, page]);
 
     const renderEmptyState = () => (
         <View style={styles.emptyState}>
@@ -84,10 +99,38 @@ const TransactionHistory = ({
             </CustomText>
             
             <View style={{ marginTop: 12 }}>
-                {sortedTransactions.length === 0 ? (
+                {paginatedTransactions.length === 0 ? (
                     renderEmptyState()
                 ) : (
-                    sortedTransactions.map((tx) => renderItem({ item: tx }))
+                    <>
+                        {paginatedTransactions.map((tx) => renderItem({ item: tx }))}
+                        
+                        {totalPages > 1 && (
+                            <View style={styles.pagination}>
+                                <TouchableOpacity 
+                                    disabled={page === 1} 
+                                    onPress={() => setPage(p => p - 1)}
+                                    style={[styles.pageButton, page === 1 && { opacity: 0.3 }]}
+                                >
+                                    <Ionicons name="chevron-back" size={20} color={theme.text} />
+                                    <CustomText size="small" weight="medium">Anterior</CustomText>
+                                </TouchableOpacity>
+
+                                <CustomText size="small" weight="bold" color={theme.textSecondary}>
+                                    Página {page} de {totalPages}
+                                </CustomText>
+
+                                <TouchableOpacity 
+                                    disabled={page === totalPages} 
+                                    onPress={() => setPage(p => p + 1)}
+                                    style={[styles.pageButton, page === totalPages && { opacity: 0.3 }]}
+                                >
+                                    <CustomText size="small" weight="medium">Siguiente</CustomText>
+                                    <Ionicons name="chevron-forward" size={20} color={theme.text} />
+                                </TouchableOpacity>
+                            </View>
+                        )}
+                    </>
                 )}
             </View>
         </View>
@@ -131,6 +174,22 @@ const styles = StyleSheet.create({
     emptyStateText: {
         fontSize: 16,
         fontWeight: '600',
+    },
+    pagination: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 20,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(0,0,0,0.05)',
+        marginTop: 8,
+    },
+    pageButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
     },
 });
 

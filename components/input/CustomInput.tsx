@@ -16,6 +16,7 @@ import {
     Text,
     TextInputProps,
     View,
+    TouchableOpacity,
 } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -47,7 +48,11 @@ export default function CustomInput({
     ...rest
 }: CustomInputProps) {
     const theme = Colors[useColorScheme() || 'light'];
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
+    
+    // Si se pasa secureTextEntry, usamos el estado local para manejar la visibilidad real
+    const isSecure = rest.secureTextEntry && !isPasswordVisible;
 
     const handleFocus = (e: any) => {
         setIsFocused(true);
@@ -67,28 +72,42 @@ export default function CustomInput({
                     backgroundColor: theme.inputBackground, 
                     borderColor: isFocused ? theme.primary : theme.borderSubtle,
                 },
-                containerStyle, // Estilo del contenedor principal
+                containerStyle,
             ]}
         >
-            {/* Renderiza el ícono si se proporciona */}
             {icon && (
                 <Ionicons name={icon} size={20} color={theme.textSecondary} style={styles.icon} />
             )}
 
-            {/* Renderiza el prefijo si se proporciona */}
             {prefix && (
                 <Text style={[styles.prefix, { color: theme.textSecondary }]}>{prefix}</Text>
             )}
 
-            {/* El componente de TextInput real */}
             <RNTextInput
                 ref={inputRef}
-                style={[styles.input, { color: theme.text }, style]} // Combina estilos base y personalizados
+                style={[styles.input, { color: theme.text }, style]}
                 placeholderTextColor={theme.textSecondary}
                 onFocus={handleFocus}
                 onBlur={handleBlur}
                 {...rest}
+                secureTextEntry={isSecure}
+                autoCorrect={false}
+                spellCheck={false}
             />
+
+            {/* Botón de Visibilidad para contraseñas */}
+            {rest.secureTextEntry && (
+                <TouchableOpacity 
+                    onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+                    style={styles.eyeIcon}
+                >
+                    <Ionicons 
+                        name={isPasswordVisible ? "eye-off-outline" : "eye-outline"} 
+                        size={22} 
+                        color={theme.textSecondary} 
+                    />
+                </TouchableOpacity>
+            )}
         </View>
     );
 }
@@ -118,5 +137,9 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         paddingVertical: 0,
         letterSpacing: 0.1,
+    },
+    eyeIcon: {
+        padding: 8,
+        marginRight: -4,
     },
 });

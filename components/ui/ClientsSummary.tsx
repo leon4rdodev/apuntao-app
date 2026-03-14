@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         overflow: 'hidden',
         marginBottom: 24,
-        marginTop: 16,
+        marginTop: 0,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.03, // Sombra muy sutil

@@ -117,7 +117,7 @@ export default function RegisterScreen() {
                             
                             <CustomInput
                                 icon="lock-closed-outline"
-                                placeholder="Crea una Contraseña (min. 6 char)"
+                                placeholder="Contraseña (min. 6 char)"
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry
