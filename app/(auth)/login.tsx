@@ -10,7 +10,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useRef } from 'react';
 import { useEmailAuth } from '@/hooks/useEmailAuth';
-import { TextInput } from 'react-native';
+import { TextInput, TouchableOpacity, Linking } from 'react-native';
+import { SUPPORT_CONTACT } from '@/constants/index';
+import { useNotification } from '@/store/notificationStore';
 
 import {
     Keyboard,
@@ -38,6 +40,20 @@ export default function LoginScreen() {
     } = useEmailAuth();
 
     const passwordRef = useRef<TextInput>(null!);
+    const showNotification = useNotification();
+
+    const handleHelpPress = () => {
+        const { WHATSAPP_NUMBER } = SUPPORT_CONTACT;
+        const message = "Hola, necesito ayuda para ingresar a mi cuenta en Apunta'o.";
+        const url = `whatsapp://send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(message)}`;
+
+        Linking.openURL(url).catch(() => {
+            showNotification({
+                message: 'Asegúrate de tener WhatsApp instalado',
+                type: 'error',
+            });
+        });
+    };
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -51,6 +67,17 @@ export default function LoginScreen() {
                         keyboardShouldPersistTaps="handled"
                         showsVerticalScrollIndicator={false}
                     >
+                        <TouchableOpacity 
+                            style={[styles.helpButton, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }]} 
+                            onPress={handleHelpPress}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name="logo-whatsapp" size={20} color="#25D366" />
+                            <CustomText size="small" weight="bold" style={{ marginLeft: 6, color: theme.textSecondary }}>
+                                Ayuda
+                            </CustomText>
+                        </TouchableOpacity>
+
                         <View style={styles.header}>
                             <Ionicons name="key-outline" size={60} color={theme.primary} />
                             <CustomText size="xlarge" weight="bold" style={styles.title}>
@@ -120,4 +147,23 @@ const styles = StyleSheet.create({
     subtitle: { textAlign: 'center' },
     form: { gap: 12, marginBottom: 28 },
     footer: { gap: 12 },
+    helpButton: {
+        position: 'absolute',
+        top: 10,
+        right: 20,
+        paddingHorizontal: 12,
+        height: 38,
+        borderRadius: 19,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        zIndex: 10,
+        // Sombra suave
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
 });
