@@ -27,19 +27,21 @@ const BackButton = () => {
 const styles = StyleSheet.create({
     backButton: {
         position: 'absolute',
-        // Ajusta la posición para estar debajo de la barra de estado
         top: Platform.OS === 'android' ? 44 : 54,
         left: 18,
         zIndex: 10,
-        // Añade un padding para aumentar el área de toque
         paddingHorizontal: 20,
         justifyContent: 'center',
         paddingVertical: 12,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8, // Espacio entre el icono y el texto
+        gap: 8,
         borderRadius: 30,
-        opacity: 0.99, // Añade un poco de opacidad para el efecto hover
+        opacity: 0.99,
+        elevation: 1,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
     },
 });
 

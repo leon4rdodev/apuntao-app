@@ -18,12 +18,21 @@ export const formatName = (name: string): string => {
 };
 
 export const formatNumberWithCommas = (value: string): string => {
-    const cleaned = value.replace(REGEX.NUMBERS_ONLY, '');
-    return cleaned.replace(REGEX.NUMBER_FORMAT, ',');
+    // Si hay un punto, separamos la parte entera de la decimal para no aplicar comas a los decimales
+    const parts = value.split('.');
+    parts[0] = parts[0].replace(REGEX.NUMBERS_ONLY, '').replace(REGEX.NUMBER_FORMAT, ',');
+    if (parts.length > 1) {
+        // Solo permitimos una parte decimal (tomamos la primera encontrada)
+        return `${parts[0]}.${parts[1].replace(REGEX.NUMBERS_ONLY, '').slice(0, 2)}`;
+    }
+    return parts[0];
 };
 
 export const formatMoney = (amount: number): string => {
-    return amount.toString().replace(REGEX.NUMBER_FORMAT, ',');
+    return new Intl.NumberFormat('es-DO', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+    }).format(amount);
 };
 
 export const formatPhoneNumber = (value: string): string => {

@@ -12,6 +12,8 @@ export function useClientsList() {
     const clients = useClientStore((state) => state.clients); 
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [page, setPage] = useState(1);
+    const itemsPerPage = 10;
 
     // Filtramos borrados una sola vez y reutilizamos en ambos cálculos
     const validClients = useMemo(
@@ -20,15 +22,15 @@ export function useClientsList() {
     );
 
     const summaryData = useMemo(() => {
-        const clientsWithDebt = validClients.filter((c) => c.debt > 0);
-        const totalDebt = clientsWithDebt.reduce((sum, client) => sum + client.debt, 0);
+        const totalClients = validClients.length;
+        const totalDebt = validClients.reduce((sum, client) => sum + client.debt, 0);
         return {
             totalDebt,
-            clientsWithDebt: clientsWithDebt.length,
+            totalClients,
         };
     }, [validClients]);
 
-    const displayedClients = useMemo(() => {
+    const filteredClients = useMemo(() => {
         const lowerCaseQuery = searchQuery.toLowerCase().trim();
         if (lowerCaseQuery) {
             return validClients.filter(
@@ -38,11 +40,32 @@ export function useClientsList() {
             );
         }
 
-        return [...validClients]
-            .filter((c) => c.debt > 0)
-            .sort((a, b) => b.debt - a.debt)
-            .slice(0, 50);
+        return [...validClients].sort((a, b) => {
+            // Priorizamos los que tienen deuda, y luego por fecha de modificación
+            if (b.debt !== a.debt) return b.debt - a.debt;
+            return b.lastModified - a.lastModified;
+        });
     }, [validClients, searchQuery]);
+
+    const totalPages = Math.ceil(filteredClients.length / itemsPerPage);
+
+    const displayedClients = useMemo(() => {
+        if (searchQuery.trim()) return filteredClients; // No paginar en búsqueda (o podrías si quieres)
+        
+        return filteredClients.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+    }, [filteredClients, page, searchQuery]);
+
+    // Reset page if search query changes
+    useMemo(() => {
+        setPage(1);
+    }, [searchQuery]);
+
+    // Reset page if current page becomes empty (e.g. after deletion)
+    useMemo(() => {
+        if (page > 1 && displayedClients.length === 0 && totalPages > 0) {
+            setPage(totalPages);
+        }
+    }, [displayedClients, totalPages, page]);
 
 
     const handleClientPress = useCallback((clientId: string) => {
@@ -71,8 +94,14 @@ export function useClientsList() {
         setSearchQuery,
         isSearchOpen,
         setIsSearchOpen,
-        summaryData,
+        summaryData: {
+            totalDebt: summaryData.totalDebt,
+            totalClients: summaryData.totalClients,
+        },
         displayedClients,
         handleClientPress,
+        page,
+        setPage,
+        totalPages,
     };
 }

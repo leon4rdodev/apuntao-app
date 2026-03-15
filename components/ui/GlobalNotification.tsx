@@ -3,7 +3,7 @@ import { Colors } from '@/constants/Colors';
 import { useNotificationStore } from '@/store/notificationStore';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 // Usaremos Reanimated para animaciones más fluidas
 import Animated, {
@@ -45,25 +45,25 @@ export function GlobalNotification() {
             case 'success':
                 return {
                     icon: 'checkmark-circle' as const,
-                    backgroundColor: theme.successLight,
                     iconColor: theme.success,
+                    borderColor: theme.success + '30',
                 };
             case 'error':
                 return {
                     icon: 'alert-circle' as const,
-                    backgroundColor: theme.errorLight,
                     iconColor: theme.error,
+                    borderColor: theme.error + '30',
                 };
             default: // info
                 return {
                     icon: 'information-circle' as const,
-                    backgroundColor: theme.surface, // Un color neutro para 'info'
-                    iconColor: theme.info,
+                    iconColor: theme.primary,
+                    borderColor: theme.borderSubtle,
                 };
         }
     };
 
-    const { icon, backgroundColor, iconColor } = getNotificationStyle();
+    const { icon, iconColor, borderColor } = getNotificationStyle();
 
     // No renderizamos el contenedor si el mensaje está vacío para evitar flashes
     if (!message) return null;
@@ -71,53 +71,74 @@ export function GlobalNotification() {
     return (
         <Animated.View
             pointerEvents={isVisible ? 'auto' : 'none'}
-            style={[styles.notification, { backgroundColor }, animatedStyle]}
+            style={[
+                styles.notification, 
+                { 
+                    backgroundColor: theme.surface,
+                    borderColor: borderColor,
+                }, 
+                animatedStyle
+            ]}
         >
-            <Ionicons name={icon} size={24} color={iconColor} style={styles.icon} />
+            <View style={[styles.iconContainer, { backgroundColor: iconColor + '15' }]}>
+                <Ionicons name={icon} size={20} color={iconColor} />
+            </View>
             <Text
                 style={[styles.message, { color: theme.text }]}
-                numberOfLines={3}
-                ellipsizeMode="tail"
+                numberOfLines={2}
             >
                 {message}
             </Text>
-            <TouchableOpacity onPress={hide} style={styles.closeButton}>
-                <Ionicons name="close" size={20} color={theme.text} />
+            <TouchableOpacity 
+                onPress={hide} 
+                style={styles.closeButton}
+                activeOpacity={0.6}
+            >
+                <Ionicons name="close" size={18} color={theme.textSecondary} />
             </TouchableOpacity>
         </Animated.View>
     );
 }
 
-// Se mantienen los mismos estilos, pero ahora aplicados al componente global
 const styles = StyleSheet.create({
     notification: {
         position: 'absolute',
-        top: 50,
-        left: 16,
-        right: 16,
-        zIndex: 9999, // Aseguramos que esté por encima de todo
+        top: 60,
+        left: 20,
+        right: 20,
+        zIndex: 9999,
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        borderRadius: 16,
-        minHeight: 60,
-        shadowColor: '#000000',
+        paddingVertical: 12,
+        paddingHorizontal: 12,
+        borderRadius: 100, // Forma de píldora
+        borderWidth: 1,
+        // Sombra premium coherente con ClientCard
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
-        elevation: 10,
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+        elevation: 4,
+    },
+    iconContainer: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
     },
     icon: {
         marginRight: 12,
     },
     message: {
-        fontSize: 16,
-        fontWeight: '500',
+        fontSize: 14,
+        fontWeight: '600',
         flex: 1,
+        letterSpacing: -0.2,
     },
     closeButton: {
-        marginLeft: 12,
+        marginLeft: 8,
         padding: 4,
     },
 });

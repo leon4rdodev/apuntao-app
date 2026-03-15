@@ -11,101 +11,111 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 interface ClientsSummaryProps {
     /** Deuda total de todos los clientes */
     totalDebt: number;
-    /** Número de clientes con deuda */
-    clientsWithDebt: number;
+    /** Número total de clientes */
+    totalClients: number;
 }
 
 /**
  * Componente de tarjeta de resumen que muestra la deuda total y el número de clientes.
  * Presenta la información clave de un vistazo en un formato de tarjeta limpio y moderno.
  * @param totalDebt - Deuda total
- * @param clientsWithDebt - Número de clientes con deuda
+ * @param totalClients - Número total de clientes
  */
-export default function ClientsSummary({ totalDebt, clientsWithDebt }: ClientsSummaryProps) {
+export default function ClientsSummary({ totalDebt, totalClients }: ClientsSummaryProps) {
     const formattedDebt = formatMoney(totalDebt);
     const colorScheme = useColorScheme() || 'light';
     const theme = Colors[colorScheme];
 
     return (
-        <View>
-            <View
-                style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }]}
-            >
-                {/* Sección Principal: Monto de la Deuda */}
-                <View style={styles.amountSection}>
-                    <Text style={[styles.amount, { color: theme.text }]}>RD$ {formattedDebt}</Text>
-                    <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-                        Deuda total
-                    </Text>
+        <View style={styles.container}>
+            <View style={styles.headerRow}>
+                <View>
+                    <Text style={[styles.label, { color: theme.textSecondary }]}>DEUDA TOTAL</Text>
+                    <Text style={[styles.amount, { color: theme.text }]}>${formattedDebt}</Text>
                 </View>
-
-                {/* Sección Secundaria: Estadísticas de Clientes */}
-                <View style={[styles.statsSection, { borderTopColor: theme.borderSubtle }]}>
-                    <Ionicons name="people-outline" size={20} color={theme.primary} />
-                    <Text style={[styles.statsText, { color: theme.text }]}>
-                        {clientsWithDebt}{' '}
-                        {clientsWithDebt === 1 ? 'cliente debe' : 'clientes deben'}
-                    </Text>
+                <View style={styles.badgeContainer}>
+                    <Text style={[styles.badgeLabel, { color: theme.textSecondary }]}>CLIENTES</Text>
+                    <View style={[styles.badge, { backgroundColor: theme.primaryLight }]}>
+                        <Ionicons name="people" size={14} color={theme.primary} />
+                        <Text style={[styles.badgeText, { color: theme.primary }]}>
+                            {totalClients}
+                        </Text>
+                    </View>
                 </View>
             </View>
 
-            {/* Separador de texto (si hay clientes) */}
-            {clientsWithDebt > 0 && (
-                <Text style={[styles.separatorText, { color: theme.textSecondary }]}>
-                    {totalDebt > 0 ? 'Clientes con más deuda' : 'Clientes sin deuda'}
-                </Text>
+            {totalClients > 0 && (
+                <View style={styles.separator}>
+                    <View style={[styles.line, { backgroundColor: theme.borderSubtle }]} />
+                    <Text style={[styles.separatorText, { color: theme.textSecondary }]}>
+                        {totalDebt > 0 ? 'Resumen de cartera' : 'Todos al día'}
+                    </Text>
+                    <View style={[styles.line, { backgroundColor: theme.borderSubtle }]} />
+                </View>
             )}
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    card: {
-        borderRadius: 24, // Bordes más suaves
-        borderWidth: 1,
-        overflow: 'hidden',
-        marginBottom: 24,
-        marginTop: 0,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.03, // Sombra muy sutil
-        shadowRadius: 12,
-        elevation: 2,
+    container: {
+        marginBottom: 20,
     },
-    amountSection: {
+    headerRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 32, // Más aire
+        paddingVertical: 10,
+    },
+    label: {
+        fontSize: 11,
+        fontWeight: '800',
+        letterSpacing: 1.2,
+        marginBottom: 4,
     },
     amount: {
-        fontSize: 44, // Un poco más grande
-        fontWeight: 'bold',
-        marginBottom: 4,
+        fontSize: 34,
+        fontWeight: '800',
         letterSpacing: -1,
     },
-    subtitle: {
-        fontSize: 13,
-        fontWeight: '600',
-        textTransform: 'uppercase',
-        letterSpacing: 1,
-    },
-    statsSection: {
+    badge: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 16,
-        borderTopWidth: 1,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+        gap: 4,
     },
-    statsText: {
-        fontSize: 16,
-        marginLeft: 8,
-        fontWeight: '500',
+    badgeContainer: {
+        alignItems: 'flex-end',
     },
-    separatorText: {
+    badgeText: {
         fontSize: 14,
         fontWeight: '700',
-        textAlign: 'center',
-        marginBottom: 16,
+    },
+    badgeLabel: {
+        fontSize: 11,
+        fontWeight: '800',
+        letterSpacing: 1.2,
+        marginBottom: 4,
         textTransform: 'uppercase',
-        letterSpacing: 0.5,
+    },
+    separator: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 24,
+        marginBottom: 8,
+        gap: 12,
+    },
+    line: {
+        flex: 1,
+        height: 1,
+    },
+    separatorText: {
+        fontSize: 12,
+        fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        opacity: 0.6,
     },
 });
