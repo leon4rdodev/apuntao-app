@@ -1364,20 +1364,5 @@
       "lastModified": 1772239596255,
       "deleted": false
     }
-  ],
-  "colmadoName": "Colmado Amarilis",
-  "createdAt": "2026-02-19T00:18:35.343Z",
-  "phoneNumber": "8095168266",
-  "pinHash": "$2b$10$Tpl2y/aDV7uy.rzIW8Fjwe6ektNKiTT9uB95PxFFmUoaq9FFDAMFK",
-  "refreshTokens": [
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MWI0ZmYyN2M5NTU2ODU3ZjZjZjhjNCIsInBob25lIjoiODA5NTE2ODI2NiIsInJvbGUiOiJyZWZyZXNoIiwiZXhwIjoxODAyOTk2NTczLCJpYXQiOjE3NzE0NjA1NzMsIm5iZiI6MTc3MTQ2MDU3M30.BzxPtLgIGH2V8gqIBp8tQi-Jl6DacKvBhaV1huNW088"
-  ],
-  "subscription": {
-    "status": "active",
-    "plan": "yearly",
-    "startDate": "2025-11-17T16:41:14.938Z",
-    "endDate": "2026-11-17T16:41:14.938Z",
-    "trialEndDate": "2025-11-24T16:40:18.795Z"
-  },
-  "updatedAt": "2026-03-15T16:18:01.400Z"
+  ]
 }

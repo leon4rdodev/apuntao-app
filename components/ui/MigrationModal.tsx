@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import ActionModal from '../clientsScreen/ActionModal';
-import CustomText from './CustomText';
-import CustomButton from './CustomButton';
-import { migrateLegacyData } from '@/utils/migration';
-import { useAuth } from '@/context/AuthContext';
-import { getAuth } from '@react-native-firebase/auth';
+import { View, Text, StyleSheet, Modal, ActivityIndicator, Alert } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { Ionicons } from '@expo/vector-icons';
-import { useNotification } from '@/store/notificationStore';
+import CustomButton from './CustomButton';
+import { migrateLegacyData } from '@/utils/migration';
+import { getAuth } from '@react-native-firebase/auth';
+import { useNotificationStore } from '@/store/notificationStore';
 
-// Importamos el archivo directamente. Metro lo convertirá en un objeto JS.
-// Esto NO requiere librerías nativas de archivos.
-import backupData from '../../backup_colmado_amarilis_2026-03-15.json';
+// Importación directa del JSON para evitar dependencias nativas
+// @ts-ignore
+import legacyData from '../../backup_colmado_amarilis_2026-03-15.json';
 
 interface MigrationModalProps {
     isVisible: boolean;
@@ -21,147 +17,124 @@ interface MigrationModalProps {
 }
 
 export default function MigrationModal({ isVisible, onClose }: MigrationModalProps) {
-    const { session } = useAuth();
-    const [isMigrating, setIsMigrating] = useState(false);
-    const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme || 'light'];
-    const showNotification = useNotification();
+    const showNotification = useNotificationStore((state) => state.show);
+    const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
     const handleStartMigration = async () => {
         try {
-            const auth = getAuth();
-            const user = auth.currentUser;
-
+            const user = getAuth().currentUser;
             if (!user?.uid) {
-                throw new Error('No se encontró sesión de usuario válida');
+                throw new Error('No se encontró sesión de usuario');
             }
 
             setStatus('loading');
-            setIsMigrating(true);
+            showNotification({
+                message: 'Migración en curso...',
+                type: 'info',
+            });
 
-            // Usamos la data importada directamente
-            await migrateLegacyData(backupData, user.uid);
+            const count = await migrateLegacyData(user.uid, legacyData as any);
 
             setStatus('success');
             showNotification({
-                message: '¡Migración completada con éxito!',
+                message: `¡Éxito! Se migraron ${count} clientes correctamente.`,
                 type: 'success',
             });
-            
-            // Damos tiempo a la notificación para que se vea antes de cerrar
+
+            // Cerrar después de un momento
             setTimeout(() => {
-                setIsMigrating(false);
                 onClose();
-            }, 2500);
+                setStatus('idle');
+            }, 2000);
 
         } catch (error: any) {
             console.error('Error en migración:', error);
             setStatus('error');
-            setIsMigrating(false);
-            Alert.alert('Error', 'No se pudo procesar la migración: ' + (error.message || 'Error desconocido'));
+            Alert.alert('Error', error.message || 'No se pudo completar la migración.');
         }
     };
 
+    const isLoading = status === 'loading';
+
     return (
-        <ActionModal
-            isVisible={isVisible}
-            onClose={isMigrating ? () => {} : onClose}
-            title="Migración de Datos (Local)"
-            paddingBottom={40}
-            actions={isMigrating ? [] : [
-                {
-                    title: 'Cancelar',
-                    onPress: onClose,
-                    buttonStyle: { backgroundColor: 'transparent', borderColor: theme.border, borderWidth: 1 },
-                    textStyle: { color: theme.textSecondary },
-                }
-            ]}
+        <Modal
+            visible={isVisible}
+            transparent
+            animationType="fade"
+            onRequestClose={onClose}
         >
-            <View style={styles.container}>
-                {status === 'idle' && (
-                    <>
-                        <Ionicons name="archive-outline" size={64} color={theme.primary} style={styles.icon} />
-                        <CustomText weight="bold" style={styles.fileName}>
-                            Archivo: backup_colmado_amarilis.json
-                        </CustomText>
-                        <CustomText style={styles.description}>
-                            Se ha detectado el archivo de respaldo en el proyecto. Al presionar el botón, se migrarán todos los clientes y ventas a tu cuenta actual de Firebase.
-                        </CustomText>
-                        <CustomButton 
-                            title="Iniciar Migración Ahora" 
-                            onPress={handleStartMigration}
-                            iconName="rocket-outline"
-                        />
-                    </>
-                )}
+            <View style={styles.overlay}>
+                <View style={[styles.content, { backgroundColor: theme.surface }]}>
+                    <Text style={[styles.title, { color: theme.text }]}>
+                        {isLoading ? 'Migrando datos...' : 'Migración de Datos'}
+                    </Text>
+                    
+                    <Text style={[styles.description, { color: theme.textSecondary }]}>
+                        {isLoading
+                            ? 'Por favor espera. Estamos importando los clientes y sus movimientos.'
+                            : 'Se ha detectado un archivo de respaldo. ¿Deseas importar los clientes y su historial de deudas?'}
+                    </Text>
 
-                {status === 'loading' && (
-                    <View style={styles.center}>
-                        <ActivityIndicator size="large" color={theme.primary} />
-                        <CustomText style={styles.statusText}>Migrando datos desde el archivo local...</CustomText>
-                        <CustomText size="small" color={theme.textSecondary} style={{marginTop: 8}}>
-                             No cierres la app
-                        </CustomText>
-                    </View>
-                )}
-
-                {status === 'success' && (
-                    <View style={styles.center}>
-                        <Ionicons name="checkmark-circle-outline" size={64} color={theme.success} />
-                        <CustomText style={styles.statusText}>¡Migración Finalizada!</CustomText>
-                        <CustomText size="small" color={theme.textSecondary} style={styles.subStatusText}>
-                            Ya puedes borrar el archivo .json del proyecto.
-                        </CustomText>
-                    </View>
-                )}
-
-                {status === 'error' && (
-                    <View style={styles.center}>
-                        <Ionicons name="alert-circle-outline" size={64} color={theme.error} />
-                        <CustomText style={styles.statusText}>Fallo en la migración</CustomText>
-                        <CustomButton 
-                            title="Reintentar" 
-                            onPress={() => setStatus('idle')}
-                            buttonStyle={{ marginTop: 16 }}
-                        />
-                    </View>
-                )}
+                    {isLoading ? (
+                        <ActivityIndicator size="large" color={theme.primary} style={styles.loader} />
+                    ) : (
+                        <View style={styles.buttonContainer}>
+                            <CustomButton
+                                title="Cancelar"
+                                onPress={onClose}
+                                disabled={isLoading}
+                                buttonStyle={[styles.button, { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.borderSubtle }]}
+                                textStyle={{ color: theme.textSecondary }}
+                            />
+                            <CustomButton
+                                title="Comenzar"
+                                onPress={handleStartMigration}
+                                disabled={isLoading || status === 'success'}
+                                buttonStyle={styles.button}
+                            />
+                        </View>
+                    )}
+                </View>
             </View>
-        </ActionModal>
+        </Modal>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
+    overlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        justifyContent: 'center',
+        padding: 24,
+    },
+    content: {
+        borderRadius: 24,
+        padding: 24,
         alignItems: 'center',
-        paddingVertical: 10,
     },
-    icon: {
-        marginBottom: 16,
-    },
-    fileName: {
-        marginBottom: 8,
-        fontSize: 16,
+    title: {
+        fontSize: 20,
+        fontWeight: '700',
+        marginBottom: 12,
+        textAlign: 'center',
     },
     description: {
+        fontSize: 16,
         textAlign: 'center',
+        lineHeight: 22,
         marginBottom: 24,
-        opacity: 0.8,
-        lineHeight: 20,
     },
-    center: {
-        alignItems: 'center',
-        paddingVertical: 20,
+    loader: {
+        marginVertical: 20,
     },
-    statusText: {
-        marginTop: 16,
-        fontSize: 18,
-        fontWeight: '600',
-        textAlign: 'center',
+    buttonContainer: {
+        flexDirection: 'row',
+        gap: 12,
+        width: '100%',
     },
-    subStatusText: {
-        marginTop: 8,
-        textAlign: 'center',
-    }
+    button: {
+        flex: 1,
+    },
 });
