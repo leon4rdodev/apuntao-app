@@ -7,6 +7,7 @@ import CustomInput from '../input/CustomInput';
 import SyncIndicator from '../ui/SyncIndicator';
 import { useState, useEffect } from 'react';
 import { useUIStore } from '@/store/uiStore';
+import MigrationModal from '../ui/MigrationModal';
 
 interface MainHeaderProps {
     setSearchQuery: (query: string) => void;
@@ -44,6 +45,7 @@ export default function MainHeader({ setSearchQuery, setIsSearchOpen, isSearchOp
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme || 'light'];
     const insets = useSafeAreaInsets();
+    const [isMigrationModalVisible, setIsMigrationModalVisible] = useState(false);
 
     return (
         <View
@@ -83,11 +85,17 @@ export default function MainHeader({ setSearchQuery, setIsSearchOpen, isSearchOp
                             />
                         </TouchableOpacity>
                         
-                        <View style={styles.absoluteCenter} pointerEvents="none">
-                            <View style={styles.headerContent}>
-                                <Text style={[styles.title, { color: theme.text }]}>Apunta&apos;o</Text>
-                                <SyncIndicator />
-                            </View>
+                        <View style={styles.absoluteCenter} pointerEvents="box-none">
+                            <TouchableOpacity 
+                                activeOpacity={0.7}
+                                onLongPress={() => setIsMigrationModalVisible(true)}
+                                delayLongPress={2000} // Activador "secreto": Mantener presionado 2 segundos
+                            >
+                                <View style={styles.headerContent}>
+                                    <Text style={[styles.title, { color: theme.text }]}>Apunta&apos;o</Text>
+                                    <SyncIndicator />
+                                </View>
+                            </TouchableOpacity>
                         </View>
                     </>
                 )}
@@ -105,6 +113,11 @@ export default function MainHeader({ setSearchQuery, setIsSearchOpen, isSearchOp
                     />
                 </TouchableOpacity>
             </View>
+
+            <MigrationModal 
+                isVisible={isMigrationModalVisible} 
+                onClose={() => setIsMigrationModalVisible(false)} 
+            />
         </View>
     );
 }

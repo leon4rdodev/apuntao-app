@@ -81,65 +81,68 @@ const ClientCard: React.FC<ClientCardProps> = ({ item, onPress, isPending }) => 
 
 const styles = StyleSheet.create({
     card: {
-        marginBottom: 12,
-        borderRadius: 24, // Consistencia con perfiles
+        marginBottom: 16, // Más espacio entre tarjetas
+        borderRadius: 20, // Bordes redondeados modernos
         borderWidth: 1,
+        // Sombra más profunda y suave (Premium)
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.03,
-        shadowRadius: 8,
-        elevation: 1,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.04,
+        shadowRadius: 10,
+        elevation: 3,
     },
     content: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 20,
+        paddingHorizontal: 16, // Un poco más compacto horizontalmente
+        paddingVertical: 18,
     },
     info: {
         flex: 1,
-        marginRight: 12,
+        marginRight: 10,
     },
     nameRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 6,
+        marginBottom: 4,
     },
     name: {
-        fontSize: 18,
+        fontSize: 17, // Tamaño de lectura ideal
         fontWeight: '700',
-        letterSpacing: -0.5,
+        letterSpacing: -0.4,
     },
     debtRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
+        gap: 2,
     },
     debtLabel: {
-        fontSize: 14,
-        fontWeight: '500',
+        fontSize: 13,
+        fontWeight: '600',
+        opacity: 0.6,
     },
     debtAmount: {
-        fontSize: 16,
-        fontWeight: '700',
+        fontSize: 15,
+        fontWeight: '800',
     },
     rightSection: {
         alignItems: 'flex-end',
-        gap: 10,
+        gap: 8,
     },
     badge: {
         paddingHorizontal: 10,
         paddingVertical: 5,
-        borderRadius: 12,
+        borderRadius: 10,
     },
     badgeText: {
         fontSize: 10,
-        fontWeight: '800',
+        fontWeight: '900',
         textTransform: 'uppercase',
-        letterSpacing: 0.5,
+        letterSpacing: 0.8,
     },
     chevron: {
-        marginRight: -4,
+        opacity: 0.3,
+        marginRight: -2,
     },
 });
 

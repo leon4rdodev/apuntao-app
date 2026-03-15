@@ -5,7 +5,7 @@ import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useClientsList } from '@/hooks/useClientsList';
 import React, { useCallback } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function Index() {
@@ -20,6 +20,9 @@ export default function Index() {
         summaryData,
         displayedClients,
         handleClientPress,
+        page,
+        setPage,
+        totalPages,
     } = useClientsList();
 
     const renderEmptyListComponent = () => (
@@ -58,10 +61,37 @@ export default function Index() {
                 windowSize={5}
                 ListHeaderComponent={
                     !isSearchOpen ? (
-                        <ClientsSummary
-                            totalDebt={summaryData.totalDebt}
-                            clientsWithDebt={summaryData.clientsWithDebt}
-                        />
+                        <View>
+                            <ClientsSummary
+                                totalDebt={summaryData.totalDebt}
+                                clientsWithDebt={summaryData.clientsWithDebt}
+                            />
+                            {totalPages > 1 && (
+                                <View style={styles.pagination}>
+                                    <TouchableOpacity 
+                                        disabled={page === 1} 
+                                        onPress={() => setPage(p => p - 1)}
+                                        style={[styles.pageButton, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }, page === 1 && { opacity: 0.3 }]}
+                                    >
+                                        <Ionicons name="chevron-back" size={20} color={theme.text} />
+                                    </TouchableOpacity>
+
+                                    <View style={[styles.pageIndicatorContainer, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }]}>
+                                        <Text style={[styles.pageIndicatorText, { color: theme.textSecondary }]}>
+                                            <Text style={{ color: theme.text, fontWeight: '800' }}>{page}</Text> de {totalPages}
+                                        </Text>
+                                    </View>
+
+                                    <TouchableOpacity 
+                                        disabled={page === totalPages} 
+                                        onPress={() => setPage(p => p + 1)}
+                                        style={[styles.pageButton, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }, page === totalPages && { opacity: 0.3 }]}
+                                    >
+                                        <Ionicons name="chevron-forward" size={20} color={theme.text} />
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        </View>
                     ) : null
                 }
                 renderItem={useCallback(({ item }: { item: any }) => (
@@ -72,6 +102,7 @@ export default function Index() {
                     />
                 ), [handleClientPress])}
                 ListEmptyComponent={renderEmptyListComponent}
+                ListFooterComponent={null}
             />
         </View>
     );
@@ -84,7 +115,7 @@ const styles = StyleSheet.create({
     listContent: {
         paddingHorizontal: 20,
         paddingTop: 20,
-        paddingBottom: 110, // Espacio para el TabBar absoluto
+        paddingBottom: 20, 
     },
     emptyContainer: {
         flex: 1,
@@ -114,5 +145,47 @@ const styles = StyleSheet.create({
         fontSize: 15,
         textAlign: 'center',
         lineHeight: 22,
+    },
+    pagination: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 10,
+        marginBottom: 20,
+        gap: 12,
+    },
+    pageButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    pageButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    pageIndicatorContainer: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 22,
+        borderWidth: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    pageIndicatorText: {
+        fontSize: 13,
+        fontWeight: '600',
     },
 });
