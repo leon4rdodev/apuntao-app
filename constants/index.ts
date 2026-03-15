@@ -47,9 +47,9 @@ export const REGEX = {
     PHONE: /^(809|829|849)\d{7}$/,
     /** Caracteres permitidos en nombres (letras, números, espacios y acentos comunes). */
     NAME_ALLOWED_CHARS: /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]*$/,
-    /** Expresión para eliminar cualquier caracter que no sea un dígito. */
-    NUMBERS_ONLY: /\D+/g,
-    /** Formato de números con comas para separación de miles. */
+    /** Expresión para eliminar cualquier caracter que no sea un dígito o un punto. */
+    NUMBERS_ONLY: /[^\d.]/g,
+    /** Formato de números con comas para separación de miles (solo enteros). */
     NUMBER_FORMAT: /\B(?=(\d{3})+(?!\d))/g,
 } as const;
 

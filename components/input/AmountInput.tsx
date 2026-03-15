@@ -25,10 +25,27 @@ export const AmountInput = forwardRef<TextInput, AmountInputProps>(({
 
     const handleChangeText = (text: string) => {
         // Limpia el texto de cualquier caracter que no sea número o punto
-        const cleanText = text.replace(/[^0-9.]/g, '');
+        let cleanText = text.replace(/[^\d.]/g, '');
 
-        // Si el texto limpio es solo "0" o está vacío, envía cadena vacía
-        if (cleanText === '0' || cleanText === '') {
+        // Aseguramos que solo haya un punto decimal
+        const dotCount = (cleanText.match(/\./g) || []).length;
+        if (dotCount > 1) {
+            // Si hay más de un punto, nos quedamos con el texto hasta el segundo punto (sin incluirlo)
+            const firstDotIndex = cleanText.indexOf('.');
+            const secondDotIndex = cleanText.indexOf('.', firstDotIndex + 1);
+            cleanText = cleanText.slice(0, secondDotIndex);
+        }
+
+        // Limitamos a 2 decimales para evitar montos inválidos
+        if (cleanText.includes('.')) {
+            const [int, dec] = cleanText.split('.');
+            if (dec.length > 2) {
+                cleanText = `${int}.${dec.slice(0, 2)}`;
+            }
+        }
+
+        // Si el texto queda vacío, enviamos cadena vacía
+        if (cleanText === '') {
             onChangeText('');
         } else {
             onChangeText(cleanText);

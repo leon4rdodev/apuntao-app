@@ -11,17 +11,17 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 interface ClientsSummaryProps {
     /** Deuda total de todos los clientes */
     totalDebt: number;
-    /** Número de clientes con deuda */
-    clientsWithDebt: number;
+    /** Número total de clientes */
+    totalClients: number;
 }
 
 /**
  * Componente de tarjeta de resumen que muestra la deuda total y el número de clientes.
  * Presenta la información clave de un vistazo en un formato de tarjeta limpio y moderno.
  * @param totalDebt - Deuda total
- * @param clientsWithDebt - Número de clientes con deuda
+ * @param totalClients - Número total de clientes
  */
-export default function ClientsSummary({ totalDebt, clientsWithDebt }: ClientsSummaryProps) {
+export default function ClientsSummary({ totalDebt, totalClients }: ClientsSummaryProps) {
     const formattedDebt = formatMoney(totalDebt);
     const colorScheme = useColorScheme() || 'light';
     const theme = Colors[colorScheme];
@@ -31,21 +31,24 @@ export default function ClientsSummary({ totalDebt, clientsWithDebt }: ClientsSu
             <View style={styles.headerRow}>
                 <View>
                     <Text style={[styles.label, { color: theme.textSecondary }]}>DEUDA TOTAL</Text>
-                    <Text style={[styles.amount, { color: theme.text }]}>RD$ {formattedDebt}</Text>
+                    <Text style={[styles.amount, { color: theme.text }]}>${formattedDebt}</Text>
                 </View>
-                <View style={[styles.badge, { backgroundColor: theme.primaryLight }]}>
-                    <Ionicons name="people" size={14} color={theme.primary} />
-                    <Text style={[styles.badgeText, { color: theme.primary }]}>
-                        {clientsWithDebt}
-                    </Text>
+                <View style={styles.badgeContainer}>
+                    <Text style={[styles.badgeLabel, { color: theme.textSecondary }]}>CLIENTES</Text>
+                    <View style={[styles.badge, { backgroundColor: theme.primaryLight }]}>
+                        <Ionicons name="people" size={14} color={theme.primary} />
+                        <Text style={[styles.badgeText, { color: theme.primary }]}>
+                            {totalClients}
+                        </Text>
+                    </View>
                 </View>
             </View>
 
-            {clientsWithDebt > 0 && (
+            {totalClients > 0 && (
                 <View style={styles.separator}>
                     <View style={[styles.line, { backgroundColor: theme.borderSubtle }]} />
                     <Text style={[styles.separatorText, { color: theme.textSecondary }]}>
-                        {totalDebt > 0 ? 'Resumen de cartera' : 'Clientes al día'}
+                        {totalDebt > 0 ? 'Resumen de cartera' : 'Todos al día'}
                     </Text>
                     <View style={[styles.line, { backgroundColor: theme.borderSubtle }]} />
                 </View>
@@ -83,9 +86,19 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         gap: 4,
     },
+    badgeContainer: {
+        alignItems: 'flex-end',
+    },
     badgeText: {
         fontSize: 14,
         fontWeight: '700',
+    },
+    badgeLabel: {
+        fontSize: 11,
+        fontWeight: '800',
+        letterSpacing: 1.2,
+        marginBottom: 4,
+        textTransform: 'uppercase',
     },
     separator: {
         flexDirection: 'row',

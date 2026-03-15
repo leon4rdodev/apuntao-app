@@ -81,15 +81,15 @@ const ClientCard: React.FC<ClientCardProps> = ({ item, onPress, isPending }) => 
 
 const styles = StyleSheet.create({
     card: {
-        marginBottom: 16, // Más espacio entre tarjetas
-        borderRadius: 20, // Bordes redondeados modernos
+        marginBottom: 16,
+        borderRadius: 20,
         borderWidth: 1,
-        // Sombra más profunda y suave (Premium)
+        // Sombra más definida (como era antes)
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.04,
-        shadowRadius: 10,
-        elevation: 3,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 1,
     },
     content: {
         flexDirection: 'row',

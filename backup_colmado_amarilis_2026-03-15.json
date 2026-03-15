@@ -1277,14 +1277,6 @@
       "deleted": false
     },
     {
-      "id": "local_1771641850580_i9z8xnf",
-      "name": "Darlin Velzquez",
-      "debt": 0,
-      "transactions": [],
-      "lastModified": 1771641850580,
-      "deleted": false
-    },
-    {
       "id": "local_1771642143346_fsllmh5",
       "name": "Nashla Hija",
       "debt": 10,
@@ -1297,14 +1289,6 @@
         }
       ],
       "lastModified": 1771642143348,
-      "deleted": false
-    },
-    {
-      "id": "local_1771642143346_fsllmh5",
-      "name": "Nashla Hija",
-      "debt": 0,
-      "transactions": [],
-      "lastModified": 1771642143346,
       "deleted": false
     },
     {
@@ -1341,27 +1325,11 @@
       "deleted": false
     },
     {
-      "id": "local_1771858175486_cv9epml",
-      "name": "Mariano Hijo",
-      "debt": 0,
-      "transactions": [],
-      "lastModified": 1771858175486,
-      "deleted": false
-    },
-    {
       "id": "local_1772239596255_l2bvz22",
       "name": "Mariano",
       "debt": 0,
       "transactions": [],
       "lastModified": 1773443041797,
-      "deleted": false
-    },
-    {
-      "id": "local_1772239596255_l2bvz22",
-      "name": "Mariano",
-      "debt": 0,
-      "transactions": [],
-      "lastModified": 1772239596255,
       "deleted": false
     }
   ]

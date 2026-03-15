@@ -64,7 +64,7 @@ export default function Index() {
                         <View>
                             <ClientsSummary
                                 totalDebt={summaryData.totalDebt}
-                                clientsWithDebt={summaryData.clientsWithDebt}
+                                totalClients={summaryData.totalClients}
                             />
                             {totalPages > 1 && (
                                 <View style={styles.pagination}>
