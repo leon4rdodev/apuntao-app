@@ -84,7 +84,6 @@ const styles = StyleSheet.create({
         marginBottom: 16,
         borderRadius: 20,
         borderWidth: 1,
-        // Sombra más definida (como era antes)
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.08,
@@ -94,7 +93,7 @@ const styles = StyleSheet.create({
     content: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16, // Un poco más compacto horizontalmente
+        paddingHorizontal: 16,
         paddingVertical: 18,
     },
     info: {
@@ -107,7 +106,7 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     name: {
-        fontSize: 17, // Tamaño de lectura ideal
+        fontSize: 17,
         fontWeight: '700',
         letterSpacing: -0.4,
     },
@@ -130,9 +129,9 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     badge: {
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 20,
     },
     badgeText: {
         fontSize: 10,
