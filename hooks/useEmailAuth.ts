@@ -78,6 +78,11 @@ export function useEmailAuth() {
                 phoneNumber: '',
             });
 
+            showNotification({
+                message: '¡Cuenta creada con éxito! Bienvenido.',
+                type: 'success',
+            });
+
             // AuthContext will detect the change and route to home
             
         } catch (error: any) {
@@ -111,6 +116,11 @@ export function useEmailAuth() {
         try {
             const auth = getAuth();
             await signInWithEmailAndPassword(auth, email.trim(), password);
+            
+            showNotification({
+                message: '¡Bienvenido de nuevo!',
+                type: 'success',
+            });
             // AuthContext detectará la sesión
         } catch (error: any) {
             console.error('Error iniciando sesión con email:', error);

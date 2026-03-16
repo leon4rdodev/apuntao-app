@@ -46,7 +46,7 @@ const ClientSummaryCard = ({ client, onEdit }: { client: Client; onEdit: () => v
                 </TouchableOpacity>
             </View>
 
-            <View style={[styles.debtContainer, { backgroundColor: theme.background }]}>
+            <View style={styles.debtContainer}>
                  <CustomText
                     size="small"
                     weight="medium"
@@ -56,7 +56,14 @@ const ClientSummaryCard = ({ client, onEdit }: { client: Client; onEdit: () => v
                     Deuda Total
                 </CustomText>
 
-                <CustomText size="xxlarge" weight="bold" color={debtColor} style={styles.debtAmount}>
+                <CustomText 
+                    size="xxlarge" 
+                    weight="bold" 
+                    color={debtColor} 
+                    style={styles.debtAmount}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                >
                     ${formatMoney(client.debt)}
                 </CustomText>
             </View>
@@ -109,7 +116,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 24,
     },
     clientName: {
         flex: 1,
@@ -121,9 +128,10 @@ const styles = StyleSheet.create({
     },
     debtContainer: {
         alignItems: 'center',
-        paddingVertical: 16,
+        paddingVertical: 24,
+        paddingHorizontal: 16,
         borderRadius: 16,
-        marginBottom: 4,
+        marginBottom: 12,
     },
     debtLabel: {
         textTransform: 'uppercase',
@@ -134,7 +142,7 @@ const styles = StyleSheet.create({
         fontSize: 42, 
     },
     contactSection: {
-        marginTop: 20, // Mayor espaciado interno antes de contacto
+        marginTop: 12, // Mayor espaciado interno antes de contacto
     },
     infoRow: {
         flexDirection: 'row',

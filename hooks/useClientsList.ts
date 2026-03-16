@@ -41,7 +41,6 @@ export function useClientsList() {
         }
 
         return [...validClients].sort((a, b) => {
-            // Priorizamos los que tienen deuda, y luego por fecha de modificación
             if (b.debt !== a.debt) return b.debt - a.debt;
             return b.lastModified - a.lastModified;
         });
@@ -50,23 +49,29 @@ export function useClientsList() {
     const totalPages = Math.ceil(filteredClients.length / itemsPerPage);
 
     const displayedClients = useMemo(() => {
-        if (searchQuery.trim()) return filteredClients; // No paginar en búsqueda (o podrías si quieres)
+        if (searchQuery.trim()) return filteredClients; 
         
         return filteredClients.slice((page - 1) * itemsPerPage, page * itemsPerPage);
     }, [filteredClients, page, searchQuery]);
 
-    // Reset page if search query changes
     useMemo(() => {
         setPage(1);
     }, [searchQuery]);
 
-    // Reset page if current page becomes empty (e.g. after deletion)
     useMemo(() => {
         if (page > 1 && displayedClients.length === 0 && totalPages > 0) {
             setPage(totalPages);
         }
     }, [displayedClients, totalPages, page]);
 
+
+    const handleNextPage = useCallback(() => {
+        setPage((p) => (p < totalPages ? p + 1 : p));
+    }, [totalPages]);
+
+    const handlePrevPage = useCallback(() => {
+        setPage((p) => (p > 1 ? p - 1 : p));
+    }, []);
 
     const handleClientPress = useCallback((clientId: string) => {
         router.push(`/(app)/clients/${clientId}`);
@@ -102,6 +107,8 @@ export function useClientsList() {
         handleClientPress,
         page,
         setPage,
+        handleNextPage,
+        handlePrevPage,
         totalPages,
     };
 }

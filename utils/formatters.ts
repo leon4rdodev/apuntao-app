@@ -77,7 +77,7 @@ export const formatDate = (dateInput: number | Date | string): string => {
 
         // Pequeños ajustes para que se vea más natural en español.
         formattedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
-        formattedDate = formattedDate.replace(' de ', ' del ');
+        // Eliminado el reemplazo de ' de ' por ' del ' que causaba 'del marzo'
         formattedDate = formattedDate.replace(/\s?[ap]\.\s?m\./i, (match) =>
             match.trim().toLowerCase()
         );
@@ -86,6 +86,48 @@ export const formatDate = (dateInput: number | Date | string): string => {
     } catch (error) {
         console.error('Error al formatear la fecha:', error);
         return 'Fecha inválida';
+    }
+};
+
+/**
+ * Formatea una fecha en 3 líneas separadas para mejor legibilidad en tarjetas.
+ * @param dateInput - La fecha como timestamp, objeto Date o string ISO.
+ * @returns String con saltos de línea (\n).
+ */
+export const formatDateThreeLines = (dateInput: number | Date | string): string => {
+    try {
+        const date = new Date(dateInput);
+        const config = { timeZone: 'America/Santo_Domingo' };
+
+        // Línea 1: Día de la semana y número (ej: Lunes 16)
+        const line1 = new Intl.DateTimeFormat('es-DO', { 
+            ...config, 
+            weekday: 'long', 
+            day: 'numeric' 
+        }).format(date);
+
+        // Línea 2: Mes y Año (ej: de marzo 2026)
+        const line2 = new Intl.DateTimeFormat('es-DO', { 
+            ...config, 
+            month: 'long', 
+            year: 'numeric' 
+        }).format(date);
+
+        // Línea 3: Hora (ej: 11:32 a. m.)
+        const line3 = new Intl.DateTimeFormat('es-DO', { 
+            ...config, 
+            hour: 'numeric', 
+            minute: '2-digit', 
+            hour12: true 
+        }).format(date).replace(/\s?[ap]\.\s?m\./i, (match) => match.trim().toLowerCase());
+
+        // Capitalizar primera letra de la línea 1 y añadir "de" a la línea 2
+        const capitalizedLine1 = line1.charAt(0).toUpperCase() + line1.slice(1);
+        const formattedLine2 = `de ${line2}`;
+
+        return `${capitalizedLine1}\n${formattedLine2}\n${line3}`;
+    } catch (error) {
+        return 'Fecha\ninválida\n--:--';
     }
 };
 

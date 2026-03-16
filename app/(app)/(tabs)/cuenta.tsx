@@ -31,6 +31,7 @@ import { ERROR_MESSAGES } from '@/constants';
 import { getAuth } from '@react-native-firebase/auth';
 import { getFirestore, doc, updateDoc } from '@react-native-firebase/firestore';
 import ActionModal from '@/components/clientsScreen/ActionModal';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import CustomInput from '@/components/input/CustomInput';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -49,6 +50,7 @@ export default function CuentaScreen() {
     
     // Perfil
     const [isEditing, setIsEditing] = useState(false);
+    const [isLogoutVisible, setIsLogoutVisible] = useState(false);
     const [newName, setNewName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
@@ -90,15 +92,8 @@ export default function CuentaScreen() {
             return;
         }
 
-        Alert.alert('Cerrar Sesión', '¿Estás seguro? Se cerrará tu sesión en este dispositivo.', [
-            { text: 'Cancelar', style: 'cancel' },
-            {
-                text: 'Confirmar',
-                style: 'destructive',
-                onPress: signOut,
-            },
-        ]);
-    }, [signOut, hasPendingWrites, showNotification]);
+        setIsLogoutVisible(true);
+    }, [hasPendingWrites, showNotification]);
 
     const handleEditProfile = useCallback(() => {
         if (account) {
@@ -248,23 +243,6 @@ export default function CuentaScreen() {
                     >
                         Ajustes y Soporte
                     </CustomText>
-                    <ActionRow
-                        icon="help-buoy-outline"
-                        text="Centro de Ayuda"
-                        onPress={() => router.push('/(app)/(tabs)/ayuda')}
-                        theme={theme}
-                    />
-                    <ActionRow
-                        icon="star-outline"
-                        text="Calificar la App"
-                        
-                        onPress={() =>
-                            Linking.openURL('market://details?id=com.leon4rdodev.apuntao')
-                        }
-                        theme={theme}
-                    />
-
-
                     {isBiometricsSupported && (
                         <View style={[styles.settingRow, { borderTopColor: theme.borderSubtle }]}>
                             <View style={styles.settingTextContainer}>
@@ -285,6 +263,21 @@ export default function CuentaScreen() {
                             </TouchableOpacity>
                         </View>
                     )}
+                    <ActionRow
+                        icon="help-buoy-outline"
+                        text="Centro de Ayuda"
+                        onPress={() => router.push('/(app)/(tabs)/ayuda')}
+                        theme={theme}
+                    />
+                    <ActionRow
+                        icon="star-outline"
+                        text="Calificar la App"
+                        
+                        onPress={() =>
+                            Linking.openURL('market://details?id=com.leon4rdodev.apuntao')
+                        }
+                        theme={theme}
+                    />
                 </View>
 
                 <View style={{ marginTop: 12 }}>
@@ -312,7 +305,7 @@ export default function CuentaScreen() {
                     {
                         title: 'Cancelar',
                         onPress: () => setIsEditing(false),
-                        buttonStyle: { backgroundColor: 'transparent', borderColor: theme.border, borderWidth: 1 },
+                        buttonStyle: { backgroundColor: theme.inputBackground, flex: 1, borderWidth: 1, borderColor: theme.borderSubtle },
                         textStyle: { color: theme.textSecondary },
                     },
                     {
@@ -336,6 +329,18 @@ export default function CuentaScreen() {
                     />
                 </View>
             </ActionModal>
+
+            <ConfirmModal
+                isVisible={isLogoutVisible}
+                onClose={() => setIsLogoutVisible(false)}
+                onConfirm={signOut}
+                title="Cerrar Sesión"
+                description="¿Estás seguro? Se cerrará tu sesión en este dispositivo y tendrás que volver a ingresar."
+                confirmText="Salir"
+                isDestructive={true}
+                iconName="log-out-outline"
+                confirmIconName="log-out-outline"
+            />
         </View>
     );
 }

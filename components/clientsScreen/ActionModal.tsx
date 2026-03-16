@@ -11,6 +11,8 @@ import {
     Keyboard,
 } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { useNotificationStore } from '@/store/notificationStore';
+import { GlobalNotification } from '@/components/ui/GlobalNotification';
 import Animated, { 
     useAnimatedStyle, 
     useAnimatedKeyboard,
@@ -46,22 +48,19 @@ const ActionModal = memo(({
     const { height: screenHeight } = useWindowDimensions();
     const isPresented = useSharedValue(0);
     const keyboard = useAnimatedKeyboard();
+    const { registerModal, unregisterModal } = useNotificationStore();
+
+    useEffect(() => {
+        if (isVisible) {
+            registerModal();
+            return () => unregisterModal();
+        }
+    }, [isVisible]);
 
     const handleClose = useCallback(() => {
         Keyboard.dismiss();
         onClose();
     }, [onClose]);
-
-    // Cerrar modal si el teclado desaparece manualmente
-    useEffect(() => {
-        if (!isVisible) return;
-        
-        const subscription = Keyboard.addListener('keyboardDidHide', () => {
-            onClose();
-        });
-
-        return () => subscription.remove();
-    }, [isVisible, onClose]);
 
     useEffect(() => {
         if (isVisible) {
@@ -142,6 +141,7 @@ const ActionModal = memo(({
                             ))}
                         </View>
                     </ScrollView>
+                    <GlobalNotification isModalInstance />
                 </Animated.View>
             </View>
         </Modal>

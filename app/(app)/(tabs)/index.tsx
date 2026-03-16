@@ -21,7 +21,8 @@ export default function Index() {
         displayedClients,
         handleClientPress,
         page,
-        setPage,
+        handleNextPage,
+        handlePrevPage,
         totalPages,
     } = useClientsList();
 
@@ -70,7 +71,7 @@ export default function Index() {
                                 <View style={styles.pagination}>
                                     <TouchableOpacity 
                                         disabled={page === 1} 
-                                        onPress={() => setPage((p: number) => p - 1)}
+                                        onPress={handlePrevPage}
                                         style={[styles.pageButton, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }, page === 1 && { opacity: 0.3 }]}
                                     >
                                         <Ionicons name="chevron-back" size={20} color={theme.text} />
@@ -84,7 +85,7 @@ export default function Index() {
 
                                     <TouchableOpacity 
                                         disabled={page === totalPages} 
-                                        onPress={() => setPage((p: number) => p + 1)}
+                                        onPress={handleNextPage}
                                         style={[styles.pageButton, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }, page === totalPages && { opacity: 0.3 }]}
                                     >
                                         <Ionicons name="chevron-forward" size={20} color={theme.text} />

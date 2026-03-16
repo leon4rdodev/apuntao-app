@@ -2,6 +2,7 @@
 
 // --- Imports de Componentes UI ---
 import ActionModal from '@/components/clientsScreen/ActionModal';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import ClientSummaryCard from '@/components/clientsScreen/ClientSummaryCard';
 import DangerZone from '@/components/clientsScreen/DangerZone';
 import MainActionButtons from '@/components/clientsScreen/MainActionButtons';
@@ -40,6 +41,16 @@ import { getFromStorage } from '@/utils/storage';
 // --- Tipos para el estado del Modal ---
 type ModalConfig = { type: 'transaction'; payload: TransactionType } | { type: 'edit' } | null;
 
+type ConfirmConfig = {
+    type: 'deleteClient' | 'deleteTransaction' | 'settleDebt';
+    title: string;
+    description: string;
+    confirmText?: string;
+    isDestructive?: boolean;
+    iconName?: any;
+    payload?: any;
+} | null;
+
 /**
  * Pantalla de Detalle de Cliente.
  * Orquesta los componentes que muestran la información y las acciones de un cliente.
@@ -61,6 +72,7 @@ export default function ClientDetailScreen() {
 
     // --- State local del componente ---
     const [modalConfig, setModalConfig] = useState<ModalConfig>(null);
+    const [confirmConfig, setConfirmConfig] = useState<ConfirmConfig>(null);
     const [amount, setAmount] = useState('');
     const [editName, setEditName] = useState('');
     const [editPhone, setEditPhone] = useState('');
@@ -141,33 +153,34 @@ export default function ClientDetailScreen() {
             return;
         }
 
-        Alert.alert(
-            'Eliminar Cliente',
-            `¿Estás seguro de que deseas eliminar a ${client.name}? Esta acción no se puede deshacer.`,
-            [
-                { text: 'Cancelar', style: 'cancel' },
-                {
-                    text: 'Eliminar',
-                    style: 'destructive',
-                    onPress: async () => {
-                        // Verificación Biométrica
-                        const biometricsEnabled = await getFromStorage<boolean>(STORAGE_KEYS.BIOMETRICS_ENABLED);
-                        if (biometricsEnabled) {
-                            const success = await authenticateBiometrics(`Confirmar eliminación de ${client.name}`);
-                            if (!success) return;
-                        }
+        setConfirmConfig({
+            type: 'deleteClient',
+            title: 'Eliminar Cliente',
+            description: `¿Estás seguro de que deseas eliminar a ${client.name}? Esta acción no se puede deshacer.`,
+            confirmText: 'Eliminar',
+            isDestructive: true,
+            iconName: 'trash-outline'
+        });
+    }, [client, showNotification]);
 
-                        deleteClient(client.id);
-                        showNotification({
-                            message: `${client.name} fue eliminado.`,
-                            type: 'success',
-                        });
-                        router.back();
-                    },
-                },
-            ]
-        );
-    }, [client, deleteClient, router, showNotification]);
+    const onConfirmDeleteClient = async () => {
+        if (!client) return;
+        
+        // Verificación Biométrica
+        const biometricsEnabled = await getFromStorage<boolean>(STORAGE_KEYS.BIOMETRICS_ENABLED);
+        if (biometricsEnabled) {
+            const success = await authenticateBiometrics(`Confirmar eliminación de ${client.name}`);
+            if (!success) return;
+        }
+
+        deleteClient(client.id);
+        showNotification({
+            message: `${client.name} fue eliminado.`,
+            type: 'success',
+        });
+        setConfirmConfig(null);
+        router.back();
+    };
 
     const handleSettleDebt = useCallback(async () => {
         if (!client || client.debt <= 0) return;
@@ -179,35 +192,36 @@ export default function ClientDetailScreen() {
         }
         // =======================================================
 
-        Alert.alert(
-            'Saldar Deuda',
-            `¿Confirmas que ${client.name} pagó su deuda total de $${formatMoney(client.debt)}?`,
-            [
-                { text: 'Cancelar', style: 'cancel' },
-                {
-                    text: 'Confirmar Pago',
-                    onPress: async () => {
-                        // Verificación Biométrica
-                        const biometricsEnabled = await getFromStorage<boolean>(STORAGE_KEYS.BIOMETRICS_ENABLED);
-                        if (biometricsEnabled) {
-                            const success = await authenticateBiometrics(`Confirmar saldo total de ${client.name}`);
-                            if (!success) return;
-                        }
+        setConfirmConfig({
+            type: 'settleDebt',
+            title: 'Saldar Deuda',
+            description: `¿Confirmas que ${client.name} pagó su deuda total de $${formatMoney(client.debt)}?`,
+            confirmText: 'Saldar',
+            iconName: 'cash-outline'
+        });
+    }, [client, formatMoney, checkAndAlert]);
 
-                        addTransaction(client.id, {
-                            amount: client.debt,
-                            type: 'Pago',
-                            date: Date.now(),
-                        });
-                        showNotification({
-                            message: SUCCESS_MESSAGES.DEBT_CLEARED,
-                            type: 'success',
-                        });
-                    },
-                },
-            ]
-        );
-    }, [client, addTransaction, showNotification, checkAndAlert]);
+    const onConfirmSettleDebt = async () => {
+        if (!client) return;
+
+        // Verificación Biométrica
+        const biometricsEnabled = await getFromStorage<boolean>(STORAGE_KEYS.BIOMETRICS_ENABLED);
+        if (biometricsEnabled) {
+            const success = await authenticateBiometrics(`Confirmar saldo total de ${client.name}`);
+            if (!success) return;
+        }
+
+        addTransaction(client.id, {
+            amount: client.debt,
+            type: 'Pago',
+            date: Date.now(),
+        });
+        showNotification({
+            message: SUCCESS_MESSAGES.DEBT_CLEARED,
+            type: 'success',
+        });
+        setConfirmConfig(null);
+    };
 
     const handleDeleteTransaction = useCallback(
         (tx: Transaction) => {
@@ -220,34 +234,37 @@ export default function ClientDetailScreen() {
             }
             // =======================================================
 
-            Alert.alert(
-                'Eliminar Transacción',
-                `¿Seguro que quieres eliminar este movimiento de $${formatMoney(tx.amount)}?`,
-                [
-                    { text: 'Cancelar', style: 'cancel' },
-                    {
-                        text: 'Eliminar',
-                        style: 'destructive',
-                        onPress: async () => {
-                            // Verificación Biométrica
-                            const biometricsEnabled = await getFromStorage<boolean>(STORAGE_KEYS.BIOMETRICS_ENABLED);
-                            if (biometricsEnabled) {
-                                const success = await authenticateBiometrics(`Confirmar eliminación de movimiento por $${formatMoney(tx.amount)}`);
-                                if (!success) return;
-                            }
-
-                            deleteTransaction(client.id, tx.id);
-                            showNotification({
-                                message: SUCCESS_MESSAGES.TRANSACTION_DELETED,
-                                type: 'success',
-                            });
-                        },
-                    },
-                ]
-            );
+            setConfirmConfig({
+                type: 'deleteTransaction',
+                title: 'Eliminar Transacción',
+                description: `¿Seguro que quieres eliminar este movimiento de $${formatMoney(tx.amount)}?`,
+                confirmText: 'Eliminar',
+                isDestructive: true,
+                payload: tx,
+                iconName: 'trash-outline'
+            });
         },
-        [client, deleteTransaction, showNotification, checkAndAlert]
+        [client, formatMoney, checkAndAlert]
     );
+
+    const onConfirmDeleteTransaction = async () => {
+        if (!client || !confirmConfig?.payload) return;
+        const tx = confirmConfig.payload as Transaction;
+
+        // Verificación Biométrica
+        const biometricsEnabled = await getFromStorage<boolean>(STORAGE_KEYS.BIOMETRICS_ENABLED);
+        if (biometricsEnabled) {
+            const success = await authenticateBiometrics(`Confirmar eliminación de movimiento por $${formatMoney(tx.amount)}`);
+            if (!success) return;
+        }
+
+        deleteTransaction(client.id, tx.id);
+        showNotification({
+            message: SUCCESS_MESSAGES.TRANSACTION_DELETED,
+            type: 'success',
+        });
+        setConfirmConfig(null);
+    };
 
     const openModal = useCallback((config: ModalConfig) => {
         if (config?.type === 'transaction' || config?.type === 'edit') {
@@ -320,8 +337,6 @@ export default function ClientDetailScreen() {
                 onPress: () => setModalConfig(null),
                 buttonStyle: { backgroundColor: theme.inputBackground, flex: 1, borderWidth: 1, borderColor: theme.borderSubtle },
                 textStyle: { color: theme.textSecondary },
-                iconName: 'close-outline',
-                iconColor: theme.textSecondary,
             },
         ];
         if (modalConfig.type === 'transaction') {
@@ -411,6 +426,21 @@ export default function ClientDetailScreen() {
             >
                 {renderModalContent()}
             </ActionModal>
+
+            <ConfirmModal
+                isVisible={!!confirmConfig}
+                onClose={() => setConfirmConfig(null)}
+                title={confirmConfig?.title || ''}
+                description={confirmConfig?.description || ''}
+                confirmText={confirmConfig?.confirmText}
+                isDestructive={confirmConfig?.isDestructive}
+                iconName={confirmConfig?.iconName}
+                onConfirm={() => {
+                    if (confirmConfig?.type === 'deleteClient') onConfirmDeleteClient();
+                    if (confirmConfig?.type === 'settleDebt') onConfirmSettleDebt();
+                    if (confirmConfig?.type === 'deleteTransaction') onConfirmDeleteTransaction();
+                }}
+            />
         </View>
     );
 }
@@ -418,7 +448,7 @@ export default function ClientDetailScreen() {
 // Estilos
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    scrollContent: { paddingTop: 110, paddingHorizontal: 20, paddingBottom: 60 },
+    scrollContent: { paddingTop: 110, paddingHorizontal: 20 },
     inputGroup: { marginBottom: 16 },
     label: { marginBottom: 8 },
     notFoundContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
