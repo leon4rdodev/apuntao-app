@@ -3,6 +3,7 @@
 import SubscriptionCard from '@/components/cards/SubscriptionCard';
 import ActionRow from '@/components/ui/ActionRow';
 import CustomButton from '@/components/ui/CustomButton';
+import CustomSwitch from '@/components/ui/CustomSwitch';
 import CustomText from '@/components/ui/CustomText';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
@@ -17,7 +18,6 @@ import {
     Platform,
     ScrollView,
     StyleSheet,
-    Switch,
     TouchableOpacity,
     View,
     TextInput,
@@ -185,7 +185,7 @@ export default function CuentaScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {account ? (
-                    <View style={[styles.profileCard, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }]}>
+                    <View style={[styles.profileCard]}>
                         <View
                             style={[
                                 styles.profileIconContainer,
@@ -193,7 +193,7 @@ export default function CuentaScreen() {
                             ]}
                         >
                             <Ionicons
-                                name="storefront-outline"
+                                name="storefront"
                                 style={styles.profileIcon}
                                 color={theme.primary}
                             />
@@ -207,7 +207,7 @@ export default function CuentaScreen() {
                                 onPress={handleEditProfile}
                                 style={styles.inlineEditButton}
                             >
-                                <Ionicons name="create-outline" size={18} color={theme.textSecondary} />
+                                <Ionicons name="create" size={18} color={theme.textSecondary} />
                             </TouchableOpacity>
                         </View>
                         <CustomText size="medium" color={theme.textSecondary} style={styles.userPhone}>
@@ -246,31 +246,23 @@ export default function CuentaScreen() {
                     {isBiometricsSupported && (
                         <View style={[styles.settingRow, { borderTopColor: theme.borderSubtle }]}>
                             <View style={styles.settingTextContainer}>
-                                <Ionicons name="finger-print-outline" size={22} color={theme.text} style={styles.settingIcon} />
+                                <Ionicons name="finger-print" size={22} color={theme.text} style={styles.settingIcon} />
                                 <CustomText size="medium" weight="medium">Seguridad Biométrica</CustomText>
                             </View>
-                            <TouchableOpacity 
-                                activeOpacity={0.7}
-                                onPress={() => toggleBiometrics(!biometricsEnabled)}
-                            >
-                                <View pointerEvents="none">
-                                    <Switch
-                                        value={biometricsEnabled}
-                                        trackColor={{ false: theme.border, true: theme.primary }}
-                                        thumbColor={Platform.OS === 'ios' ? undefined : '#fff'}
-                                    />
-                                </View>
-                            </TouchableOpacity>
+                            <CustomSwitch 
+                                value={biometricsEnabled}
+                                onValueChange={toggleBiometrics}
+                            />
                         </View>
                     )}
                     <ActionRow
-                        icon="help-buoy-outline"
+                        icon="help-circle"
                         text="Centro de Ayuda"
                         onPress={() => router.push('/(app)/(tabs)/ayuda')}
                         theme={theme}
                     />
                     <ActionRow
-                        icon="star-outline"
+                        icon="star"
                         text="Calificar la App"
                         
                         onPress={() =>
@@ -286,7 +278,7 @@ export default function CuentaScreen() {
                         onPress={handleSignOut}
                         buttonStyle={{ backgroundColor: 'transparent', borderColor: theme.border, borderWidth: 1 }}
                         textStyle={{ color: theme.error, fontWeight: '600' }}
-                        iconName="log-out-outline"
+                        iconName="log-out"
                         iconColor={theme.error}
                     />
                 </View>
@@ -312,7 +304,7 @@ export default function CuentaScreen() {
                         title: 'Guardar',
                         onPress: handleUpdateName,
                         isLoading: isSaving,
-                        iconName: 'checkmark-outline',
+                        iconName: 'checkmark',
                     },
                 ]}
             >
@@ -338,8 +330,7 @@ export default function CuentaScreen() {
                 description="¿Estás seguro? Se cerrará tu sesión en este dispositivo y tendrás que volver a ingresar."
                 confirmText="Salir"
                 isDestructive={true}
-                iconName="log-out-outline"
-                confirmIconName="log-out-outline"
+                confirmIconName="log-out"
             />
         </View>
     );
@@ -349,14 +340,12 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     scrollContainer: { 
         padding: 20, 
-        paddingTop: 60, // Consistente con agregar.tsx
         paddingBottom: 40, 
     },
     profileCard: {
         alignItems: 'center',
-        padding: 24,
+        paddingBottom: 24,
         borderRadius: 24,
-        borderWidth: 1,
         marginBottom: 20,
     },
     profileIconContainer: {

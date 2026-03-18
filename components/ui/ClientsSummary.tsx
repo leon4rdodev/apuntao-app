@@ -36,7 +36,7 @@ export default function ClientsSummary({ totalDebt, totalClients }: ClientsSumma
                 <View style={styles.badgeContainer}>
                     <Text style={[styles.badgeLabel, { color: theme.textSecondary }]}>CLIENTES</Text>
                     <View style={[styles.badge, { backgroundColor: theme.primaryLight }]}>
-                        <Ionicons name="people" size={14} color={theme.primary} />
+                        <Ionicons name="people-circle" size={16} color={theme.primary} />
                         <Text style={[styles.badgeText, { color: theme.primary }]}>
                             {totalClients}
                         </Text>

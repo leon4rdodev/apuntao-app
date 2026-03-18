@@ -159,7 +159,7 @@ export default function ClientDetailScreen() {
             description: `¿Estás seguro de que deseas eliminar a ${client.name}? Esta acción no se puede deshacer.`,
             confirmText: 'Eliminar',
             isDestructive: true,
-            iconName: 'trash-outline'
+            iconName: 'trash'
         });
     }, [client, showNotification]);
 
@@ -197,7 +197,7 @@ export default function ClientDetailScreen() {
             title: 'Saldar Deuda',
             description: `¿Confirmas que ${client.name} pagó su deuda total de $${formatMoney(client.debt)}?`,
             confirmText: 'Saldar',
-            iconName: 'cash-outline'
+            iconName: 'cash'
         });
     }, [client, formatMoney, checkAndAlert]);
 
@@ -241,7 +241,7 @@ export default function ClientDetailScreen() {
                 confirmText: 'Eliminar',
                 isDestructive: true,
                 payload: tx,
-                iconName: 'trash-outline'
+                iconName: 'trash'
             });
         },
         [client, formatMoney, checkAndAlert]
@@ -350,7 +350,7 @@ export default function ClientDetailScreen() {
                         onPress: handleSaveTransaction, 
                         buttonStyle: { backgroundColor: theme.primary, flex: 1 }, 
                         textStyle: { color: theme.textOnPrimary },
-                        iconName: 'checkmark-outline',
+                        iconName: 'checkmark',
                         iconColor: theme.textOnPrimary,
                     },
                 ],
@@ -366,7 +366,7 @@ export default function ClientDetailScreen() {
                         onPress: handleUpdateClient, 
                         buttonStyle: { backgroundColor: theme.primary, flex: 1 }, 
                         textStyle: { color: theme.textOnPrimary },
-                        iconName: 'save-outline',
+                        iconName: 'save',
                         iconColor: theme.textOnPrimary,
                     },
                 ],
@@ -380,7 +380,7 @@ export default function ClientDetailScreen() {
         return (
             <View style={[styles.container, { backgroundColor: theme.background, paddingBottom: insets.bottom }]}>
                 <View style={styles.notFoundContainer}>
-                    <Ionicons name="alert-circle-outline" size={60} color={theme.error} />
+                    <Ionicons name="alert-circle" size={60} color={theme.error} />
                     <CustomText size="large" weight="bold" style={{ marginVertical: 16 }}>
                         Cliente no encontrado
                     </CustomText>

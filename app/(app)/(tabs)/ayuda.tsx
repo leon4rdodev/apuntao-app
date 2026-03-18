@@ -92,7 +92,7 @@ export default function AyudaScreen() {
                 {/* --- Cabecera Premium --- */}
                 <View style={styles.header}>
                     <View style={[styles.iconWrapper, { backgroundColor: theme.primaryLight }]}>
-                        <Ionicons name="help-buoy-outline" size={32} color={theme.primary} />
+                        <Ionicons name="help-circle" size={32} color={theme.primary} />
                     </View>
                     <CustomText size="xxlarge" weight="bold" style={styles.title}>
                         Preguntas Frecuentes
@@ -131,7 +131,7 @@ export default function AyudaScreen() {
                         theme={theme}
                     />
                     <ActionRow
-                        icon="mail-outline"
+                        icon="mail"
                         text="Enviar un Correo"
                         onPress={handleEmailPress}
                         theme={theme}
@@ -150,7 +150,6 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     scrollContainer: { 
         padding: 20, 
-        paddingTop: 60, 
         paddingBottom: 40 
     },
     header: { alignItems: 'center', marginBottom: 32 },

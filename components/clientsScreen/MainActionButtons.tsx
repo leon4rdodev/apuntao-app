@@ -15,7 +15,7 @@ const MainActionButtons = ({ onPay, onAddDebt }: { onPay: () => void; onAddDebt:
             <CustomButton
                 title="Pago"
                 onPress={onPay}
-                iconName="arrow-down-circle-outline"
+                iconName="add-circle"
                 buttonStyle={[
                     styles.mainActionButton,
                     { backgroundColor: theme.background, borderColor: theme.border, borderWidth: 1 },
@@ -26,7 +26,7 @@ const MainActionButtons = ({ onPay, onAddDebt }: { onPay: () => void; onAddDebt:
             <CustomButton
                 title="Deuda"
                 onPress={onAddDebt}
-                iconName="arrow-up-circle-outline"
+                iconName="remove-circle"
                 buttonStyle={[
                     styles.mainActionButton,
                     { backgroundColor: theme.background, borderColor: theme.border, borderWidth: 1 },

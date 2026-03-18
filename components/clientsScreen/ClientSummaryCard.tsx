@@ -42,7 +42,7 @@ const ClientSummaryCard = ({ client, onEdit }: { client: Client; onEdit: () => v
                     {client.name}
                 </CustomText>
                 <TouchableOpacity onPress={onEdit} style={styles.editButton}>
-                    <Ionicons name="create-outline" size={20} color={theme.textSecondary} />
+                    <Ionicons name="create" size={20} color={theme.textSecondary} />
                 </TouchableOpacity>
             </View>
 
@@ -59,7 +59,7 @@ const ClientSummaryCard = ({ client, onEdit }: { client: Client; onEdit: () => v
                 <CustomText 
                     size="xxlarge" 
                     weight="bold" 
-                    color={debtColor} 
+                    color={theme.text} 
                     style={styles.debtAmount}
                     numberOfLines={1}
                     adjustsFontSizeToFit
@@ -71,7 +71,7 @@ const ClientSummaryCard = ({ client, onEdit }: { client: Client; onEdit: () => v
             {client.phone && (
                 <View style={[styles.contactSection]}>
                     <View style={styles.infoRow}>
-                        <Ionicons name="call-outline" size={20} color={theme.textSecondary} />
+                        <Ionicons name="call" size={20} color={theme.textSecondary} />
                         <CustomText size="medium" weight="medium" color={theme.textSecondary}>
                             {formatPhoneNumber(client.phone)}
                         </CustomText>
@@ -89,9 +89,9 @@ const ClientSummaryCard = ({ client, onEdit }: { client: Client; onEdit: () => v
                             title="Mensaje"
                             onPress={handleWhatsApp}
                             iconName="logo-whatsapp"
-                            buttonStyle={[styles.contactButton, { backgroundColor: '#dcfce7', borderWidth: 0 }]}
-                            textStyle={{ color: '#166534' }}
-                            iconColor="#166534"
+                            buttonStyle={[styles.contactButton, { backgroundColor: theme.background, borderWidth: 1, borderColor: theme.borderSubtle }]}
+                            textStyle={{ color: theme.primary }}
+                            iconColor={theme.primary}
                         />
                     </View>
                 </View>

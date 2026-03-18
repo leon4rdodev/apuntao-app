@@ -48,7 +48,7 @@ const TransactionHistory = ({
     const renderEmptyState = () => (
         <View style={styles.emptyState}>
             <View style={[styles.emptyIconContainer, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }]}>
-                <Ionicons name="receipt-outline" size={40} color={theme.textSecondary} />
+                <Ionicons name="receipt" size={40} color={theme.textSecondary} />
             </View>
             <CustomText weight="bold" style={[styles.emptyStateText, { color: theme.text }]}>
                 Sin movimientos aún
@@ -107,7 +107,7 @@ const TransactionHistory = ({
                     onPress={() => handleDelete(tx)} 
                     style={styles.deleteButton}
                 >
-                    <Ionicons name="trash-outline" size={18} color={theme.textSecondary} />
+                    <Ionicons name="trash" size={18} color={theme.textSecondary} />
                 </TouchableOpacity>
             </Animated.View>
         );

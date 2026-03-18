@@ -69,11 +69,12 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     featureText: {
-        fontSize: 16,
-        fontWeight: '500',
+        fontSize: 18,
+        fontWeight: '700',
     },
     featureDescription: {
-        fontSize: 14,
-        marginTop: 4,
+        fontSize: 15,
+        marginTop: 6,
+        lineHeight: 22,
     },
 });

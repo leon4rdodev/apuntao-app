@@ -42,7 +42,7 @@ const SubscriptionCard = () => {
         // ... (resto de la función getStatusInfo igual)
         if (!subscription || subscription.status === 'loading') {
             return {
-                icon: 'hourglass-outline' as const,
+                icon: 'hourglass' as const,
                 color: theme.textSecondary,
                 text: 'Cargando...',
             };
@@ -51,31 +51,31 @@ const SubscriptionCard = () => {
         switch (subscription.status) {
             case 'active':
                 return {
-                    icon: 'shield-checkmark-outline' as const,
+                    icon: 'shield-checkmark' as const,
                     color: theme.success,
                     text: 'Activa',
                 };
             case 'trial':
                 return {
-                    icon: 'time-outline' as const,
+                    icon: 'time' as const,
                     color: theme.info,
                     text: 'Prueba Gratuita',
                 };
             case 'expired':
                 return {
-                    icon: 'alert-circle-outline' as const,
+                    icon: 'alert-circle' as const,
                     color: theme.error,
                     text: 'Expirada',
                 };
             case 'cancelled':
                 return {
-                    icon: 'close-circle-outline' as const,
+                    icon: 'close-circle' as const,
                     color: theme.error,
                     text: 'Cancelada',
                 };
             default:
                 return {
-                    icon: 'help-circle-outline' as const,
+                    icon: 'help-circle' as const,
                     color: theme.textSecondary,
                     text: 'Desconocido',
                 };

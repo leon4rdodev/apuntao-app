@@ -35,7 +35,7 @@ const ConfirmModal = ({
     confirmText = 'Confirmar',
     cancelText = 'Cancelar',
     isDestructive = false,
-    iconName = 'alert-circle-outline',
+    iconName = 'alert-circle',
     confirmIconName,
     isLoading = false,
 }: ConfirmModalProps) => {
@@ -62,7 +62,7 @@ const ConfirmModal = ({
                 flex: 1 
             },
             textStyle: { color: theme.textOnPrimary },
-            iconName: confirmIconName || (isDestructive ? 'trash-outline' : 'checkmark-outline'),
+            iconName: confirmIconName || (isDestructive ? 'trash' : 'checkmark'),
             iconColor: theme.textOnPrimary,
         },
     ];

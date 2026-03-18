@@ -25,7 +25,7 @@ const DangerZone = ({
                     title={'Saldar Deuda'}
                     onPress={onSettleDebt}
                     buttonStyle={[styles.secondaryButton, { backgroundColor: 'transparent', borderColor: theme.border, borderWidth: 1 }]}
-                    iconName="checkmark-circle-outline"
+                    iconName="checkmark-circle"
                     iconColor={theme.primary}
                     textStyle={{ color: theme.text, fontWeight: '500' }}
                 />
@@ -35,7 +35,7 @@ const DangerZone = ({
                     title="Eliminar Cliente"
                     onPress={onDeleteClient}
                     buttonStyle={[styles.secondaryButton, { backgroundColor: 'transparent', borderColor: theme.border, borderWidth: 1 }]}
-                    iconName="trash-outline"
+                    iconName="trash"
                     iconColor={theme.error}
                     textStyle={{ color: theme.error, fontWeight: '500' }}
                 />

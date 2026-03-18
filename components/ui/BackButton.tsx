@@ -15,8 +15,11 @@ const BackButton = () => {
     const theme = Colors[useColorScheme() || 'light'];
 
     return (
-        <TouchableOpacity onPress={() => router.back()} style={[styles.backButton, { backgroundColor: theme.surface }]} >
-            <Ionicons name="arrow-back-sharp" size={24} color={theme.text} />
+        <TouchableOpacity 
+            onPress={() => router.back()} 
+            style={[styles.backButton, { backgroundColor: theme.surface }]} 
+        >
+            <Ionicons name="chevron-back" size={24} color={theme.text} />
             <CustomText size="medium" weight="medium" style={{ color: theme.text }}>
                 Volver
             </CustomText>
@@ -30,12 +33,12 @@ const styles = StyleSheet.create({
         top: Platform.OS === 'android' ? 44 : 54,
         left: 18,
         zIndex: 10,
-        paddingHorizontal: 20,
-        justifyContent: 'center',
+        paddingLeft: 12,
+        paddingRight: 24,
         paddingVertical: 12,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        gap: 4,
         borderRadius: 30,
         opacity: 0.99,
         elevation: 1,

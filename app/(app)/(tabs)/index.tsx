@@ -29,7 +29,7 @@ export default function Index() {
     const renderEmptyListComponent = () => (
         <View style={styles.emptyContainer}>
             <View style={[styles.emptyIconContainer, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }]}>
-                <Ionicons name="receipt-outline" size={48} color={theme.textSecondary} />
+                <Ionicons name="receipt" size={48} color={theme.textSecondary} />
             </View>
             <Text style={[styles.emptyTitle, { color: theme.text }]}>
                 {searchQuery ? 'Sin resultados' : 'Lista vacía'}

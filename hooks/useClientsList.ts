@@ -32,18 +32,41 @@ export function useClientsList() {
 
     const filteredClients = useMemo(() => {
         const lowerCaseQuery = searchQuery.toLowerCase().trim();
-        if (lowerCaseQuery) {
-            return validClients.filter(
-                (client) =>
-                    client.name.toLowerCase().includes(lowerCaseQuery) ||
-                    client.phone?.replace(/\D/g, '').includes(lowerCaseQuery.replace(/\D/g, ''))
-            );
+        if (!lowerCaseQuery) {
+            return [...validClients].sort((a, b) => {
+                if (b.debt !== a.debt) return b.debt - a.debt;
+                return b.lastModified - a.lastModified;
+            });
         }
 
-        return [...validClients].sort((a, b) => {
-            if (b.debt !== a.debt) return b.debt - a.debt;
-            return b.lastModified - a.lastModified;
-        });
+        const queryPhone = lowerCaseQuery.replace(/\D/g, '');
+
+        return validClients
+            .filter((client) => {
+                const nameMatch = client.name.toLowerCase().includes(lowerCaseQuery);
+                const phoneMatch = queryPhone && client.phone?.replace(/\D/g, '').includes(queryPhone);
+                return nameMatch || phoneMatch;
+            })
+            .sort((a, b) => {
+                const nameA = a.name.toLowerCase();
+                const nameB = b.name.toLowerCase();
+
+                // 1. Exact Match Priority
+                const isExactA = nameA === lowerCaseQuery;
+                const isExactB = nameB === lowerCaseQuery;
+                if (isExactA && !isExactB) return -1;
+                if (!isExactA && isExactB) return 1;
+
+                // 2. Starts With Priority
+                const startsA = nameA.startsWith(lowerCaseQuery);
+                const startsB = nameB.startsWith(lowerCaseQuery);
+                if (startsA && !startsB) return -1;
+                if (!startsA && startsB) return 1;
+
+                // 3. Fallback to default sort (Debt then lastModified)
+                if (b.debt !== a.debt) return b.debt - a.debt;
+                return b.lastModified - a.lastModified;
+            });
     }, [validClients, searchQuery]);
 
     const totalPages = Math.ceil(filteredClients.length / itemsPerPage);

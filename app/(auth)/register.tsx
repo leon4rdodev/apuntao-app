@@ -60,6 +60,10 @@ export default function RegisterScreen() {
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+            {/* Elementos Decorativos (Orbes/Bolas) */}
+            <View style={[styles.orbTopLeft, { backgroundColor: theme.primary }]} />
+            <View style={[styles.orbBottomRight, { backgroundColor: theme.primary }]} />
+
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.container}
@@ -82,7 +86,7 @@ export default function RegisterScreen() {
                         </TouchableOpacity>
 
                         <View style={styles.header}>
-                            <Ionicons name="person-add-outline" size={60} color={theme.primary} />
+                            <Ionicons name="person-add" size={60} color={theme.primary} />
                             <CustomText size="xlarge" weight="bold" style={styles.title}>
                                 Crea tu Cuenta
                             </CustomText>
@@ -93,7 +97,7 @@ export default function RegisterScreen() {
 
                         <View style={styles.form}>
                             <CustomInput
-                                icon="storefront-outline"
+                                icon="storefront"
                                 placeholder="Nombre de tu Negocio"
                                 value={colmadoName}
                                 onChangeText={setColmadoName}
@@ -103,7 +107,7 @@ export default function RegisterScreen() {
                             />
                             
                             <CustomInput
-                                icon="mail-outline"
+                                icon="mail"
                                 placeholder="Correo Electrónico"
                                 value={email}
                                 onChangeText={setEmail}
@@ -116,7 +120,7 @@ export default function RegisterScreen() {
                             />
                             
                             <CustomInput
-                                icon="lock-closed-outline"
+                                icon="lock-closed"
                                 placeholder="Contraseña (min. 6 char)"
                                 value={password}
                                 onChangeText={setPassword}
@@ -134,7 +138,7 @@ export default function RegisterScreen() {
                                 onPress={handleRegister}
                                 isLoading={isLoading}
                                 disabled={isLoading}
-                                iconName="person-add-outline"
+                                iconName="person-add"
                             />
 
                             <CustomButton
@@ -179,5 +183,25 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
+    },
+     orbTopLeft: {
+        position: 'absolute',
+        top: -100,
+        left: -100,
+        width: 250,
+        height: 250,
+        borderRadius: 125,
+        opacity: 0.08,
+        zIndex: 0,
+    },
+    orbBottomRight: {
+        position: 'absolute',
+        bottom: -100,
+        right: -100,
+        width: 250,
+        height: 250,
+        borderRadius: 125,
+        opacity: 0.08,
+        zIndex: 0,
     },
 });

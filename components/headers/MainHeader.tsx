@@ -63,7 +63,7 @@ export default function MainHeader({ setSearchQuery, setIsSearchOpen, isSearchOp
                             autoFocus 
                             placeholder='Buscar cliente...'
                             containerStyle={styles.searchInput}
-                            icon="search-outline"
+                            icon="search"
                         />
                     </View>
                 ) : (
@@ -75,7 +75,7 @@ export default function MainHeader({ setSearchQuery, setIsSearchOpen, isSearchOp
                             accessibilityLabel="Cambiar tema"
                         >
                             <Ionicons 
-                                name={colorScheme === 'dark' ? 'sunny-outline' : 'moon-outline'} 
+                                name={colorScheme === 'dark' ? 'sunny' : 'moon'} 
                                 size={24} 
                                 color={theme.text} 
                             />
@@ -97,7 +97,7 @@ export default function MainHeader({ setSearchQuery, setIsSearchOpen, isSearchOp
                     accessibilityRole="button"
                 >
                     <Ionicons
-                        name={isSearchOpen ? 'close-outline' : 'search-outline'}
+                        name={isSearchOpen ? 'close' : 'search'}
                         size={28}
                         color={theme.text}
                     />

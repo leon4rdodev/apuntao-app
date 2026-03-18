@@ -45,6 +45,10 @@ export const Colors = {
 
         // Input
         inputBackground: '#F3F4F6', // Fondo de inputs, un gris claro
+
+        // Botón (Estado Deshabilitado)
+        buttonDisabled: '#E2E8F0',
+        buttonTextDisabled: '#94A3B8',
     },
     dark: {
         // --- Marca (Brand) ---
@@ -82,5 +86,9 @@ export const Colors = {
 
         // Input
         inputBackground: '#2c2c2c', // Fondo de inputs similar a YouTube en dark mode
+
+        // Botón (Estado Deshabilitado)
+        buttonDisabled: '#3d3d3d', // Original border
+        buttonTextDisabled: '#aaaaaa', // Original textSecondary
     },
 };

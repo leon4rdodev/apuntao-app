@@ -57,12 +57,12 @@ const ClientCard: React.FC<ClientCardProps> = ({ item, onPress, isPending }) => 
                             {item.name}
                         </Text>
                         {isPending && (
-                            <Ionicons name="cloud-upload-outline" size={16} color={theme.warning} style={{ marginLeft: 6 }} />
+                            <Ionicons name="cloud-upload" size={16} color={theme.warning} style={{ marginLeft: 8 }} />
                         )}
                     </View>
                     <View style={styles.debtRow}>
                         <Text style={[styles.debtLabel, { color: theme.textSecondary }]}>Debe</Text>
-                        <Text style={[styles.debtAmount, { color: item.debt > 0 ? theme.error : theme.success }]}>
+                        <Text style={[styles.debtAmount, { color: theme.text }]}>
                             ${formattedDebt}
                         </Text>
                     </View>
@@ -72,7 +72,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ item, onPress, isPending }) => 
                     <View style={[styles.badge, { backgroundColor: `${color}15` }]}>
                         <Text style={[styles.badgeText, { color }]}>{text}</Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={18} color={theme.border} style={styles.chevron} />
+                    <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} style={styles.chevron} />
                 </View>
             </View>
         </TouchableOpacity>
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
         letterSpacing: 0.8,
     },
     chevron: {
-        opacity: 0.3,
+        opacity: 0.6,
         marginRight: -2,
     },
 });
