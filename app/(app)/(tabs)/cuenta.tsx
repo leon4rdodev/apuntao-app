@@ -1,33 +1,26 @@
 // app/(app)/(tabs)/cuenta.tsx
 
-import SubscriptionCard from '@/components/cards/SubscriptionCard';
-import ActionRow from '@/components/ui/ActionRow';
-import CustomButton from '@/components/ui/CustomButton';
 import CustomSwitch from '@/components/ui/CustomSwitch';
 import CustomText from '@/components/ui/CustomText';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
-import { getFromStorage } from '@/utils/storage';
-import { Ionicons } from '@expo/vector-icons'; // <-- 1. Importa Ionicons
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Linking,
-    Platform,
     ScrollView,
     StyleSheet,
     TouchableOpacity,
     View,
     TextInput,
+    ActivityIndicator,
+    Linking,
 } from 'react-native';
 import { authenticateBiometrics, isBiometricsAvailable } from '@/utils/biometrics';
 import { STORAGE_KEYS } from '@/constants';
-import { saveToStorage } from '@/utils/storage';
+import { saveToStorage, getFromStorage } from '@/utils/storage';
 import { useNotification } from '@/store/notificationStore';
 import { useUIStore } from '@/store/uiStore';
-import { ERROR_MESSAGES } from '@/constants';
 import { getAuth } from '@react-native-firebase/auth';
 import { getFirestore, doc, updateDoc } from '@react-native-firebase/firestore';
 import ActionModal from '@/components/clientsScreen/ActionModal';
@@ -38,6 +31,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
 import { useClientStore } from '@/store/clientStore';
+import SubscriptionCard from '@/components/cards/SubscriptionCard';
+import ActionRow from '@/components/ui/ActionRow';
+import CustomButton from '@/components/ui/CustomButton';
 
 export default function CuentaScreen() {
     const theme = Colors[useColorScheme() || 'light'];
@@ -46,7 +42,6 @@ export default function CuentaScreen() {
     const { session: account, signOut } = useAuth();
     const showNotification = useNotification();
     const hasPendingWrites = useClientStore((state) => state.hasPendingWrites);
-    const [isExternalConfigured, setIsExternalConfigured] = React.useState(false);
     
     // Perfil
     const [isEditing, setIsEditing] = useState(false);
@@ -73,9 +68,6 @@ export default function CuentaScreen() {
 
     React.useEffect(() => {
         const checkConfig = async () => {
-            const uri = await getFromStorage('EXTERNAL_BACKUP_URI');
-            setIsExternalConfigured(!!uri);
-
             // Cargar preferencia de biometría
             const enabled = await getFromStorage<boolean>(STORAGE_KEYS.BIOMETRICS_ENABLED);
             setBiometricsEnabled(!!enabled);
@@ -137,7 +129,7 @@ export default function CuentaScreen() {
         } finally {
             setIsSaving(false);
         }
-    }, [newName]);
+    }, [newName, showNotification]);
 
     const toggleBiometrics = useCallback(async (value: boolean) => {
         try {
@@ -318,6 +310,9 @@ export default function CuentaScreen() {
                         onChangeText={setNewName}
                         placeholder="Ej. Colmado El Sol"
                         autoFocus={false}
+                        onSubmitEditing={handleUpdateName}
+                        returnKeyType="done"
+                        submitBehavior="blurAndSubmit"
                     />
                 </View>
             </ActionModal>

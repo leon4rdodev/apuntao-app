@@ -14,7 +14,6 @@ import CustomText from '@/components/ui/CustomText';
 import { useClientStore } from '@/store/clientStore';
 
 // --- Imports de Lógica y Hooks ---
-import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/constants';
 import { Colors } from '@/constants/Colors';
 import { useNotification } from '@/store/notificationStore';
 import { useSubscriptionCheck } from '@/hooks/useSubscriptionCheck'; // <-- MANTENER IMPORTADO
@@ -30,12 +29,17 @@ import { validateClientData } from '@/utils/validation';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState, useRef, useEffect } from 'react';
-import { Alert, ScrollView, StyleSheet, View, TextInput } from 'react-native';
+import {
+    ScrollView,
+    StyleSheet,
+    View,
+    TextInput,
+} from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AmountInput } from '@/components/input/AmountInput';
 import { authenticateBiometrics } from '@/utils/biometrics';
-import { STORAGE_KEYS } from '@/constants';
+import { STORAGE_KEYS, ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/constants';
 import { getFromStorage } from '@/utils/storage';
 
 // --- Tipos para el estado del Modal ---
@@ -199,7 +203,7 @@ export default function ClientDetailScreen() {
             confirmText: 'Saldar',
             iconName: 'cash'
         });
-    }, [client, formatMoney, checkAndAlert]);
+    }, [client, checkAndAlert]);
 
     const onConfirmSettleDebt = async () => {
         if (!client) return;
@@ -244,7 +248,7 @@ export default function ClientDetailScreen() {
                 iconName: 'trash'
             });
         },
-        [client, formatMoney, checkAndAlert]
+        [client, checkAndAlert]
     );
 
     const onConfirmDeleteTransaction = async () => {
@@ -294,6 +298,9 @@ export default function ClientDetailScreen() {
                     placeholder="0"
                     keyboardType="numeric"
                     autoFocus={false}
+                    onSubmitEditing={handleSaveTransaction}
+                    returnKeyType="done"
+                    submitBehavior="blurAndSubmit"
                 />
             );
         }
@@ -309,6 +316,8 @@ export default function ClientDetailScreen() {
                             value={editName} 
                             onChangeText={setEditName} 
                             autoFocus={false} 
+                            onSubmitEditing={handleUpdateClient}
+                            returnKeyType="next"
                         />
                     </View>
                     <View style={styles.inputGroup}>
@@ -321,13 +330,16 @@ export default function ClientDetailScreen() {
                             keyboardType="phone-pad"
                             placeholder="(809) 123-4567"
                             maxLength={14}
+                            onSubmitEditing={handleUpdateClient}
+                            returnKeyType="done"
+                            submitBehavior="blurAndSubmit"
                         />
                     </View>
                 </>
             );
         }
         return null;
-    }, [modalConfig, amount, editName, editPhone, theme]);
+    }, [modalConfig, amount, editName, editPhone, theme, handleSaveTransaction, handleUpdateClient]);
 
     const { title, actions } = useMemo(() => {
         if (!modalConfig) return { title: '', actions: [] };
@@ -372,7 +384,10 @@ export default function ClientDetailScreen() {
                 ],
             };
         }
-        return { title: '', actions: [] };
+        return {
+            title: '',
+            actions: [],
+        };
     }, [modalConfig, theme, handleSaveTransaction, handleUpdateClient]);
 
     // --- Renderizado ---

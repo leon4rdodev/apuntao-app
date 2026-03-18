@@ -9,6 +9,7 @@ import {
     Modal,
     ScrollView,
     Keyboard,
+    useWindowDimensions,
 } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useNotificationStore } from '@/store/notificationStore';
@@ -20,7 +21,6 @@ import Animated, {
     useSharedValue,
     interpolate
 } from 'react-native-reanimated';
-import { useWindowDimensions } from 'react-native';
 
 interface ActionModalProps {
     isVisible: boolean;
@@ -55,7 +55,7 @@ const ActionModal = memo(({
             registerModal();
             return () => unregisterModal();
         }
-    }, [isVisible]);
+    }, [isVisible, registerModal, unregisterModal]);
 
     const handleClose = useCallback(() => {
         Keyboard.dismiss();
@@ -68,7 +68,21 @@ const ActionModal = memo(({
         } else {
             isPresented.value = withTiming(0, { duration: 250 });
         }
-    }, [isVisible]);
+    }, [isVisible, isPresented]);
+
+    useEffect(() => {
+        if (!isVisible) return;
+
+        const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+            // Un pequeño retraso permite que onSubmitEditing procese antes de cerrar
+            // Pero como el usuario quiere que "se cierre con el teclado", llamamos a onClose
+            onClose();
+        });
+
+        return () => {
+            hideSubscription.remove();
+        };
+    }, [isVisible, onClose]);
 
     const overlayStyle = useAnimatedStyle(() => ({
         opacity: isPresented.value,
@@ -197,5 +211,7 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
 });
+
+ActionModal.displayName = 'ActionModal';
 
 export default ActionModal;

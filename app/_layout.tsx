@@ -2,6 +2,7 @@
  * @file app/_layout.tsx
  * @description Layout raíz de la aplicación. Ensambla los proveedores
  * y utiliza un hook para manejar la navegación protegida.
+ * Ghost update: Modal verification
  */
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -15,32 +16,28 @@ import { GlobalNotification } from '@/components/ui/GlobalNotification';
 import { SafeAreaProvider, initialWindowMetrics, useSafeAreaInsets } from 'react-native-safe-area-context';
 import ActionModal from '@/components/clientsScreen/ActionModal';
 import CustomText from '@/components/ui/CustomText';
+import { AppState, AppStateStatus } from 'react-native';
 
 ExpoSplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
     const colorScheme = useColorScheme();
-    const { session, isLoading } = useAuth();
+    const { isLoading } = useAuth();
     const navigationTheme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
     const [isUpdateModalVisible, setIsUpdateModalVisible] = React.useState(false);
     const insets = useSafeAreaInsets();
 
-    useEffect(() => {
-        async function onFetchUpdateAsync() {
-            try {
-                const update = await Updates.checkForUpdateAsync();
-                if (update.isAvailable) {
-                    setIsUpdateModalVisible(true);
-                }
-            } catch (error) {
-                console.error('Error fetching latest Expo update:', error);
+    const checkForUpdates = async () => {
+        if (__DEV__) return;
+        try {
+            const update = await Updates.checkForUpdateAsync();
+            if (update.isAvailable) {
+                setIsUpdateModalVisible(true);
             }
+        } catch (error) {
+            console.error('Error fetching latest Expo update:', error);
         }
-
-        if (!__DEV__) {
-            onFetchUpdateAsync();
-        }
-    }, []);
+    };
 
     const handleUpdate = async () => {
         try {
@@ -53,8 +50,27 @@ function RootLayoutNav() {
     };
 
     useEffect(() => {
+        const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+            if (nextAppState === 'active') {
+                checkForUpdates();
+            }
+        });
+
+        return () => {
+            subscription.remove();
+        };
+    }, []);
+
+    useEffect(() => {
         if (!isLoading) {
             ExpoSplashScreen.hideAsync();
+            
+            // Delayed check (3 seconds) to not block initial UI
+            const timer = setTimeout(() => {
+                checkForUpdates();
+            }, 3000);
+            
+            return () => clearTimeout(timer);
         }
     }, [isLoading]);
 
@@ -84,14 +100,14 @@ function RootLayoutNav() {
                         textStyle: { color: navigationTheme.colors.text }
                     },
                     {
-                        title: 'Actualizar ahora',
+                        title: 'Actualizar',
                         onPress: handleUpdate,
-                        iconName: 'rocket'
+                        iconName: 'cloud-download'
                     }
                 ]}
             >
                 <CustomText style={{ textAlign: 'center', opacity: 0.7 }}>
-                    Hay una nueva versión de Apunta'o lista con mejoras y correcciones. ¿Quieres actualizar ahora? La aplicación se reiniciará.
+                    Hay una nueva versión de Apunta&apos;o lista con mejoras y correcciones. ¿Quieres actualizar ahora? La aplicación se reiniciará.
                 </CustomText>
             </ActionModal>
             
