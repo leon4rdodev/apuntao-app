@@ -35,10 +35,22 @@ export async function migrateLegacyData(uid: string, data: LegacyData) {
     const batch = writeBatch(db);
     const now = Date.now();
 
-    const clients = data.clients || [];
+    const allClients = data.clients || [];
     const userClientsRef = collection(db, 'users', uid, 'clients');
 
-    for (const oldClient of clients) {
+    // Deduplicación: Mantener solo el registro más reciente para cada ID
+    const uniqueClientsMap = new Map<string, LegacyClient>();
+    
+    for (const client of allClients) {
+        const existing = uniqueClientsMap.get(client.id);
+        if (!existing || (Number(client.lastModified) || 0) > (Number(existing.lastModified) || 0)) {
+            uniqueClientsMap.set(client.id, client);
+        }
+    }
+
+    const clientsToMigrate = Array.from(uniqueClientsMap.values());
+
+    for (const oldClient of clientsToMigrate) {
         // Generamos o usamos el ID del cliente
         const clientRef = doc(userClientsRef, oldClient.id);
 
@@ -62,5 +74,5 @@ export async function migrateLegacyData(uid: string, data: LegacyData) {
     }
 
     await batch.commit();
-    return clients.length;
+    return clientsToMigrate.length;
 }

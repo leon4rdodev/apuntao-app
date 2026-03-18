@@ -1,6 +1,6 @@
 {
   "_id": "691b4ff27c9556857f6cf8c4",
-  "__v": 338,
+  "__v": 348,
   "clients": [
     {
       "id": "local_1763398793614_m8yu0bf",
@@ -13,8 +13,20 @@
     {
       "id": "local_1764367677253_bvxoekj",
       "name": "Felipe",
-      "debt": 5065,
+      "debt": 6165,
       "transactions": [
+        {
+          "id": "txn_1773673531609_8r9mo6t",
+          "date": 1773673531609,
+          "amount": 200,
+          "type": "Deuda"
+        },
+        {
+          "id": "txn_1773673527500_bqb3ctz",
+          "date": 1773673527500,
+          "amount": 900,
+          "type": "Deuda"
+        },
         {
           "id": "txn_1773591479379_1lb6d0m",
           "date": 1773591479379,
@@ -28,7 +40,7 @@
           "type": "Deuda"
         }
       ],
-      "lastModified": 1773591479379,
+      "lastModified": 1773673531609,
       "deleted": false
     },
     {
@@ -622,8 +634,14 @@
     {
       "id": "local_1764368140180_cakzpdq",
       "name": "Manito",
-      "debt": 1135,
+      "debt": 385,
       "transactions": [
+        {
+          "id": "txn_1773673429241_fge1ioz",
+          "date": 1773673429241,
+          "amount": 750,
+          "type": "Pago"
+        },
         {
           "id": "txn_1772981511502_8bnxgb3",
           "date": 1772981511502,
@@ -661,7 +679,7 @@
           "type": "Deuda"
         }
       ],
-      "lastModified": 1772981511502,
+      "lastModified": 1773673429241,
       "deleted": false
     },
     {
@@ -706,34 +724,9 @@
     {
       "id": "local_1764369109444_fs42lro",
       "name": "Modesto",
-      "debt": 2430,
-      "transactions": [
-        {
-          "id": "txn_1773268044060_k6wkcb3",
-          "date": 1773268044060,
-          "amount": 350,
-          "type": "Deuda"
-        },
-        {
-          "id": "txn_1773268018438_1zvqnla",
-          "date": 1773268018438,
-          "amount": 750,
-          "type": "Deuda"
-        },
-        {
-          "id": "txn_1773268002886_cp8ayd7",
-          "date": 1773268002886,
-          "amount": 650,
-          "type": "Deuda"
-        },
-        {
-          "id": "txn_1770068199267_3v5cucj",
-          "date": 1770068199267,
-          "amount": 680,
-          "type": "Deuda"
-        }
-      ],
-      "lastModified": 1773268044060,
+      "debt": 0,
+      "transactions": [],
+      "lastModified": 1773691697568,
       "deleted": false
     },
     {
@@ -1034,8 +1027,20 @@
     {
       "id": "local_1765482619065_cmb49aw",
       "name": "Moreno Colita",
-      "debt": 985,
+      "debt": 685,
       "transactions": [
+        {
+          "id": "txn_1773675857986_z88tf15",
+          "date": 1773675857986,
+          "amount": 650,
+          "type": "Pago"
+        },
+        {
+          "id": "txn_1773675852030_5424xv3",
+          "date": 1773675852030,
+          "amount": 350,
+          "type": "Deuda"
+        },
         {
           "id": "txn_1772060982198_t67uspj",
           "date": 1772060982198,
@@ -1055,14 +1060,20 @@
           "type": "Deuda"
         }
       ],
-      "lastModified": 1772060982198,
+      "lastModified": 1773675857986,
       "deleted": false
     },
     {
       "id": "local_1765482666186_hqdm1v1",
       "name": "Pipo Moreno",
-      "debt": 5840,
+      "debt": 6640,
       "transactions": [
+        {
+          "id": "txn_1773673502693_tr22iqs",
+          "date": 1773673502693,
+          "amount": 800,
+          "type": "Deuda"
+        },
         {
           "id": "txn_1773590404446_indm6ts",
           "date": 1773590404446,
@@ -1118,7 +1129,7 @@
           "type": "Deuda"
         }
       ],
-      "lastModified": 1773590404446,
+      "lastModified": 1773673502693,
       "deleted": false
     },
     {
@@ -1168,8 +1179,14 @@
     {
       "id": "local_1769551255857_ia1t98r",
       "name": "Arismendi",
-      "debt": 415,
+      "debt": 4065,
       "transactions": [
+        {
+          "id": "txn_1773673559227_i7teqy3",
+          "date": 1773673559227,
+          "amount": 3650,
+          "type": "Deuda"
+        },
         {
           "id": "txn_1773535809245_66jz87l",
           "date": 1773535809245,
@@ -1183,7 +1200,7 @@
           "type": "Deuda"
         }
       ],
-      "lastModified": 1773535809246,
+      "lastModified": 1773673559227,
       "deleted": false
     },
     {
@@ -1277,6 +1294,14 @@
       "deleted": false
     },
     {
+      "id": "local_1771641850580_i9z8xnf",
+      "name": "Darlin Velzquez",
+      "debt": 0,
+      "transactions": [],
+      "lastModified": 1771641850580,
+      "deleted": false
+    },
+    {
       "id": "local_1771642143346_fsllmh5",
       "name": "Nashla Hija",
       "debt": 10,
@@ -1289,6 +1314,14 @@
         }
       ],
       "lastModified": 1771642143348,
+      "deleted": false
+    },
+    {
+      "id": "local_1771642143346_fsllmh5",
+      "name": "Nashla Hija",
+      "debt": 0,
+      "transactions": [],
+      "lastModified": 1771642143346,
       "deleted": false
     },
     {
@@ -1325,12 +1358,50 @@
       "deleted": false
     },
     {
+      "id": "local_1771858175486_cv9epml",
+      "name": "Mariano Hijo",
+      "debt": 0,
+      "transactions": [],
+      "lastModified": 1771858175486,
+      "deleted": false
+    },
+    {
+      "id": "local_1772239596255_l2bvz22",
+      "name": "Mariano",
+      "debt": 1550,
+      "transactions": [
+        {
+          "id": "txn_1773673624339_1bhdue0",
+          "date": 1773673624339,
+          "amount": 1550,
+          "type": "Deuda"
+        }
+      ],
+      "lastModified": 1773673624339,
+      "deleted": false
+    },
+    {
       "id": "local_1772239596255_l2bvz22",
       "name": "Mariano",
       "debt": 0,
       "transactions": [],
-      "lastModified": 1773443041797,
+      "lastModified": 1772239596255,
       "deleted": false
     }
-  ]
+  ],
+  "colmadoName": "Colmado Amarilis",
+  "createdAt": "2026-02-19T00:18:35.343Z",
+  "phoneNumber": "8095168266",
+  "pinHash": "$2b$10$Tpl2y/aDV7uy.rzIW8Fjwe6ektNKiTT9uB95PxFFmUoaq9FFDAMFK",
+  "refreshTokens": [
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MWI0ZmYyN2M5NTU2ODU3ZjZjZjhjNCIsInBob25lIjoiODA5NTE2ODI2NiIsInJvbGUiOiJyZWZyZXNoIiwiZXhwIjoxODAyOTk2NTczLCJpYXQiOjE3NzE0NjA1NzMsIm5iZiI6MTc3MTQ2MDU3M30.BzxPtLgIGH2V8gqIBp8tQi-Jl6DacKvBhaV1huNW088"
+  ],
+  "subscription": {
+    "status": "active",
+    "plan": "yearly",
+    "startDate": "2025-11-17T16:41:14.938Z",
+    "endDate": "2026-11-17T16:41:14.938Z",
+    "trialEndDate": "2025-11-24T16:40:18.795Z"
+  },
+  "updatedAt": "2026-03-16T20:08:19.337Z"
 }
