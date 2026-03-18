@@ -29,23 +29,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const startFirestoreSync = useClientStore((state) => state.actions.startFirestoreSync);
     const stopFirestoreSync = useClientStore((state) => state.actions.stopFirestoreSync);
 
+    const isHydrated = useClientStore((state) => state.isHydrated);
     const [isFontLoaded, setIsFontLoaded] = useState(false);
     const [isAuthReady, setIsAuthReady] = useState(false);
 
     useEffect(() => {
-        // Solo cargamos Ionicons de forma bloqueante (es el único usado en el primer frame).
-        // El resto se carga en segundo plano para no retrasar el splash screen.
-        Font.loadAsync({ ...Ionicons.font })
+        // Cargamos todas las fuentes principales en paralelo usando Promise.all
+        Promise.all([
+            Font.loadAsync({ ...Ionicons.font }),
+            Font.loadAsync({ ...MaterialIcons.font }),
+            Font.loadAsync({ ...Entypo.font }),
+            Font.loadAsync({ ...AntDesign.font }),
+            Font.loadAsync({ ...FontAwesome.font }),
+        ])
             .then(() => setIsFontLoaded(true))
-            .then(() => {
-                // Carga diferida del resto — no bloquea la UI
-                Font.loadAsync({
-                    ...MaterialIcons.font,
-                    ...Entypo.font,
-                    ...AntDesign.font,
-                    ...FontAwesome.font,
-                }).catch(() => {/* Ignorar errores de fuentes secundarias */});
-                
+            .catch((err) => {
+                console.warn('Error cargando fuentes:', err);
+                // Continuamos de todos modos para no bloquear la app indefinidamente
+                setIsFontLoaded(true);
+            })
+            .finally(() => {
                 // Verificar biometría una sola vez al inicio
                 checkBiometrics();
             });
@@ -67,29 +70,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 // Iniciar sincronización de clientes — Firestore entrega caché local primero.
                 startFirestoreSync(user.uid);
 
-                // IMPORTANTE: Establecemos un usuario temporal ANTES de marcar auth como lista.
-                // Esto evita que expo-router vea isLoading=false y session=null,
-                // lo que causaba el destello (flash) de la pantalla de login.
                 setAccount({
                     colmadoName: 'Cargando...',
                     email: user.email || '',
                     phoneNumber: user.phoneNumber || '',
-                    subscription: { status: 'loading', plan: 'none' }, // Cambiado a loading
+                    subscription: { status: 'loading', plan: 'none' },
                 });
 
-                // Marcar auth como lista INMEDIATAMENTE para que la UI cargue
-                // con los datos locales sin esperar la red.
+                // Marcar auth como lista
                 setIsAuthReady(true);
                 setInitialized(true);
 
-                // Usar onSnapshot en lugar de getDoc para el perfil.
-                // onSnapshot (Local-First): Entrega el perfil desde SQLite instantáneamente en ~5ms,
-                // y luego actualiza en background si hay cambios en la nube.
                 const userRef = doc(db, 'users', user.uid);
                 unsubProfile = onSnapshot(userRef, (userSnap) => {
                     const data = userSnap.data() as any;
-                    
-                    // Si el snapshot no es del caché, es una confirmación de la hora real del servidor.
                     if (!userSnap.metadata.fromCache) {
                         useSessionStore.getState().setSyncTimestamp(Date.now());
                     }
@@ -115,15 +109,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         });
 
-        
         return () => {
             subscriber();
             if (unsubProfile) unsubProfile();
             stopFirestoreSync();
-        }; // unsubscribe on unmount
+        };
     }, [setAccount, setSubscription, setInitialized, startFirestoreSync, stopFirestoreSync]);
 
-    const isLoading = !isFontLoaded || !isAuthReady;
+    // isLoading ahora depende de que las fuentes estén listas, la sesión autenticada 
+    // Y que el store de clientes esté hidratado (aunque sea del caché local).
+    const isLoading = !isFontLoaded || !isAuthReady || (account !== null && !isHydrated);
 
     return (
         <AuthContext.Provider

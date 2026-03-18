@@ -26,6 +26,7 @@ import { useNotificationStore } from './notificationStore';
 interface ClientState {
     clients: Client[];
     isLoading: boolean;
+    isHydrated: boolean;
     hasPendingWrites: boolean;
     unsubscribeSnapshot: (() => void) | null;
     actions: {
@@ -48,6 +49,7 @@ let currentUid: string | null = null;
 export const useClientStore = create<ClientState>()((set, get) => ({
     clients: [],
     isLoading: false,
+    isHydrated: false,
     hasPendingWrites: false,
     unsubscribeSnapshot: null,
     actions: {
@@ -103,12 +105,13 @@ export const useClientStore = create<ClientState>()((set, get) => ({
                     set({ 
                         clients: clientsList, 
                         isLoading: false, 
+                        isHydrated: true,
                         hasPendingWrites: querySnapshot.metadata.hasPendingWrites 
                     });
                 },
                 (error) => {
                     console.error('[clientStore] Error en onSnapshot:', error);
-                    set({ isLoading: false });
+                    set({ isLoading: false, isHydrated: true }); // Marcamos como hidratado incluso en error para no bloquear la app
                     useNotificationStore.getState().show({
                         message: 'Error de conexión con la base de datos.',
                         type: 'error',
@@ -125,7 +128,7 @@ export const useClientStore = create<ClientState>()((set, get) => ({
                 unsubscribeSnapshot();
                 set({ unsubscribeSnapshot: null });
             }
-            set({ clients: [], isLoading: false });
+            set({ clients: [], isLoading: false, isHydrated: false });
             currentUid = null;
         },
 
