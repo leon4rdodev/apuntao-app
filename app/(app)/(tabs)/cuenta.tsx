@@ -15,6 +15,7 @@ import {
     TextInput,
     ActivityIndicator,
     Linking,
+    Keyboard,
 } from 'react-native';
 import { authenticateBiometrics, isBiometricsAvailable } from '@/utils/biometrics';
 import { STORAGE_KEYS } from '@/constants';
@@ -114,7 +115,8 @@ export default function CuentaScreen() {
             await updateDoc(doc(db, 'users', user.uid), {
                 colmadoName: newName.trim(),
             });
-
+            
+            Keyboard.dismiss();
             setIsEditing(false);
             showNotification({
                 message: 'Nombre actualizado con éxito',
@@ -312,7 +314,7 @@ export default function CuentaScreen() {
                         autoFocus={false}
                         onSubmitEditing={handleUpdateName}
                         returnKeyType="done"
-                        submitBehavior="blurAndSubmit"
+                        blurOnSubmit={false}
                     />
                 </View>
             </ActionModal>

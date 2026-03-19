@@ -34,6 +34,7 @@ import {
     StyleSheet,
     View,
     TextInput,
+    Keyboard,
 } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -126,6 +127,7 @@ export default function ClientDetailScreen() {
             date: Date.now(),
         });
         showNotification({ message: SUCCESS_MESSAGES.TRANSACTION_ADDED, type: 'success' });
+        Keyboard.dismiss();
         setModalConfig(null);
         setAmount('');
     }, [client, amount, modalConfig, addTransaction, showNotification]);
@@ -145,6 +147,7 @@ export default function ClientDetailScreen() {
         updateClient(client.id, { name: formattedName, phone: formattedPhone });
 
         showNotification({ message: SUCCESS_MESSAGES.CLIENT_UPDATED, type: 'success' });
+        Keyboard.dismiss();
         setModalConfig(null);
     }, [client, editName, editPhone, updateClient, showNotification]);
 
@@ -300,7 +303,7 @@ export default function ClientDetailScreen() {
                     autoFocus={false}
                     onSubmitEditing={handleSaveTransaction}
                     returnKeyType="done"
-                    submitBehavior="blurAndSubmit"
+                    blurOnSubmit={false}
                 />
             );
         }
@@ -332,7 +335,7 @@ export default function ClientDetailScreen() {
                             maxLength={14}
                             onSubmitEditing={handleUpdateClient}
                             returnKeyType="done"
-                            submitBehavior="blurAndSubmit"
+                            blurOnSubmit={false}
                         />
                     </View>
                 </>
