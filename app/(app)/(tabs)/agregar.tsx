@@ -7,8 +7,8 @@ import { formatNumberWithCommas, formatPhoneNumber } from '@/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState, useRef } from 'react';
 import { useAddClient } from '@/hooks/useAddClient';
-import { TextInput } from 'react-native';
 import {
+    TextInput,
     Keyboard,
     KeyboardAvoidingView,
     Platform,

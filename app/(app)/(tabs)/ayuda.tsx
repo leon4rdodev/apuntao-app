@@ -41,20 +41,22 @@ const FAQS = [
     },
 ];
 
-const FAQItem = React.memo(({ question, answer, borderColor }: {
+function FAQItem({ question, answer, borderColor }: {
     question: string;
     answer: string;
     borderColor: string;
-}) => (
-    <View style={[styles.faqItem, { borderTopColor: borderColor }]}>
-        <CustomText size="medium" weight="bold" style={styles.faqQuestion}>
-            {question}
-        </CustomText>
-        <CustomText size="medium" style={styles.faqAnswer}>
-            {answer}
-        </CustomText>
-    </View>
-));
+}) {
+    return (
+        <View style={[styles.faqItem, { borderTopColor: borderColor }]}>
+            <CustomText size="medium" weight="bold" style={styles.faqQuestion}>
+                {question}
+            </CustomText>
+            <CustomText size="medium" style={styles.faqAnswer}>
+                {answer}
+            </CustomText>
+        </View>
+    );
+}
 
 export default function AyudaScreen() {
     const theme = Colors[useColorScheme() || 'light'];
@@ -98,7 +100,7 @@ export default function AyudaScreen() {
                         Preguntas Frecuentes
                     </CustomText>
                     <CustomText size="medium" color={theme.textSecondary} style={styles.subtitle}>
-                        Encuentra respuestas rápidas para aprovechar Apunta'o al máximo.
+                        Encuentra respuestas rápidas para aprovechar Apunta&apos;o al máximo.
                     </CustomText>
                 </View>
 
