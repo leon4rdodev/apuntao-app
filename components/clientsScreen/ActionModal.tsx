@@ -70,19 +70,6 @@ const ActionModal = memo(({
         }
     }, [isVisible, isPresented]);
 
-    useEffect(() => {
-        if (!isVisible) return;
-
-        const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
-            // Un pequeño retraso permite que onSubmitEditing procese antes de cerrar
-            // Pero como el usuario quiere que "se cierre con el teclado", llamamos a onClose
-            onClose();
-        });
-
-        return () => {
-            hideSubscription.remove();
-        };
-    }, [isVisible, onClose]);
 
     const overlayStyle = useAnimatedStyle(() => ({
         opacity: isPresented.value,
@@ -109,55 +96,55 @@ const ActionModal = memo(({
             animationType="none"
             statusBarTranslucent
         >
-            <View style={styles.container}>
-                <TouchableWithoutFeedback onPress={handleClose}>
-                    <Animated.View style={[styles.modalOverlay, overlayStyle]} />
-                </TouchableWithoutFeedback>
+            {/* Backdrop: tapping it closes the modal */}
+            <TouchableWithoutFeedback onPress={handleClose}>
+                <Animated.View style={[styles.modalOverlay, overlayStyle]} />
+            </TouchableWithoutFeedback>
 
-                <Animated.View 
-                    style={[
-                        styles.modalContent, 
-                        { backgroundColor: theme.surface }, 
-                        contentStyle
+            {/* Content: tapping inside does NOT close the modal */}
+            <Animated.View 
+                style={[
+                    styles.modalContent, 
+                    { backgroundColor: theme.surface }, 
+                    contentStyle
+                ]}
+            >
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={[
+                        styles.scrollContent,
+                        { paddingBottom: Math.max(paddingBottom, 24) }
                     ]}
+                    keyboardShouldPersistTaps="handled"
+                    bounces={false}
                 >
-                    <ScrollView
-                        showsVerticalScrollIndicator={false}
-                        contentContainerStyle={[
-                            styles.scrollContent,
-                            { paddingBottom: Math.max(paddingBottom, 24) }
-                        ]}
-                        keyboardShouldPersistTaps="handled"
-                        bounces={false}
-                    >
-                        <View style={styles.handleContainer}>
-                            <View style={[styles.handle, { backgroundColor: theme.borderSubtle }]} />
-                        </View>
+                    <View style={styles.handleContainer}>
+                        <View style={[styles.handle, { backgroundColor: theme.borderSubtle }]} />
+                    </View>
 
-                        <CustomText size="large" weight="bold" style={styles.modalTitle}>
-                            {title}
-                        </CustomText>
+                    <CustomText size="large" weight="bold" style={styles.modalTitle}>
+                        {title}
+                    </CustomText>
 
-                        <View style={styles.childrenContainer}>{children}</View>
+                    <View style={styles.childrenContainer}>{children}</View>
 
-                        <View style={styles.modalActions}>
-                            {actions.map((action, index) => (
-                                <View key={action.title || index} style={{ flex: 1 }}>
-                                    <CustomButton
-                                        title={action.title}
-                                        onPress={action.onPress}
-                                        buttonStyle={[action.buttonStyle]}
-                                        textStyle={[{ fontSize: 16 }, action.textStyle]}
-                                        iconName={action.iconName}
-                                        iconColor={action.iconColor}
-                                    />
-                                </View>
-                            ))}
-                        </View>
-                    </ScrollView>
-                    <GlobalNotification isModalInstance />
-                </Animated.View>
-            </View>
+                    <View style={styles.modalActions}>
+                        {actions.map((action, index) => (
+                            <View key={action.title || index} style={{ flex: 1 }}>
+                                <CustomButton
+                                    title={action.title}
+                                    onPress={action.onPress}
+                                    buttonStyle={[action.buttonStyle]}
+                                    textStyle={[{ fontSize: 16 }, action.textStyle]}
+                                    iconName={action.iconName}
+                                    iconColor={action.iconColor}
+                                />
+                            </View>
+                        ))}
+                    </View>
+                </ScrollView>
+                <GlobalNotification isModalInstance />
+            </Animated.View>
         </Modal>
     );
 });
@@ -172,7 +159,10 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.45)',
     },
     modalContent: {
-        width: '100%',
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
         maxHeight: '90%',
         borderTopLeftRadius: 32,
         borderTopRightRadius: 32,

@@ -1,56 +1,69 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useCallback } from 'react';
 import { View, TextInput, StyleSheet, TextInputProps } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 
+/**
+ * Formatea un número puro (sin comas) a string con separadores de miles.
+ * Eg: "1500.5" -> "1,500.5"
+ */
+function formatRawToDisplay(raw: string): string {
+    if (!raw) return '';
+    const [intPart, decPart] = raw.split('.');
+    const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return decPart !== undefined ? `${intFormatted}.${decPart}` : intFormatted;
+}
+
+/**
+ * Limpia un string ingresado desde el teclado a un "raw" numérico puro.
+ * Eg: "1,500.50" -> "1500.50"
+ */
+function cleanToRaw(text: string): string {
+    // Quitar todo excepto dígitos y punto
+    let clean = text.replace(/[^\d.]/g, '');
+
+    // Solo un punto decimal permitido
+    const firstDot = clean.indexOf('.');
+    if (firstDot !== -1) {
+        clean = clean.slice(0, firstDot + 1) + clean.slice(firstDot + 1).replace(/\./g, '');
+    }
+
+    // Máximo 2 decimales
+    if (clean.includes('.')) {
+        const [int, dec] = clean.split('.');
+        clean = `${int}.${dec.slice(0, 2)}`;
+    }
+
+    return clean;
+}
+
 interface AmountInputProps extends Omit<TextInputProps, 'onChangeText' | 'value'> {
+    /** Valor "raw" sin comas (e.g. "1500.50"). El padre debe guardar este valor sin formatear. */
     value: string;
-    onChangeText: (text: string) => void;
+    /** Devuelve el valor raw limpio sin comas para que el padre lo guarde directamente. */
+    onChangeText: (rawValue: string) => void;
     placeholder?: string;
 }
 
 /**
  * @component AmountInput
- * @description Input especializado para montos monetarios, ahora con soporte para Refs.
+ * @description Input especializado para montos monetarios.
+ * El padre guarda el valor RAW (sin comas), este componente formatea para display.
+ * Esto elimina el parpadeo por reformateo en cada tecla.
  */
-export const AmountInput = forwardRef<TextInput, AmountInputProps>(({
-    value,
-    onChangeText,
-    placeholder = '0',
-    ...rest
-}, ref) => {
+export const AmountInput = forwardRef<TextInput, AmountInputProps>((
+    { value, onChangeText, placeholder = '0', ...rest },
+    ref
+) => {
     const theme = Colors[useColorScheme() || 'light'];
-    // Muestra "0" solo si value está vacío
-    const displayValue = `${value || ''}`;
 
-    const handleChangeText = (text: string) => {
-        // Limpia el texto de cualquier caracter que no sea número o punto
-        let cleanText = text.replace(/[^\d.]/g, '');
+    // Formateamos para display SOLO al renderizar, nunca en el estado del padre
+    const displayValue = formatRawToDisplay(value);
 
-        // Aseguramos que solo haya un punto decimal
-        const dotCount = (cleanText.match(/\./g) || []).length;
-        if (dotCount > 1) {
-            // Si hay más de un punto, nos quedamos con el texto hasta el segundo punto (sin incluirlo)
-            const firstDotIndex = cleanText.indexOf('.');
-            const secondDotIndex = cleanText.indexOf('.', firstDotIndex + 1);
-            cleanText = cleanText.slice(0, secondDotIndex);
-        }
-
-        // Limitamos a 2 decimales para evitar montos inválidos
-        if (cleanText.includes('.')) {
-            const [int, dec] = cleanText.split('.');
-            if (dec.length > 2) {
-                cleanText = `${int}.${dec.slice(0, 2)}`;
-            }
-        }
-
-        // Si el texto queda vacío, enviamos cadena vacía
-        if (cleanText === '') {
-            onChangeText('');
-        } else {
-            onChangeText(cleanText);
-        }
-    };
+    const handleChangeText = useCallback((text: string) => {
+        const raw = cleanToRaw(text);
+        onChangeText(raw);
+    }, [onChangeText]);
 
     return (
         <View style={styles.container}>
@@ -62,13 +75,15 @@ export const AmountInput = forwardRef<TextInput, AmountInputProps>(({
                 placeholder={placeholder}
                 placeholderTextColor={theme.textSecondary}
                 keyboardType="decimal-pad"
-                autoFocus={false} // Desactivamos el autoFocus nativo para controlarlo manualmente con delay
+                autoFocus={false}
                 caretHidden={true}
                 {...rest}
             />
         </View>
     );
 });
+
+AmountInput.displayName = 'AmountInput';
 
 const styles = StyleSheet.create({
     container: {

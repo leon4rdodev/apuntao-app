@@ -314,7 +314,7 @@ export default function CuentaScreen() {
                         autoFocus={false}
                         onSubmitEditing={handleUpdateName}
                         returnKeyType="done"
-                        blurOnSubmit={false}
+                        submitBehavior="submit"
                     />
                 </View>
             </ActionModal>

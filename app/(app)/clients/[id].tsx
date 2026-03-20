@@ -21,7 +21,6 @@ import { Transaction, TransactionType } from '@/types';
 import {
     formatMoney,
     formatName,
-    formatNumberWithCommas,
     formatPhoneNumber,
     parseFormattedNumber,
 } from '@/utils/formatters';
@@ -297,13 +296,12 @@ export default function ClientDetailScreen() {
                 <AmountInput
                     ref={amountInputRef as any}
                     value={amount}
-                    onChangeText={(text) => setAmount(formatNumberWithCommas(text))}
+                    onChangeText={setAmount}
                     placeholder="0"
-                    keyboardType="numeric"
                     autoFocus={false}
                     onSubmitEditing={handleSaveTransaction}
                     returnKeyType="done"
-                    blurOnSubmit={false}
+                    submitBehavior="submit"
                 />
             );
         }
@@ -335,7 +333,7 @@ export default function ClientDetailScreen() {
                             maxLength={14}
                             onSubmitEditing={handleUpdateClient}
                             returnKeyType="done"
-                            blurOnSubmit={false}
+                            submitBehavior="submit"
                         />
                     </View>
                 </>
