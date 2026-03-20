@@ -115,7 +115,7 @@ const ActionModal = memo(({
                         styles.scrollContent,
                         { paddingBottom: Math.max(paddingBottom, 24) }
                     ]}
-                    keyboardShouldPersistTaps="handled"
+                    keyboardShouldPersistTaps="always"
                     bounces={false}
                 >
                     <View style={styles.handleContainer}>
