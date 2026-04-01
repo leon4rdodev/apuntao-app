@@ -26,6 +26,8 @@ const ClientSummaryCard = ({ client, onEdit }: { client: Client; onEdit: () => v
         let message = `Hola ${client.name}, te saludo de ${colmadoName}. `;
         if (client.debt > 0) {
             message += `Te escribo para recordarte tu balance pendiente de $${formatMoney(client.debt)}. ¡Muchas gracias!`;
+        } else if (client.debt < 0) {
+            message += `Tienes un saldo a tu favor de $${formatMoney(Math.abs(client.debt))}. ¡Gracias por confiar en nosotros!`;
         } else {
             message += `¡Muchas gracias por estar al día con tu cuenta!`;
         }
@@ -33,7 +35,12 @@ const ClientSummaryCard = ({ client, onEdit }: { client: Client; onEdit: () => v
         Linking.openURL(`whatsapp://send?phone=1${cleanPhone}&text=${encodeURIComponent(message)}`);
     };
 
+    const isCredit = client.debt < 0;
     const debtColor = client.debt > 0 ? theme.error : theme.success;
+    const debtLabel = isCredit ? 'Saldo a favor' : 'Deuda Total';
+    const debtDisplay = isCredit
+        ? `+$${formatMoney(Math.abs(client.debt))}`
+        : `$${formatMoney(client.debt)}`;
 
     return (
         <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }]}>
@@ -50,21 +57,21 @@ const ClientSummaryCard = ({ client, onEdit }: { client: Client; onEdit: () => v
                  <CustomText
                     size="small"
                     weight="medium"
-                    color={theme.textSecondary}
+                    color={isCredit ? debtColor : theme.textSecondary}
                     style={styles.debtLabel}
                 >
-                    Deuda Total
+                    {debtLabel}
                 </CustomText>
 
                 <CustomText 
                     size="xxlarge" 
                     weight="bold" 
-                    color={theme.text} 
+                    color={isCredit ? debtColor : theme.text} 
                     style={styles.debtAmount}
                     numberOfLines={1}
                     adjustsFontSizeToFit
                 >
-                    ${formatMoney(client.debt)}
+                    {debtDisplay}
                 </CustomText>
             </View>
 

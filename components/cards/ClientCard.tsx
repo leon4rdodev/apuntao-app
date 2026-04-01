@@ -29,6 +29,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ item, onPress, isPending }) => 
      * Retorna el nivel de deuda con su color asociado y texto descriptivo.
      */
     const getDebtLevel = (debt: number) => {
+        if (debt < 0) return { text: 'A favor', color: theme.success };
         if (debt === 0) return { text: 'Al día', color: theme.success };
         if (debt < 2000) return { text: 'Baja', color: theme.success };
         if (debt < 7000) return { text: 'Media', color: theme.warning };
@@ -36,7 +37,11 @@ const ClientCard: React.FC<ClientCardProps> = ({ item, onPress, isPending }) => 
     };
 
     const { text, color } = getDebtLevel(item.debt);
-    const formattedDebt = formatMoney(item.debt);
+    const isCredit = item.debt < 0;
+    const debtLabel = isCredit ? 'A favor' : 'Debe';
+    const formattedDebt = isCredit
+        ? `+$${formatMoney(Math.abs(item.debt))}`
+        : `$${formatMoney(item.debt)}`;
 
     return (
         <TouchableOpacity
@@ -61,9 +66,9 @@ const ClientCard: React.FC<ClientCardProps> = ({ item, onPress, isPending }) => 
                         )}
                     </View>
                     <View style={styles.debtRow}>
-                        <Text style={[styles.debtLabel, { color: theme.textSecondary }]}>Debe</Text>
-                        <Text style={[styles.debtAmount, { color: theme.text }]}>
-                            ${formattedDebt}
+                        <Text style={[styles.debtLabel, { color: isCredit ? color : theme.textSecondary }]}>{debtLabel}</Text>
+                        <Text style={[styles.debtAmount, { color: isCredit ? color : theme.text }]}>
+                            {formattedDebt}
                         </Text>
                     </View>
                 </View>

@@ -1,7 +1,7 @@
 import CustomText from '@/components/ui/CustomText';
 import { Colors } from '@/constants/Colors';
 import { Transaction } from '@/types';
-import { formatDate, formatDateThreeLines, formatMoney } from '@/utils/formatters';
+import { formatDateThreeLines, formatMoney } from '@/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import { StyleSheet, TouchableOpacity, View, Text } from 'react-native';
@@ -28,7 +28,9 @@ const TransactionHistory = ({
     };
 
     const sortedTransactions = useMemo(
-        () => [...transactions].sort((a, b) => b.date - a.date),
+        () => [...transactions]
+            .filter(t => !t.deleted)           // Ocultamos las borradas (soft delete)
+            .sort((a, b) => b.date - a.date),
         [transactions]
     );
 
@@ -129,7 +131,7 @@ const TransactionHistory = ({
                     <View style={[styles.countBadge, { backgroundColor: theme.primary + '10' }]}>
                         <Ionicons name="receipt" size={14} color={theme.primary} style={{ marginRight: 4 }} />
                         <CustomText size="small" weight="bold" color={theme.primary}>
-                            {transactions.length}
+                            {sortedTransactions.length}
                         </CustomText>
                     </View>
                 )}

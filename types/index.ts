@@ -15,6 +15,8 @@ export interface Transaction {
     amount: number;
     /** El tipo de transacción: si aumenta la deuda ('Deuda') o la disminuye ('Pago'). */
     type: TransactionType;
+    /** Indica si la transacción ha sido borrada (Soft Delete). */
+    deleted?: boolean;
 }
 
 /** Representa la entidad de un cliente dentro de una cuenta de colmado. */

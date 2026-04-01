@@ -93,7 +93,7 @@ export const useClientStore = create<ClientState>()((set, get) => ({
                                 id,
                                 name: data.name || 'Cliente sin nombre',
                                 phone: data.phone,
-                                debt: typeof data.debt === 'number' ? Math.max(0, data.debt) : 0,
+                                debt: typeof data.debt === 'number' ? data.debt : 0,
                                 transactions: Array.isArray(data.transactions) ? data.transactions : [],
                                 lastModified: lastModified || Date.now(),
                                 deleted: data.deleted || false,
@@ -225,38 +225,30 @@ export const useClientStore = create<ClientState>()((set, get) => ({
 
             const now = Date.now();
             const debtChange = transaction.type === 'Deuda' ? transaction.amount : -transaction.amount;
-            const newDebt = Math.max(0, client.debt + debtChange);
+            const newDebt = client.debt + debtChange;
             const newTx: Transaction = {
                 ...transaction,
                 id: `txn_${now}_${Math.random().toString(36).substring(2, 9)}`,
             };
 
-            const shouldClear = newDebt === 0;
-
             // 1. Actualización Optimista
             set({
                 clients: get().clients.map(c => 
                     c.id === clientId 
-                    ? { ...c, debt: newDebt, transactions: shouldClear ? [] : [newTx, ...c.transactions], lastModified: now } 
+                    ? { ...c, debt: newDebt, transactions: [newTx, ...c.transactions], lastModified: now } 
                     : c
                 ).sort((a,b) => b.lastModified - a.lastModified)
             });
 
-            // 2. Sincronización en segundo plano con limpieza automática
+            // 2. Sincronización en segundo plano
             const db = getFirestore();
             const clientRef = doc(db, 'users', currentUid, 'clients', clientId);
             
             const updatePayload: any = {
-                debt: increment(debtChange), // Atómico para no perder balance
+                debt: newDebt === 0 ? 0 : increment(debtChange), // Si llega a 0, forzamos el valor exacto
+                transactions: arrayUnion(newTx),
                 lastModified: now,
             };
-
-            if (shouldClear) {
-                updatePayload.transactions = [];
-                updatePayload.debt = 0; // Forzado para asegurar limpieza total cuando llega a 0
-            } else {
-                updatePayload.transactions = arrayUnion(newTx);
-            }
 
             updateDoc(clientRef, updatePayload).catch(e => console.error('[addTransaction] Error:', e));
         },
@@ -272,37 +264,33 @@ export const useClientStore = create<ClientState>()((set, get) => ({
 
             const now = Date.now();
             const debtChange = tx.type === 'Deuda' ? -tx.amount : tx.amount;
-            const newDebt = Math.max(0, client.debt + debtChange);
+            const newDebt = client.debt + debtChange;
+            // En local solo mostramos las no borradas
             const remaining = client.transactions.filter((t) => t.id !== transactionId);
+            const deletedTx = { ...tx, deleted: true };
 
-            const shouldClear = newDebt === 0;
-
-            // 1. Actualización Optimista
+            // 1. Actualización Optimista (la UI no la muestra más)
             set({
                 clients: get().clients.map(c => 
                     c.id === clientId 
-                    ? { ...c, debt: newDebt, transactions: shouldClear ? [] : remaining, lastModified: now } 
+                    ? { ...c, debt: newDebt, transactions: remaining, lastModified: now } 
                     : c
                 ).sort((a,b) => b.lastModified - a.lastModified)
             });
 
-            // 2. Sincronización en segundo plano con limpieza automática
+            // 2. Sincronización en segundo plano (Soft Delete en Firestore)
+            // Firestore no permite arrayRemove + arrayUnion del mismo campo en una sola llamada,
+            // así que encadenamos dos updateDoc: primero quitamos el original, luego insertamos con deleted:true.
             const db = getFirestore();
             const clientRef = doc(db, 'users', currentUid, 'clients', clientId);
-            
-            const updatePayload: any = {
-                debt: increment(debtChange),
+
+            updateDoc(clientRef, {
+                debt: newDebt === 0 ? 0 : increment(debtChange),
+                transactions: arrayRemove(tx),
                 lastModified: now,
-            };
-
-            if (shouldClear) {
-                updatePayload.transactions = [];
-                updatePayload.debt = 0;
-            } else {
-                updatePayload.transactions = arrayRemove(tx);
-            }
-
-            updateDoc(clientRef, updatePayload).catch(e => console.error('[deleteTransaction] Error:', e));
+            })
+            .then(() => updateDoc(clientRef, { transactions: arrayUnion(deletedTx) }))
+            .catch(e => console.error('[deleteTransaction] Error:', e));
         },
 
         getClientById: (id) => get().clients.find((c) => c.id === id),
