@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Keyboard } from 'react-native';
 import { getAuth } from '@react-native-firebase/auth';
 import { getFirestore, doc, updateDoc } from '@react-native-firebase/firestore';
@@ -9,7 +9,7 @@ import { useClientStore } from '@/store/clientStore';
 import { useUIStore } from '@/store/uiStore';
 import { authenticateBiometrics, isBiometricsAvailable } from '@/utils/biometrics';
 import { STORAGE_KEYS } from '@/constants';
-import { saveToStorage, getFromStorage } from '@/utils/storage';
+import { saveToStorage } from '@/utils/storage';
 
 export function useCuenta() {
     const { session: account, signOut } = useAuth();
@@ -17,17 +17,13 @@ export function useCuenta() {
     const hasPendingWrites = useClientStore((state) => state.hasPendingWrites);
     const isBiometricsSupported = useUIStore((state) => state.isBiometricsSupported);
 
+    const biometricsEnabled = useUIStore((state) => state.biometricsEnabled);
+    const setBiometricsEnabled = useUIStore((state) => state.setBiometricsEnabled);
+
     const [isEditing, setIsEditing] = useState(false);
     const [isLogoutVisible, setIsLogoutVisible] = useState(false);
-    const [biometricsEnabled, setBiometricsEnabled] = useState(false);
 
-    useEffect(() => {
-        const checkConfig = async () => {
-            const enabled = await getFromStorage<boolean>(STORAGE_KEYS.BIOMETRICS_ENABLED);
-            setBiometricsEnabled(!!enabled);
-        };
-        checkConfig();
-    }, []);
+
 
     const handleSignOutRequest = useCallback(() => {
         if (hasPendingWrites) {
@@ -95,7 +91,7 @@ export function useCuenta() {
             console.error('Error al cambiar biometría:', error);
             showNotification({ message: 'No se pudo guardar la preferencia', type: 'error' });
         }
-    }, [showNotification]);
+    }, [showNotification, setBiometricsEnabled]);
 
     return {
         account,

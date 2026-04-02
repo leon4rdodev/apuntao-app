@@ -9,8 +9,10 @@ import { useColorScheme } from '@/hooks/useColorScheme';
  * Props del componente ClientsSummary
  */
 interface ClientsSummaryProps {
-    /** Deuda total de todos los clientes */
+    /** Deuda total de todos los clientes (solo deudas positivas) */
     totalDebt: number;
+    /** Saldo a favor total (crédito de los clientes, opcional) */
+    totalCredit?: number;
     /** Número total de clientes */
     totalClients: number;
 }
@@ -21,17 +23,26 @@ interface ClientsSummaryProps {
  * @param totalDebt - Deuda total
  * @param totalClients - Número total de clientes
  */
-export default function ClientsSummary({ totalDebt, totalClients }: ClientsSummaryProps) {
+export default function ClientsSummary({ totalDebt, totalCredit = 0, totalClients }: ClientsSummaryProps) {
     const formattedDebt = formatMoney(totalDebt);
+    const formattedCredit = formatMoney(totalCredit);
     const colorScheme = useColorScheme() || 'light';
     const theme = Colors[colorScheme];
 
     return (
         <View style={styles.container}>
             <View style={styles.headerRow}>
-                <View>
-                    <Text style={[styles.label, { color: theme.textSecondary }]}>DEUDA TOTAL</Text>
-                    <Text style={[styles.amount, { color: theme.text }]}>${formattedDebt}</Text>
+                <View style={styles.amountsContainer}>
+                    <View>
+                        <Text style={[styles.label, { color: theme.textSecondary }]}>POR COBRAR</Text>
+                        <Text style={[styles.amount, { color: theme.text }]}>${formattedDebt}</Text>
+                    </View>
+                    {totalCredit > 0 && (
+                        <View style={styles.creditSpacing}>
+                            <Text style={[styles.label, { color: theme.textSecondary }]}>A FAVOR DE CLIENTES</Text>
+                            <Text style={[styles.amount, { color: theme.success }]}>+${formattedCredit}</Text>
+                        </View>
+                    )}
                 </View>
                 <View style={styles.badgeContainer}>
                     <Text style={[styles.badgeLabel, { color: theme.textSecondary }]}>CLIENTES</Text>
@@ -64,8 +75,14 @@ const styles = StyleSheet.create({
     headerRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: 'flex-start', // Cambio de center a flex-start por si hay dos filas de montos
         paddingVertical: 10,
+    },
+    amountsContainer: {
+        flexDirection: 'column',
+    },
+    creditSpacing: {
+        marginTop: 12,
     },
     label: {
         fontSize: 11,

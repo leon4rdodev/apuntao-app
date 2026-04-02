@@ -55,10 +55,7 @@ export function useClientDetail(clientId: string) {
             return;
         }
 
-        if (modalConfig.payload === 'Pago' && numericAmount > client.debt) {
-            showNotification({ message: ERROR_MESSAGES.PAYMENT_EXCEEDS_DEBT, type: 'error' });
-            return;
-        }
+
 
         const biometricsEnabled = await getFromStorage<boolean>(STORAGE_KEYS.BIOMETRICS_ENABLED);
         if (biometricsEnabled) {

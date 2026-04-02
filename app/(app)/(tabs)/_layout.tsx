@@ -9,7 +9,7 @@ export default function TabLayout() {
                 headerShown: false,
                 tabBarShowLabel: false,
                 tabBarHideOnKeyboard: true, // Evita artefactos visuales sobre el teclado
-                animation: 'fade',
+                animation: 'none',
                 tabBarStyle: { position: 'absolute', borderTopWidth: 0, elevation: 0 },
             }}
             tabBar={(props) => <CustomTabBar {...props} />}

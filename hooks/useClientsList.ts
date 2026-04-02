@@ -23,9 +23,20 @@ export function useClientsList() {
 
     const summaryData = useMemo(() => {
         const totalClients = validClients.length;
-        const totalDebt = validClients.reduce((sum, client) => sum + client.debt, 0);
+        let totalDebt = 0;
+        let totalCredit = 0;
+
+        validClients.forEach((client) => {
+            if (client.debt > 0) {
+                totalDebt += client.debt;
+            } else if (client.debt < 0) {
+                totalCredit += Math.abs(client.debt);
+            }
+        });
+
         return {
             totalDebt,
+            totalCredit,
             totalClients,
         };
     }, [validClients]);
@@ -79,7 +90,7 @@ export function useClientsList() {
 
     useMemo(() => {
         setPage(1);
-    }, [searchQuery]);
+    }, []);
 
     useMemo(() => {
         if (page > 1 && displayedClients.length === 0 && totalPages > 0) {
@@ -124,6 +135,7 @@ export function useClientsList() {
         setIsSearchOpen,
         summaryData: {
             totalDebt: summaryData.totalDebt,
+            totalCredit: summaryData.totalCredit,
             totalClients: summaryData.totalClients,
         },
         displayedClients,

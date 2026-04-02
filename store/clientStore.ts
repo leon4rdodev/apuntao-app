@@ -16,7 +16,6 @@ import {
     where,
     setDoc,
     updateDoc,
-    increment,
     arrayUnion,
     arrayRemove,
 } from '@react-native-firebase/firestore';
@@ -85,6 +84,12 @@ export const useClientStore = create<ClientState>()((set, get) => ({
                         // Buscamos si ya tenemos una versión más reciente de este cliente localmente (optimística)
                         const existingClient = currentClients.find(c => c.id === id);
                         
+                        const txs = Array.isArray(data.transactions) ? data.transactions : [];
+                        const calculatedDebt = txs.reduce((acc: number, tx: any) => {
+                            if (tx.deleted) return acc;
+                            return acc + (tx.type === 'Deuda' ? tx.amount : -tx.amount);
+                        }, 0);
+
                         // Si el snapshot es de caché/pendiente y nuestro estado local es más nuevo, mantenemos el local
                         if (existingClient && querySnapshot.metadata.hasPendingWrites && lastModified < existingClient.lastModified) {
                             clientsList.push(existingClient);
@@ -93,8 +98,8 @@ export const useClientStore = create<ClientState>()((set, get) => ({
                                 id,
                                 name: data.name || 'Cliente sin nombre',
                                 phone: data.phone,
-                                debt: typeof data.debt === 'number' ? data.debt : 0,
-                                transactions: Array.isArray(data.transactions) ? data.transactions : [],
+                                debt: calculatedDebt, // Recalculado automáticamente desde las transacciones activas
+                                transactions: txs,
                                 lastModified: lastModified || Date.now(),
                                 deleted: data.deleted || false,
                             });
@@ -245,7 +250,7 @@ export const useClientStore = create<ClientState>()((set, get) => ({
             const clientRef = doc(db, 'users', currentUid, 'clients', clientId);
             
             const updatePayload: any = {
-                debt: newDebt === 0 ? 0 : increment(debtChange), // Si llega a 0, forzamos el valor exacto
+                debt: newDebt, // Forzamos el valor absoluto recalculado en lugar de increment, para curar discrepancias
                 transactions: arrayUnion(newTx),
                 lastModified: now,
             };
@@ -285,7 +290,7 @@ export const useClientStore = create<ClientState>()((set, get) => ({
             const clientRef = doc(db, 'users', currentUid, 'clients', clientId);
 
             updateDoc(clientRef, {
-                debt: newDebt === 0 ? 0 : increment(debtChange),
+                debt: newDebt, // Forzamos el valor absoluto
                 transactions: arrayRemove(tx),
                 lastModified: now,
             })
