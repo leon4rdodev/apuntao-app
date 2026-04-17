@@ -46,11 +46,11 @@ export default {
         extra: {
             router: {},
             eas: {
-                "projectId": "080d32b9-65da-4cdd-8fbf-36bcd79f67d5"
+                "projectId": "31759412-964f-4b48-874a-9f6c9b4672b5"
             },
         },
         updates: {
-            url: "https://u.expo.dev/080d32b9-65da-4cdd-8fbf-36bcd79f67d5",
+            url: "https://u.expo.dev/31759412-964f-4b48-874a-9f6c9b4672b5",
             fallbackToCacheTimeout: 0,
             checkOnLaunch: "NEVER"
         },
