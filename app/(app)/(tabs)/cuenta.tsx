@@ -40,6 +40,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useClientStore } from '@/store/clientStore';
 import { useSessionStore } from '@/store/sessionStore';
 import { generateReferralCode } from '@/utils/referral';
+import * as Clipboard from 'expo-clipboard';
 
 export default function CuentaScreen() {
     const theme = Colors[useColorScheme() || 'light'];
@@ -212,6 +213,20 @@ export default function CuentaScreen() {
         }
     }, [showNotification]);
 
+    const handleCopyReferralCode = useCallback(async () => {
+        if (!referralCode) {
+            showNotification({ message: 'Código de referido no disponible', type: 'error' });
+            return;
+        }
+        try {
+            await Clipboard.setStringAsync(referralCode);
+            showNotification({ message: 'Código copiado al portapapeles', type: 'success' });
+        } catch (error) {
+            console.error('Error al copiar:', error);
+            showNotification({ message: 'No se pudo copiar el código', type: 'error' });
+        }
+    }, [referralCode, showNotification]);
+
     const handleShareReferral = useCallback(async () => {
         if (!referralCode) {
             showNotification({ message: 'Código de referido no disponible', type: 'error' });
@@ -225,13 +240,6 @@ export default function CuentaScreen() {
             console.error('Error al compartir:', error);
         }
     }, [referralCode, account, showNotification]);
-
-    const handleCopyReferralCode = useCallback(() => {
-        if (!referralCode) return;
-        // Clipboard API básica en React Native
-        // Usamos Share como fallback para copiar
-        Alert.alert('Tu código de referido', referralCode);
-    }, [referralCode]);
 
     return (
         <View 
@@ -294,18 +302,28 @@ export default function CuentaScreen() {
                             Invita y Gana
                         </CustomText>
 
-                        <View style={styles.referralCodeRow}>
-                            <View style={[styles.referralCodeBadge, { backgroundColor: theme.primaryLight }]}>
-                                <CustomText size="xlarge" weight="bold" color={theme.primary}>
-                                    {referralCode}
-                                </CustomText>
-                            </View>
+                        <View style={[styles.referralCodeBadge, { backgroundColor: theme.primaryLight }]}>
+                            <CustomText size="xxlarge" weight="bold" color={theme.primary}>
+                                {referralCode}
+                            </CustomText>
+                        </View>
+
+                        <View style={styles.referralActions}>
                             <TouchableOpacity
-                                style={[styles.copyButton, { backgroundColor: theme.primary }]}
+                                style={[styles.referralActionBtn, { borderColor: theme.border }]}
+                                onPress={handleCopyReferralCode}
+                            >
+                                <Ionicons name="copy-outline" size={20} color={theme.primary} />
+                                <CustomText size="medium" weight="bold" style={{ color: theme.primary, marginLeft: 8 }}>
+                                    Copiar
+                                </CustomText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.referralActionBtn, { backgroundColor: theme.primary, borderColor: theme.primary }]}
                                 onPress={handleShareReferral}
                             >
                                 <Ionicons name="share-outline" size={20} color={theme.textOnPrimary} />
-                                <CustomText size="small" weight="bold" style={{ color: theme.textOnPrimary, marginLeft: 6 }}>
+                                <CustomText size="medium" weight="bold" style={{ color: theme.textOnPrimary, marginLeft: 8 }}>
                                     Compartir
                                 </CustomText>
                             </TouchableOpacity>
@@ -313,18 +331,18 @@ export default function CuentaScreen() {
 
                         <View style={styles.referralStats}>
                             <View style={styles.referralStatItem}>
-                                <Ionicons name="people-outline" size={24} color={theme.primary} />
-                                <CustomText size="large" weight="bold" style={{ marginTop: 4 }}>
+                                <Ionicons name="people-outline" size={28} color={theme.primary} />
+                                <CustomText size="xlarge" weight="bold" style={{ marginTop: 6 }}>
                                     {referralCount}
                                 </CustomText>
                                 <CustomText size="small" color={theme.textSecondary}>
                                     Referidos
                                 </CustomText>
                             </View>
-                            <View style={styles.referralStatDivider} />
+                            <View style={[styles.referralStatDivider, { backgroundColor: theme.border }]} />
                             <View style={styles.referralStatItem}>
-                                <Ionicons name="cash-outline" size={24} color={theme.success} />
-                                <CustomText size="large" weight="bold" style={{ marginTop: 4 }}>
+                                <Ionicons name="cash-outline" size={28} color={theme.success} />
+                                <CustomText size="xlarge" weight="bold" style={{ marginTop: 6 }}>
                                     {referralCredits > 0 ? `RD$ ${referralCredits}` : 'RD$ 0'}
                                 </CustomText>
                                 <CustomText size="small" color={theme.textSecondary}>
@@ -335,7 +353,7 @@ export default function CuentaScreen() {
 
                         <CustomText size="small" color={theme.textSecondary} style={styles.referralInfo}>
                             Gana el 40% de la primera suscripción de tus referidos. 
-                            Ellos obtienen 1 mes gratis al registrarse con tu código.
+                            Ellos obtienen 1 mes gratis al registrarse con tu código AP-XXXXX.
                         </CustomText>
                     </View>
                 ) : null}
@@ -523,32 +541,33 @@ const styles = StyleSheet.create({
     settingIcon: {
         marginRight: 12,
     },
-    referralCodeRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 16,
-        gap: 12,
-    },
     referralCodeBadge: {
-        flex: 1,
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: 12,
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        borderRadius: 16,
         alignItems: 'center',
+        marginBottom: 16,
     },
-    copyButton: {
+    referralActions: {
+        flexDirection: 'row',
+        gap: 12,
+        marginBottom: 24,
+    },
+    referralActionBtn: {
+        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: 12,
+        justifyContent: 'center',
+        paddingVertical: 14,
+        borderRadius: 14,
+        borderWidth: 1.5,
     },
     referralStats: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-around',
         marginBottom: 16,
+        paddingVertical: 8,
     },
     referralStatItem: {
         alignItems: 'center',
@@ -556,8 +575,7 @@ const styles = StyleSheet.create({
     },
     referralStatDivider: {
         width: 1,
-        height: 40,
-        backgroundColor: 'transparent',
+        height: 48,
     },
     referralInfo: {
         textAlign: 'center',
