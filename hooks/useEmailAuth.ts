@@ -13,7 +13,7 @@ import {
 } from '@react-native-firebase/firestore';
 import { useNotification } from '@/store/notificationStore';
 import { useSessionStore } from '@/store/sessionStore';
-import { generateReferralCode, findReferrerByCode, applyReferralRewards } from '@/utils/referral';
+import { generateReferralCode, findReferrerByCode, applyReferralRewards, saveReferralCodeMapping } from '@/utils/referral';
 import { REFERRAL_CONFIG } from '@/constants';
 
 export function useEmailAuth() {
@@ -49,23 +49,23 @@ export function useEmailAuth() {
             const auth = getAuth();
             const db = getFirestore();
 
-            // Try to find referrer if a code was entered
             let referrerId: string | null = null;
-            if (referralCode.trim()) {
+            const hasReferralCode = !!referralCode.trim();
+
+            if (hasReferralCode) {
                 referrerId = await findReferrerByCode(referralCode.trim());
             }
 
             const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
             const user = userCredential.user;
 
-            // 1 month free if referred, otherwise 7 days trial
-            const trialDays = referrerId ? REFERRAL_CONFIG.REFERRED_FREE_DAYS : 7;
+            // Always give 1 month free if a code was entered
+            const trialDays = hasReferralCode ? REFERRAL_CONFIG.REFERRED_FREE_DAYS : 7;
             const now = new Date();
             const expirationDate = new Date(now);
             expirationDate.setDate(now.getDate() + trialDays);
             const formattedTrialEnd = expirationDate.toISOString();
 
-            // Generate deterministic referral code for the new user
             const userCode = generateReferralCode(user.uid);
 
             const defaultSub = { 
@@ -88,13 +88,16 @@ export function useEmailAuth() {
             if (referrerId) {
                 userData.referredBy = referrerId;
             }
-            if (referralCode.trim()) {
+            if (hasReferralCode) {
                 userData.referredByCode = referralCode.trim().toUpperCase();
             }
             
             await setDoc(userRef, userData, { merge: true });
 
-            // Apply rewards asynchronously — best effort, don't block registration
+            // Save the new user's code mapping (best-effort)
+            saveReferralCodeMapping(userCode, user.uid).catch(() => {});
+
+            // Apply rewards if referrer was found
             if (referrerId) {
                 applyReferralRewards(user.uid, referrerId).catch((err) => {
                     console.warn('Error applying referral rewards:', err);

@@ -17,7 +17,7 @@ import { useSessionStore } from '@/store/sessionStore';
 import { useAuth } from '@/context/AuthContext';
 import { getAuth } from '@react-native-firebase/auth';
 import { getFirestore, doc, updateDoc } from '@react-native-firebase/firestore';
-import { generateReferralCode } from '@/utils/referral';
+import { generateReferralCode, saveReferralCodeMapping } from '@/utils/referral';
 import { useNotification } from '@/store/notificationStore';
 
 export default function ReferidosScreen() {
@@ -48,6 +48,7 @@ export default function ReferidosScreen() {
                     await updateDoc(doc(db, 'users', user.uid), {
                         referralCode: code,
                     });
+                    saveReferralCodeMapping(code, user.uid);
                 } catch (err) {
                     console.warn('Could not save referral code:', err);
                 }

@@ -1,4 +1,4 @@
-import { getFirestore, doc, getDoc, runTransaction, serverTimestamp, increment } from '@react-native-firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, runTransaction, serverTimestamp, increment } from '@react-native-firebase/firestore';
 import { REFERRAL_CONFIG } from '@/constants';
 
 function hashCode(str: string): number {
@@ -22,46 +22,16 @@ export function generateReferralCode(uid: string): string {
     return `${REFERRAL_CONFIG.REFERRAL_CODE_PREFIX}-${code}`;
 }
 
-export async function applyReferralRewards(newUserId: string, referrerId: string): Promise<void> {
+export async function saveReferralCodeMapping(code: string, uid: string): Promise<void> {
     const db = getFirestore();
-    const newUserRef = doc(db, 'users', newUserId);
-    const referrerRef = doc(db, 'users', referrerId);
-
-    await runTransaction(db, async (transaction) => {
-        const newUserSnap = await transaction.get(newUserRef);
-        const referrerSnap = await transaction.get(referrerRef);
-
-        if (!newUserSnap.exists || !referrerSnap.exists) {
-            return;
-        }
-
-        const newUserData = newUserSnap.data();
-        const now = new Date();
-
-        const currentTrialEnd = newUserData?.subscription?.trialEndDate
-            ? new Date(newUserData.subscription.trialEndDate)
-            : now;
-        const newTrialEnd = new Date(currentTrialEnd);
-        newTrialEnd.setDate(newTrialEnd.getDate() + REFERRAL_CONFIG.REFERRED_FREE_DAYS);
-
-        transaction.update(newUserRef, {
-            referredBy: referrerId,
-            [`subscription.trialEndDate`]: newTrialEnd.toISOString(),
+    try {
+        await setDoc(doc(db, 'referralCodes', code), {
+            uid,
+            createdAt: serverTimestamp(),
         });
-
-        const referralRef = doc(db, 'users', referrerId, 'referrals', newUserId);
-        transaction.set(referralRef, {
-            referredUid: newUserId,
-            referredName: newUserData?.colmadoName || 'Nuevo usuario',
-            date: Date.now(),
-            status: 'pending',
-            commissionPercentage: REFERRAL_CONFIG.REFERRER_COMMISSION,
-        });
-
-        transaction.update(referrerRef, {
-            referralCount: increment(1),
-        });
-    });
+    } catch (err) {
+        console.warn('Could not save referral code mapping:', err);
+    }
 }
 
 export async function findReferrerByCode(code: string): Promise<string | null> {
@@ -74,9 +44,52 @@ export async function findReferrerByCode(code: string): Promise<string | null> {
         }
     } catch {
         // Firestore rules might block reading referralCodes collection
-        // Fallback: try to find user by querying their own doc
-        // This is best-effort; without proper rules, commission tracking
-        // requires a Cloud Function
     }
     return null;
+}
+
+export async function applyReferralRewards(newUserId: string, referrerId: string): Promise<void> {
+    const db = getFirestore();
+    const newUserRef = doc(db, 'users', newUserId);
+    const referrerRef = doc(db, 'users', referrerId);
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const newUserSnap = await transaction.get(newUserRef);
+            const referrerSnap = await transaction.get(referrerRef);
+
+            if (!newUserSnap.exists || !referrerSnap.exists) {
+                return;
+            }
+
+            const newUserData = newUserSnap.data();
+            const now = new Date();
+
+            const currentTrialEnd = newUserData?.subscription?.trialEndDate
+                ? new Date(newUserData.subscription.trialEndDate)
+                : now;
+            const newTrialEnd = new Date(currentTrialEnd);
+            newTrialEnd.setDate(newTrialEnd.getDate() + REFERRAL_CONFIG.REFERRED_FREE_DAYS);
+
+            transaction.update(newUserRef, {
+                referredBy: referrerId,
+                [`subscription.trialEndDate`]: newTrialEnd.toISOString(),
+            });
+
+            const referralRef = doc(db, 'users', referrerId, 'referrals', newUserId);
+            transaction.set(referralRef, {
+                referredUid: newUserId,
+                referredName: newUserData?.colmadoName || 'Nuevo usuario',
+                date: Date.now(),
+                status: 'pending',
+                commissionPercentage: REFERRAL_CONFIG.REFERRER_COMMISSION,
+            });
+
+            transaction.update(referrerRef, {
+                referralCount: increment(1),
+            });
+        });
+    } catch (err) {
+        console.warn('Error applying referral rewards:', err);
+    }
 }
