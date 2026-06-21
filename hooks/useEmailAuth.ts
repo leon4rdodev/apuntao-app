@@ -7,14 +7,13 @@ import {
 } from '@react-native-firebase/auth';
 import { 
     getFirestore, 
-    collection, 
     doc, 
     setDoc, 
     serverTimestamp 
 } from '@react-native-firebase/firestore';
 import { useNotification } from '@/store/notificationStore';
 import { useSessionStore } from '@/store/sessionStore';
-import { generateUniqueReferralCode, validateReferralCode, reserveReferralCode, applyReferralRewards } from '@/utils/referral';
+import { generateReferralCode, findReferrerByCode, applyReferralRewards } from '@/utils/referral';
 import { REFERRAL_CONFIG } from '@/constants';
 
 export function useEmailAuth() {
@@ -50,30 +49,24 @@ export function useEmailAuth() {
             const auth = getAuth();
             const db = getFirestore();
 
+            // Try to find referrer if a code was entered
             let referrerId: string | null = null;
             if (referralCode.trim()) {
-                const code = referralCode.trim().toUpperCase();
-                referrerId = await validateReferralCode(code);
-                if (!referrerId) {
-                    showNotification({
-                        message: 'El código de referido no es válido.',
-                        type: 'error',
-                    });
-                    setIsLoading(false);
-                    return;
-                }
+                referrerId = await findReferrerByCode(referralCode.trim());
             }
 
             const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
             const user = userCredential.user;
 
+            // 1 month free if referred, otherwise 7 days trial
             const trialDays = referrerId ? REFERRAL_CONFIG.REFERRED_FREE_DAYS : 7;
             const now = new Date();
             const expirationDate = new Date(now);
             expirationDate.setDate(now.getDate() + trialDays);
             const formattedTrialEnd = expirationDate.toISOString();
 
-            const userCode = await generateUniqueReferralCode();
+            // Generate deterministic referral code for the new user
+            const userCode = generateReferralCode(user.uid);
 
             const defaultSub = { 
                 status: 'trial', 
@@ -91,15 +84,21 @@ export function useEmailAuth() {
                 referralCredits: 0,
                 createdAt: serverTimestamp(),
             };
+
             if (referrerId) {
                 userData.referredBy = referrerId;
             }
+            if (referralCode.trim()) {
+                userData.referredByCode = referralCode.trim().toUpperCase();
+            }
             
             await setDoc(userRef, userData, { merge: true });
-            await reserveReferralCode(userCode, user.uid);
 
+            // Apply rewards asynchronously — best effort, don't block registration
             if (referrerId) {
-                await applyReferralRewards(user.uid, referrerId);
+                applyReferralRewards(user.uid, referrerId).catch((err) => {
+                    console.warn('Error applying referral rewards:', err);
+                });
             }
 
             setAccount({

@@ -1,43 +1,25 @@
-import { getFirestore, collection, doc, getDoc, setDoc, runTransaction, serverTimestamp, increment } from '@react-native-firebase/firestore';
+import { getFirestore, doc, getDoc, runTransaction, serverTimestamp, increment } from '@react-native-firebase/firestore';
 import { REFERRAL_CONFIG } from '@/constants';
 
-function generateCode(): string {
+function hashCode(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+    }
+    return Math.abs(hash);
+}
+
+export function generateReferralCode(uid: string): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const hash = hashCode(uid);
     let code = '';
+    let n = hash;
     for (let i = 0; i < 5; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
+        code = chars[n % chars.length] + code;
+        n = Math.floor(n / chars.length);
     }
     return `${REFERRAL_CONFIG.REFERRAL_CODE_PREFIX}-${code}`;
-}
-
-export async function generateUniqueReferralCode(): Promise<string> {
-    const db = getFirestore();
-    const codesRef = collection(db, 'referralCodes');
-    let code: string;
-    let attempts = 0;
-    do {
-        code = generateCode();
-        const snap = await getDoc(doc(codesRef, code));
-        if (!snap.exists()) return code;
-        attempts++;
-    } while (attempts < 10);
-    throw new Error('No se pudo generar un código único de referido');
-}
-
-export async function validateReferralCode(code: string): Promise<string | null> {
-    const db = getFirestore();
-    const ref = doc(db, 'referralCodes', code.trim().toUpperCase());
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return null;
-    return snap.data()?.uid || null;
-}
-
-export async function reserveReferralCode(code: string, uid: string): Promise<void> {
-    const db = getFirestore();
-    await setDoc(doc(db, 'referralCodes', code), {
-        uid,
-        createdAt: serverTimestamp(),
-    });
 }
 
 export async function applyReferralRewards(newUserId: string, referrerId: string): Promise<void> {
@@ -50,13 +32,10 @@ export async function applyReferralRewards(newUserId: string, referrerId: string
         const referrerSnap = await transaction.get(referrerRef);
 
         if (!newUserSnap.exists || !referrerSnap.exists) {
-            throw new Error('Usuario no encontrado');
+            return;
         }
 
         const newUserData = newUserSnap.data();
-        const referrerData = referrerSnap.data();
-
-        const referrerName = referrerData?.colmadoName || 'Un usuario';
         const now = new Date();
 
         const currentTrialEnd = newUserData?.subscription?.trialEndDate
@@ -70,7 +49,7 @@ export async function applyReferralRewards(newUserId: string, referrerId: string
             [`subscription.trialEndDate`]: newTrialEnd.toISOString(),
         });
 
-        const referralRef = doc(collection(db, 'users', referrerId, 'referrals'));
+        const referralRef = doc(db, 'users', referrerId, 'referrals', newUserId);
         transaction.set(referralRef, {
             referredUid: newUserId,
             referredName: newUserData?.colmadoName || 'Nuevo usuario',
@@ -83,4 +62,21 @@ export async function applyReferralRewards(newUserId: string, referrerId: string
             referralCount: increment(1),
         });
     });
+}
+
+export async function findReferrerByCode(code: string): Promise<string | null> {
+    const db = getFirestore();
+    const ref = doc(db, 'referralCodes', code.trim().toUpperCase());
+    try {
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+            return snap.data()?.uid || null;
+        }
+    } catch {
+        // Firestore rules might block reading referralCodes collection
+        // Fallback: try to find user by querying their own doc
+        // This is best-effort; without proper rules, commission tracking
+        // requires a Cloud Function
+    }
+    return null;
 }

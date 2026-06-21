@@ -39,6 +39,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useClientStore } from '@/store/clientStore';
 import { useSessionStore } from '@/store/sessionStore';
+import { generateReferralCode } from '@/utils/referral';
 
 export default function CuentaScreen() {
     const theme = Colors[useColorScheme() || 'light'];
@@ -58,6 +59,9 @@ export default function CuentaScreen() {
     const referralCode = useSessionStore((state) => state.referralCode);
     const referralCount = useSessionStore((state) => state.referralCount);
     const referralCredits = useSessionStore((state) => state.referralCredits);
+    const setReferralCode = useSessionStore((state) => state.setReferralCode);
+    const setReferralCount = useSessionStore((state) => state.setReferralCount);
+    const setReferralCredits = useSessionStore((state) => state.setReferralCredits);
 
     // --- Refs para Foco ---
     const newNameInputRef = React.useRef<TextInput>(null);
@@ -81,12 +85,34 @@ export default function CuentaScreen() {
             const uri = await getFromStorage('EXTERNAL_BACKUP_URI');
             setIsExternalConfigured(!!uri);
 
-            // Cargar preferencia de biometría
             const enabled = await getFromStorage<boolean>(STORAGE_KEYS.BIOMETRICS_ENABLED);
             setBiometricsEnabled(!!enabled);
         };
         checkConfig();
     }, []);
+
+    // Generate referral code for existing users who don't have one yet
+    React.useEffect(() => {
+        const ensureReferralCode = async () => {
+            if (!referralCode && account) {
+                const auth = getAuth();
+                const user = auth.currentUser;
+                if (user) {
+                    const code = generateReferralCode(user.uid);
+                    setReferralCode(code);
+                    try {
+                        const db = getFirestore();
+                        await updateDoc(doc(db, 'users', user.uid), {
+                            referralCode: code,
+                        });
+                    } catch (err) {
+                        console.warn('Could not save referral code to Firestore:', err);
+                    }
+                }
+            }
+        };
+        ensureReferralCode();
+    }, [referralCode, account, setReferralCode]);
 
     const handleSignOut = useCallback(() => {
         if (hasPendingWrites) {
