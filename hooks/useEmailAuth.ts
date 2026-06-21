@@ -54,13 +54,20 @@ export function useEmailAuth() {
 
             if (hasReferralCode) {
                 referrerId = await findReferrerByCode(referralCode.trim());
+                if (!referrerId) {
+                    showNotification({
+                        message: 'El código de referido no es válido.',
+                        type: 'error',
+                    });
+                    setIsLoading(false);
+                    return;
+                }
             }
 
             const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
             const user = userCredential.user;
 
-            // Always give 1 month free if a code was entered
-            const trialDays = hasReferralCode ? REFERRAL_CONFIG.REFERRED_FREE_DAYS : 7;
+            const trialDays = referrerId ? REFERRAL_CONFIG.REFERRED_FREE_DAYS : 7;
             const now = new Date();
             const expirationDate = new Date(now);
             expirationDate.setDate(now.getDate() + trialDays);
