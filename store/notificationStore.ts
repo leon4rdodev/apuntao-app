@@ -10,8 +10,7 @@ interface NotificationState {
     isVisible: boolean;
     message: string;
     type: NotificationType;
-    // CORRECCIÓN: El tipo de timerId en React Native es `number`.
-    timerId?: number;
+    timerId?: ReturnType<typeof setTimeout>;
     /** Seguimiento de cuantos modales nativos están abiertos. */
     activeModalCount: number;
 }

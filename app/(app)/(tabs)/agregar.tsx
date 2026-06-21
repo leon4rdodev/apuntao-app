@@ -187,6 +187,7 @@ const styles = StyleSheet.create({
     safeArea: { flex: 1 },
     scrollContainer: {
         flexGrow: 1,
+        justifyContent: 'center',
         paddingHorizontal: 20,
         paddingTop: 20,
         paddingBottom: 80,

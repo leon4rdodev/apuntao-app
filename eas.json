@@ -18,6 +18,16 @@
         "EXPO_PUBLIC_API_URL": "secret:API_URL"
       }
     },
+    "testing": {
+      "distribution": "internal",
+      "channel": "testing",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "secret:API_URL"
+      }
+    },
     "production": {
       "channel": "production",
       "autoIncrement": true,

@@ -141,7 +141,7 @@ export default function AyudaScreen() {
                 </View>
 
                 <CustomText size="small" color={theme.textSecondary} style={styles.footerText}>
-                    Estamos disponibles para ayudarte de Lunes a Sábado de 9:00 AM a 6:00 PM.
+                    Estamos disponibles para ayudarte{"\n"}de Lunes a Sábado de 9:00 AM a 6:00 PM.
                 </CustomText>
             </ScrollView>
         </View>
