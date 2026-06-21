@@ -1,7 +1,3 @@
-/**
- * @file app/(auth)/register.tsx
- * @description Pantalla de registro para nuevos dueños de colmados usando Email/Password.
- */
 import CustomButton from '@/components/ui/CustomButton';
 import CustomInput from '@/components/input/CustomInput';
 import CustomText from '@/components/ui/CustomText';
@@ -37,12 +33,15 @@ export default function RegisterScreen() {
         setEmail,
         password,
         setPassword,
+        referralCode,
+        setReferralCode,
         isLoading,
         handleRegister,
     } = useEmailAuth();
 
     const emailRef = useRef<TextInput>(null!);
     const passwordRef = useRef<TextInput>(null!);
+    const referralRef = useRef<TextInput>(null!);
     const showNotification = useNotification();
 
     const handleHelpPress = () => {
@@ -60,10 +59,6 @@ export default function RegisterScreen() {
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-            {/* Elementos Decorativos (Orbes/Bolas) */}
-            <View style={[styles.orbTopLeft, { backgroundColor: theme.primary }]} />
-            <View style={[styles.orbBottomRight, { backgroundColor: theme.primary }]} />
-
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.container}
@@ -86,7 +81,7 @@ export default function RegisterScreen() {
                         </TouchableOpacity>
 
                         <View style={styles.header}>
-                            <Ionicons name="person-add" size={60} color={theme.primary} />
+                            <Ionicons name="person-add-outline" size={60} color={theme.primary} />
                             <CustomText size="xlarge" weight="bold" style={styles.title}>
                                 Crea tu Cuenta
                             </CustomText>
@@ -97,7 +92,7 @@ export default function RegisterScreen() {
 
                         <View style={styles.form}>
                             <CustomInput
-                                icon="storefront"
+                                icon="storefront-outline"
                                 placeholder="Nombre de tu Negocio"
                                 value={colmadoName}
                                 onChangeText={setColmadoName}
@@ -107,7 +102,7 @@ export default function RegisterScreen() {
                             />
                             
                             <CustomInput
-                                icon="mail"
+                                icon="mail-outline"
                                 placeholder="Correo Electrónico"
                                 value={email}
                                 onChangeText={setEmail}
@@ -120,14 +115,26 @@ export default function RegisterScreen() {
                             />
                             
                             <CustomInput
-                                icon="lock-closed"
+                                icon="lock-closed-outline"
                                 placeholder="Contraseña (min. 6 char)"
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry
                                 editable={!isLoading}
-                                returnKeyType="done"
+                                returnKeyType="next"
                                 inputRef={passwordRef}
+                                onSubmitEditing={() => referralRef.current?.focus()}
+                            />
+
+                            <CustomInput
+                                icon="gift-outline"
+                                placeholder="Código de referido (opcional)"
+                                value={referralCode}
+                                onChangeText={setReferralCode}
+                                autoCapitalize="characters"
+                                editable={!isLoading}
+                                returnKeyType="done"
+                                inputRef={referralRef}
                                 onSubmitEditing={handleRegister}
                             />
                         </View>
@@ -138,7 +145,7 @@ export default function RegisterScreen() {
                                 onPress={handleRegister}
                                 isLoading={isLoading}
                                 disabled={isLoading}
-                                iconName="person-add"
+                                iconName="person-add-outline"
                             />
 
                             <CustomButton
@@ -177,31 +184,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderWidth: 1,
         zIndex: 10,
-        // Sombra suave
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
-    },
-     orbTopLeft: {
-        position: 'absolute',
-        top: -100,
-        left: -100,
-        width: 250,
-        height: 250,
-        borderRadius: 125,
-        opacity: 0.08,
-        zIndex: 0,
-    },
-    orbBottomRight: {
-        position: 'absolute',
-        bottom: -100,
-        right: -100,
-        width: 250,
-        height: 250,
-        borderRadius: 125,
-        opacity: 0.08,
-        zIndex: 0,
     },
 });

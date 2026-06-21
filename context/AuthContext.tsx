@@ -22,7 +22,7 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { account, logout, setAccount, setSubscription, setInitialized } = useSessionStore();
+    const { account, logout, setAccount, setSubscription, setReferralCode, setReferralCount, setReferralCredits, setInitialized } = useSessionStore();
     const checkBiometrics = useUIStore((state) => state.checkBiometrics);
     
     // Función que implementaremos en clientStore.ts para sincronizar con Firestore
@@ -94,8 +94,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                             email: user.email || data.email || '',
                             phoneNumber: data.phoneNumber || '',
                             subscription: data.subscription || { status: 'active', plan: 'none' },
+                            referralCode: data.referralCode || '',
+                            referredBy: data.referredBy || null,
+                            referralCount: data.referralCount || 0,
+                            referralCredits: data.referralCredits || 0,
                         });
                         setSubscription(data.subscription || { status: 'active', plan: 'none' });
+                        setReferralCode(data.referralCode || '');
+                        setReferralCount(data.referralCount || 0);
+                        setReferralCredits(data.referralCredits || 0);
                     }
                 }, (error) => {
                     console.log('Perfil en caché (offline o error de red):', error.message);

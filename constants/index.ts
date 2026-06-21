@@ -23,6 +23,13 @@ export const APP_CONFIG = {
     NOTIFICATION_AUTO_CLOSE_DURATION: 1500,
 } as const;
 
+// --- Configuración del Sistema de Referidos ---
+export const REFERRAL_CONFIG = {
+    REFERRAL_CODE_PREFIX: 'AP',
+    REFERRED_FREE_DAYS: 30,
+    REFERRER_COMMISSION: 0.4,
+} as const;
+
 // --- Enlaces Externos ---
 export const EXTERNAL_LINKS = {
     /** URL para calificar la app en Google Play Store. */

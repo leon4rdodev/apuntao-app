@@ -54,8 +54,22 @@ export interface ColmadoAccountInfo {
     phoneNumber: string;
     clients: Client[];
     subscription: Subscription;
+    referralCode?: string;
+    referredBy?: string | null;
+    referralCount?: number;
+    referralCredits?: number;
     createdAt?: any;
     updatedAt?: any;
+}
+
+export interface ReferralRecord {
+    id: string;
+    referredUid: string;
+    referredName: string;
+    date: number;
+    status: 'pending' | 'credited';
+    commissionPercentage: number;
+    commissionAmount?: number;
 }
 
 // --- Tipos para la Gestión de Sesión ---

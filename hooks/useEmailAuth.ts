@@ -14,6 +14,8 @@ import {
 } from '@react-native-firebase/firestore';
 import { useNotification } from '@/store/notificationStore';
 import { useSessionStore } from '@/store/sessionStore';
+import { generateUniqueReferralCode, validateReferralCode, reserveReferralCode, applyReferralRewards } from '@/utils/referral';
+import { REFERRAL_CONFIG } from '@/constants';
 
 export function useEmailAuth() {
     const showNotification = useNotification();
@@ -22,6 +24,7 @@ export function useEmailAuth() {
     const [colmadoName, setColmadoName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [referralCode, setReferralCode] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
     const handleRegister = async () => {
@@ -47,15 +50,30 @@ export function useEmailAuth() {
             const auth = getAuth();
             const db = getFirestore();
 
+            let referrerId: string | null = null;
+            if (referralCode.trim()) {
+                const code = referralCode.trim().toUpperCase();
+                referrerId = await validateReferralCode(code);
+                if (!referrerId) {
+                    showNotification({
+                        message: 'El código de referido no es válido.',
+                        type: 'error',
+                    });
+                    setIsLoading(false);
+                    return;
+                }
+            }
+
             const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
             const user = userCredential.user;
 
-            // 🎁 Asignar automáticamente 7 días de prueba gratis
-            const trialDays = 7;
+            const trialDays = referrerId ? REFERRAL_CONFIG.REFERRED_FREE_DAYS : 7;
             const now = new Date();
             const expirationDate = new Date(now);
             expirationDate.setDate(now.getDate() + trialDays);
-            const formattedTrialEnd = expirationDate.toISOString(); // Formato ISO para comparar fácilmente
+            const formattedTrialEnd = expirationDate.toISOString();
+
+            const userCode = await generateUniqueReferralCode();
 
             const defaultSub = { 
                 status: 'trial', 
@@ -64,27 +82,37 @@ export function useEmailAuth() {
             };
             const userRef = doc(db, 'users', user.uid);
             
-            await setDoc(userRef, {
+            const userData: any = {
                 colmadoName: colmadoName.trim(),
                 email: user.email,
                 subscription: defaultSub,
+                referralCode: userCode,
+                referralCount: 0,
+                referralCredits: 0,
                 createdAt: serverTimestamp(),
-            }, { merge: true });
+            };
+            if (referrerId) {
+                userData.referredBy = referrerId;
+            }
+            
+            await setDoc(userRef, userData, { merge: true });
+            await reserveReferralCode(userCode, user.uid);
+
+            if (referrerId) {
+                await applyReferralRewards(user.uid, referrerId);
+            }
 
             setAccount({
                 colmadoName: colmadoName.trim(),
                 email: user.email || '',
                 subscription: defaultSub as any,
                 phoneNumber: '',
+                referralCode: userCode,
+                referredBy: referrerId,
+                referralCount: 0,
+                referralCredits: 0,
             });
 
-            showNotification({
-                message: '¡Cuenta creada con éxito! Bienvenido.',
-                type: 'success',
-            });
-
-            // AuthContext will detect the change and route to home
-            
         } catch (error: any) {
             console.error('Error en registro con email:', error);
             let errorMessage = 'Error al registrar la cuenta.';
@@ -116,12 +144,6 @@ export function useEmailAuth() {
         try {
             const auth = getAuth();
             await signInWithEmailAndPassword(auth, email.trim(), password);
-            
-            showNotification({
-                message: '¡Bienvenido de nuevo!',
-                type: 'success',
-            });
-            // AuthContext detectará la sesión
         } catch (error: any) {
             console.error('Error iniciando sesión con email:', error);
             showNotification({
@@ -140,6 +162,8 @@ export function useEmailAuth() {
         setEmail,
         password,
         setPassword,
+        referralCode,
+        setReferralCode,
         isLoading,
         handleRegister,
         handleLogin,
