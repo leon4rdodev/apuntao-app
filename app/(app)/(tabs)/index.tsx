@@ -21,14 +21,15 @@ export default function Index() {
         displayedClients,
         handleClientPress,
         page,
-        setPage,
+        handleNextPage,
+        handlePrevPage,
         totalPages,
     } = useClientsList();
 
     const renderEmptyListComponent = () => (
         <View style={styles.emptyContainer}>
             <View style={[styles.emptyIconContainer, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }]}>
-                <Ionicons name="receipt-outline" size={48} color={theme.textSecondary} />
+                <Ionicons name="receipt" size={48} color={theme.textSecondary} />
             </View>
             <Text style={[styles.emptyTitle, { color: theme.text }]}>
                 {searchQuery ? 'Sin resultados' : 'Lista vacía'}
@@ -64,13 +65,14 @@ export default function Index() {
                         <View>
                             <ClientsSummary
                                 totalDebt={summaryData.totalDebt}
+                                totalCredit={summaryData.totalCredit}
                                 totalClients={summaryData.totalClients}
                             />
                             {totalPages > 1 && (
                                 <View style={styles.pagination}>
                                     <TouchableOpacity 
                                         disabled={page === 1} 
-                                        onPress={() => setPage((p: number) => p - 1)}
+                                        onPress={handlePrevPage}
                                         style={[styles.pageButton, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }, page === 1 && { opacity: 0.3 }]}
                                     >
                                         <Ionicons name="chevron-back" size={20} color={theme.text} />
@@ -84,7 +86,7 @@ export default function Index() {
 
                                     <TouchableOpacity 
                                         disabled={page === totalPages} 
-                                        onPress={() => setPage((p: number) => p + 1)}
+                                        onPress={handleNextPage}
                                         style={[styles.pageButton, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }, page === totalPages && { opacity: 0.3 }]}
                                     >
                                         <Ionicons name="chevron-forward" size={20} color={theme.text} />

@@ -7,8 +7,8 @@ import { formatNumberWithCommas, formatPhoneNumber } from '@/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState, useRef } from 'react';
 import { useAddClient } from '@/hooks/useAddClient';
-import { TextInput } from 'react-native';
 import {
+    TextInput,
     Keyboard,
     KeyboardAvoidingView,
     Platform,
@@ -72,7 +72,7 @@ export default function AgregarClienteScreen() {
 
     return (
         <View 
-            style={[styles.safeArea, { backgroundColor: theme.background }]}
+            style={[styles.safeArea, { backgroundColor: theme.background, paddingTop: insets.top }]}
         >
             <Stack.Screen options={{ headerShown: false }} />
             <KeyboardAvoidingView
@@ -95,7 +95,7 @@ export default function AgregarClienteScreen() {
                                     Nombre del Cliente <CustomText color={theme.error}>*</CustomText>
                                 </CustomText>
                                 <CustomInput
-                                    icon="person-outline"
+                                    icon="person"
                                     placeholder="Ej: Juan Pérez"
                                     value={name}
                                     onChangeText={setName}
@@ -129,7 +129,7 @@ export default function AgregarClienteScreen() {
                                     Número de Teléfono (Opcional)
                                 </CustomText>
                                 <CustomInput
-                                    icon="call-outline"
+                                    icon="call"
                                     placeholder="(809) 123-4567"
                                     value={phone}
                                     onChangeText={(text) => setPhone(formatPhoneNumber(text))}
@@ -147,7 +147,29 @@ export default function AgregarClienteScreen() {
                                 disabled={!isFormValid}
                                 isLoading={isSaving}
                                 iconName="person-add"
-                                buttonStyle={{ marginTop: 20 }}
+                                buttonStyle={[
+                                    { marginTop: 20 },
+                                    useColorScheme() === 'light' && (!isFormValid || isSaving) ? {
+                                        backgroundColor: theme.inputBackground,
+                                        borderWidth: 1.5,
+                                        borderColor: theme.borderSubtle,
+                                    } : {}
+                                ]}
+                                textStyle={
+                                    useColorScheme() === 'light' && (!isFormValid || isSaving) 
+                                        ? { color: theme.buttonTextDisabled } 
+                                        : undefined
+                                }
+                                iconColor={
+                                    useColorScheme() === 'light' && (!isFormValid || isSaving) 
+                                        ? theme.buttonTextDisabled 
+                                        : undefined
+                                }
+                                spinnerColor={
+                                    useColorScheme() === 'light' && isSaving 
+                                        ? theme.primary 
+                                        : undefined
+                                }
                             />
                         </View>
                         {/* Espacio extra al final solo cuando el teclado está abierto */}
@@ -165,14 +187,14 @@ const styles = StyleSheet.create({
     safeArea: { flex: 1 },
     scrollContainer: {
         flexGrow: 1,
+        justifyContent: 'center',
         paddingHorizontal: 20,
-        paddingTop: 60,
+        paddingTop: 20,
         paddingBottom: 80,
     },
     headerContainer: {
         alignItems: 'center',
         marginBottom: 32,
-        paddingHorizontal: 10,
     },
     iconWrapper: {
         width: 72,

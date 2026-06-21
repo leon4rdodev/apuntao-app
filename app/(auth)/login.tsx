@@ -57,6 +57,10 @@ export default function LoginScreen() {
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+            {/* Elementos Decorativos (Orbes/Bolas) */}
+            <View style={[styles.orbTopLeft, { backgroundColor: theme.primary }]} />
+            <View style={[styles.orbBottomRight, { backgroundColor: theme.primary }]} />
+
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.container}
@@ -79,7 +83,7 @@ export default function LoginScreen() {
                         </TouchableOpacity>
 
                         <View style={styles.header}>
-                            <Ionicons name="key-outline" size={60} color={theme.primary} />
+                            <Ionicons name="key" size={60} color={theme.primary} />
                             <CustomText size="xlarge" weight="bold" style={styles.title}>
                                 ¡Qué bueno verte!
                             </CustomText>
@@ -90,7 +94,7 @@ export default function LoginScreen() {
 
                         <View style={styles.form}>
                             <CustomInput
-                                icon="mail-outline"
+                                icon="mail"
                                 placeholder="Correo Electrónico"
                                 value={email}
                                 onChangeText={setEmail}
@@ -102,7 +106,7 @@ export default function LoginScreen() {
                             />
                             
                             <CustomInput
-                                icon="lock-closed-outline"
+                                icon="lock-closed"
                                 placeholder="Contraseña"
                                 value={password}
                                 onChangeText={setPassword}
@@ -120,7 +124,7 @@ export default function LoginScreen() {
                                 onPress={handleLogin}
                                 isLoading={isLoading}
                                 disabled={isLoading}
-                                iconName="log-in-outline"
+                                iconName="log-in"
                             />
                             
                             <CustomButton
@@ -165,5 +169,25 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
+    },
+    orbTopLeft: {
+        position: 'absolute',
+        top: -120,
+        left: -120,
+        width: 280,
+        height: 280,
+        borderRadius: 140,
+        opacity: 0.08,
+        zIndex: 0,
+    },
+    orbBottomRight: {
+        position: 'absolute',
+        bottom: -120,
+        right: -120,
+        width: 280,
+        height: 280,
+        borderRadius: 140,
+        opacity: 0.08,
+        zIndex: 0,
     },
 });

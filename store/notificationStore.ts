@@ -10,13 +10,18 @@ interface NotificationState {
     isVisible: boolean;
     message: string;
     type: NotificationType;
-    // CORRECCIÓN: El tipo de timerId en React Native es `number`.
-    timerId?: number;
+    timerId?: ReturnType<typeof setTimeout>;
+    /** Seguimiento de cuantos modales nativos están abiertos. */
+    activeModalCount: number;
 }
 
 interface NotificationActions {
     show: (payload: { message: string; type?: NotificationType; duration?: number }) => void;
     hide: () => void;
+    /** Notificar al store que un modal se ha abierto. */
+    registerModal: () => void;
+    /** Notificar al store que un modal se ha cerrado. */
+    unregisterModal: () => void;
 }
 
 // 2. Definimos el estado inicial
@@ -24,6 +29,7 @@ const initialState: NotificationState = {
     isVisible: false,
     message: '',
     type: 'info',
+    activeModalCount: 0,
 };
 
 // 3. Creamos el store
@@ -58,6 +64,9 @@ export const useNotificationStore = create<NotificationState & NotificationActio
             set({ message: '' });
         }, 250);
     },
+
+    registerModal: () => set((state) => ({ activeModalCount: state.activeModalCount + 1 })),
+    unregisterModal: () => set((state) => ({ activeModalCount: Math.max(0, state.activeModalCount - 1) })),
 }));
 
 // 4. Creamos un hook selector para un uso más limpio

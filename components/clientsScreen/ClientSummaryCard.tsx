@@ -26,6 +26,8 @@ const ClientSummaryCard = ({ client, onEdit }: { client: Client; onEdit: () => v
         let message = `Hola ${client.name}, te saludo de ${colmadoName}. `;
         if (client.debt > 0) {
             message += `Te escribo para recordarte tu balance pendiente de $${formatMoney(client.debt)}. ¡Muchas gracias!`;
+        } else if (client.debt < 0) {
+            message += `Tienes un saldo a tu favor de $${formatMoney(Math.abs(client.debt))}. ¡Gracias por confiar en nosotros!`;
         } else {
             message += `¡Muchas gracias por estar al día con tu cuenta!`;
         }
@@ -33,7 +35,12 @@ const ClientSummaryCard = ({ client, onEdit }: { client: Client; onEdit: () => v
         Linking.openURL(`whatsapp://send?phone=1${cleanPhone}&text=${encodeURIComponent(message)}`);
     };
 
+    const isCredit = client.debt < 0;
     const debtColor = client.debt > 0 ? theme.error : theme.success;
+    const debtLabel = isCredit ? 'Saldo a favor' : 'Deuda Total';
+    const debtDisplay = isCredit
+        ? `+$${formatMoney(Math.abs(client.debt))}`
+        : `$${formatMoney(client.debt)}`;
 
     return (
         <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }]}>
@@ -42,29 +49,36 @@ const ClientSummaryCard = ({ client, onEdit }: { client: Client; onEdit: () => v
                     {client.name}
                 </CustomText>
                 <TouchableOpacity onPress={onEdit} style={styles.editButton}>
-                    <Ionicons name="create-outline" size={20} color={theme.textSecondary} />
+                    <Ionicons name="create" size={20} color={theme.textSecondary} />
                 </TouchableOpacity>
             </View>
 
-            <View style={[styles.debtContainer, { backgroundColor: theme.background }]}>
+            <View style={styles.debtContainer}>
                  <CustomText
                     size="small"
                     weight="medium"
-                    color={theme.textSecondary}
+                    color={isCredit ? debtColor : theme.textSecondary}
                     style={styles.debtLabel}
                 >
-                    Deuda Total
+                    {debtLabel}
                 </CustomText>
 
-                <CustomText size="xxlarge" weight="bold" color={debtColor} style={styles.debtAmount}>
-                    ${formatMoney(client.debt)}
+                <CustomText 
+                    size="xxlarge" 
+                    weight="bold" 
+                    color={isCredit ? debtColor : theme.text} 
+                    style={styles.debtAmount}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                >
+                    {debtDisplay}
                 </CustomText>
             </View>
 
             {client.phone && (
                 <View style={[styles.contactSection]}>
                     <View style={styles.infoRow}>
-                        <Ionicons name="call-outline" size={20} color={theme.textSecondary} />
+                        <Ionicons name="call" size={20} color={theme.textSecondary} />
                         <CustomText size="medium" weight="medium" color={theme.textSecondary}>
                             {formatPhoneNumber(client.phone)}
                         </CustomText>
@@ -82,9 +96,9 @@ const ClientSummaryCard = ({ client, onEdit }: { client: Client; onEdit: () => v
                             title="Mensaje"
                             onPress={handleWhatsApp}
                             iconName="logo-whatsapp"
-                            buttonStyle={[styles.contactButton, { backgroundColor: '#dcfce7', borderWidth: 0 }]}
-                            textStyle={{ color: '#166534' }}
-                            iconColor="#166534"
+                            buttonStyle={[styles.contactButton, { backgroundColor: theme.background, borderWidth: 1, borderColor: theme.borderSubtle }]}
+                            textStyle={{ color: theme.primary }}
+                            iconColor={theme.primary}
                         />
                     </View>
                 </View>
@@ -109,7 +123,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 24,
     },
     clientName: {
         flex: 1,
@@ -121,9 +135,10 @@ const styles = StyleSheet.create({
     },
     debtContainer: {
         alignItems: 'center',
-        paddingVertical: 16,
+        paddingVertical: 24,
+        paddingHorizontal: 16,
         borderRadius: 16,
-        marginBottom: 4,
+        marginBottom: 12,
     },
     debtLabel: {
         textTransform: 'uppercase',
@@ -134,7 +149,7 @@ const styles = StyleSheet.create({
         fontSize: 42, 
     },
     contactSection: {
-        marginTop: 20, // Mayor espaciado interno antes de contacto
+        marginTop: 12, // Mayor espaciado interno antes de contacto
     },
     infoRow: {
         flexDirection: 'row',

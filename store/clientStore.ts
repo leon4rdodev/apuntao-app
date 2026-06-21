@@ -16,7 +16,6 @@ import {
     where,
     setDoc,
     updateDoc,
-    increment,
     arrayUnion,
     arrayRemove,
 } from '@react-native-firebase/firestore';
@@ -26,6 +25,7 @@ import { useNotificationStore } from './notificationStore';
 interface ClientState {
     clients: Client[];
     isLoading: boolean;
+    isHydrated: boolean;
     hasPendingWrites: boolean;
     unsubscribeSnapshot: (() => void) | null;
     actions: {
@@ -48,6 +48,7 @@ let currentUid: string | null = null;
 export const useClientStore = create<ClientState>()((set, get) => ({
     clients: [],
     isLoading: false,
+    isHydrated: false,
     hasPendingWrites: false,
     unsubscribeSnapshot: null,
     actions: {
@@ -83,6 +84,12 @@ export const useClientStore = create<ClientState>()((set, get) => ({
                         // Buscamos si ya tenemos una versión más reciente de este cliente localmente (optimística)
                         const existingClient = currentClients.find(c => c.id === id);
                         
+                        const txs = Array.isArray(data.transactions) ? data.transactions : [];
+                        const calculatedDebt = txs.reduce((acc: number, tx: any) => {
+                            if (tx.deleted) return acc;
+                            return acc + (tx.type === 'Deuda' ? tx.amount : -tx.amount);
+                        }, 0);
+
                         // Si el snapshot es de caché/pendiente y nuestro estado local es más nuevo, mantenemos el local
                         if (existingClient && querySnapshot.metadata.hasPendingWrites && lastModified < existingClient.lastModified) {
                             clientsList.push(existingClient);
@@ -91,8 +98,8 @@ export const useClientStore = create<ClientState>()((set, get) => ({
                                 id,
                                 name: data.name || 'Cliente sin nombre',
                                 phone: data.phone,
-                                debt: typeof data.debt === 'number' ? Math.max(0, data.debt) : 0,
-                                transactions: Array.isArray(data.transactions) ? data.transactions : [],
+                                debt: calculatedDebt, // Recalculado automáticamente desde las transacciones activas
+                                transactions: txs,
                                 lastModified: lastModified || Date.now(),
                                 deleted: data.deleted || false,
                             });
@@ -103,12 +110,13 @@ export const useClientStore = create<ClientState>()((set, get) => ({
                     set({ 
                         clients: clientsList, 
                         isLoading: false, 
+                        isHydrated: true,
                         hasPendingWrites: querySnapshot.metadata.hasPendingWrites 
                     });
                 },
                 (error) => {
                     console.error('[clientStore] Error en onSnapshot:', error);
-                    set({ isLoading: false });
+                    set({ isLoading: false, isHydrated: true }); // Marcamos como hidratado incluso en error para no bloquear la app
                     useNotificationStore.getState().show({
                         message: 'Error de conexión con la base de datos.',
                         type: 'error',
@@ -125,7 +133,7 @@ export const useClientStore = create<ClientState>()((set, get) => ({
                 unsubscribeSnapshot();
                 set({ unsubscribeSnapshot: null });
             }
-            set({ clients: [], isLoading: false });
+            set({ clients: [], isLoading: false, isHydrated: false });
             currentUid = null;
         },
 
@@ -222,38 +230,30 @@ export const useClientStore = create<ClientState>()((set, get) => ({
 
             const now = Date.now();
             const debtChange = transaction.type === 'Deuda' ? transaction.amount : -transaction.amount;
-            const newDebt = Math.max(0, client.debt + debtChange);
+            const newDebt = client.debt + debtChange;
             const newTx: Transaction = {
                 ...transaction,
                 id: `txn_${now}_${Math.random().toString(36).substring(2, 9)}`,
             };
 
-            const shouldClear = newDebt === 0;
-
             // 1. Actualización Optimista
             set({
                 clients: get().clients.map(c => 
                     c.id === clientId 
-                    ? { ...c, debt: newDebt, transactions: shouldClear ? [] : [newTx, ...c.transactions], lastModified: now } 
+                    ? { ...c, debt: newDebt, transactions: [newTx, ...c.transactions], lastModified: now } 
                     : c
                 ).sort((a,b) => b.lastModified - a.lastModified)
             });
 
-            // 2. Sincronización en segundo plano con limpieza automática
+            // 2. Sincronización en segundo plano
             const db = getFirestore();
             const clientRef = doc(db, 'users', currentUid, 'clients', clientId);
             
             const updatePayload: any = {
-                debt: increment(debtChange), // Atómico para no perder balance
+                debt: newDebt, // Forzamos el valor absoluto recalculado en lugar de increment, para curar discrepancias
+                transactions: arrayUnion(newTx),
                 lastModified: now,
             };
-
-            if (shouldClear) {
-                updatePayload.transactions = [];
-                updatePayload.debt = 0; // Forzado para asegurar limpieza total cuando llega a 0
-            } else {
-                updatePayload.transactions = arrayUnion(newTx);
-            }
 
             updateDoc(clientRef, updatePayload).catch(e => console.error('[addTransaction] Error:', e));
         },
@@ -269,37 +269,33 @@ export const useClientStore = create<ClientState>()((set, get) => ({
 
             const now = Date.now();
             const debtChange = tx.type === 'Deuda' ? -tx.amount : tx.amount;
-            const newDebt = Math.max(0, client.debt + debtChange);
+            const newDebt = client.debt + debtChange;
+            // En local solo mostramos las no borradas
             const remaining = client.transactions.filter((t) => t.id !== transactionId);
+            const deletedTx = { ...tx, deleted: true };
 
-            const shouldClear = newDebt === 0;
-
-            // 1. Actualización Optimista
+            // 1. Actualización Optimista (la UI no la muestra más)
             set({
                 clients: get().clients.map(c => 
                     c.id === clientId 
-                    ? { ...c, debt: newDebt, transactions: shouldClear ? [] : remaining, lastModified: now } 
+                    ? { ...c, debt: newDebt, transactions: remaining, lastModified: now } 
                     : c
                 ).sort((a,b) => b.lastModified - a.lastModified)
             });
 
-            // 2. Sincronización en segundo plano con limpieza automática
+            // 2. Sincronización en segundo plano (Soft Delete en Firestore)
+            // Firestore no permite arrayRemove + arrayUnion del mismo campo en una sola llamada,
+            // así que encadenamos dos updateDoc: primero quitamos el original, luego insertamos con deleted:true.
             const db = getFirestore();
             const clientRef = doc(db, 'users', currentUid, 'clients', clientId);
-            
-            const updatePayload: any = {
-                debt: increment(debtChange),
+
+            updateDoc(clientRef, {
+                debt: newDebt, // Forzamos el valor absoluto
+                transactions: arrayRemove(tx),
                 lastModified: now,
-            };
-
-            if (shouldClear) {
-                updatePayload.transactions = [];
-                updatePayload.debt = 0;
-            } else {
-                updatePayload.transactions = arrayRemove(tx);
-            }
-
-            updateDoc(clientRef, updatePayload).catch(e => console.error('[deleteTransaction] Error:', e));
+            })
+            .then(() => updateDoc(clientRef, { transactions: arrayUnion(deletedTx) }))
+            .catch(e => console.error('[deleteTransaction] Error:', e));
         },
 
         getClientById: (id) => get().clients.find((c) => c.id === id),

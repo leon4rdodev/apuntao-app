@@ -29,6 +29,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ item, onPress, isPending }) => 
      * Retorna el nivel de deuda con su color asociado y texto descriptivo.
      */
     const getDebtLevel = (debt: number) => {
+        if (debt < 0) return { text: 'A favor', color: theme.success };
         if (debt === 0) return { text: 'Al día', color: theme.success };
         if (debt < 2000) return { text: 'Baja', color: theme.success };
         if (debt < 7000) return { text: 'Media', color: theme.warning };
@@ -36,7 +37,11 @@ const ClientCard: React.FC<ClientCardProps> = ({ item, onPress, isPending }) => 
     };
 
     const { text, color } = getDebtLevel(item.debt);
-    const formattedDebt = formatMoney(item.debt);
+    const isCredit = item.debt < 0;
+    const debtLabel = isCredit ? 'A favor' : 'Debe';
+    const formattedDebt = isCredit
+        ? `+$${formatMoney(Math.abs(item.debt))}`
+        : `$${formatMoney(item.debt)}`;
 
     return (
         <TouchableOpacity
@@ -57,13 +62,13 @@ const ClientCard: React.FC<ClientCardProps> = ({ item, onPress, isPending }) => 
                             {item.name}
                         </Text>
                         {isPending && (
-                            <Ionicons name="cloud-upload-outline" size={16} color={theme.warning} style={{ marginLeft: 6 }} />
+                            <Ionicons name="cloud-upload" size={16} color={theme.warning} style={{ marginLeft: 8 }} />
                         )}
                     </View>
                     <View style={styles.debtRow}>
-                        <Text style={[styles.debtLabel, { color: theme.textSecondary }]}>Debe</Text>
-                        <Text style={[styles.debtAmount, { color: item.debt > 0 ? theme.error : theme.success }]}>
-                            ${formattedDebt}
+                        <Text style={[styles.debtLabel, { color: isCredit ? color : theme.textSecondary }]}>{debtLabel}</Text>
+                        <Text style={[styles.debtAmount, { color: isCredit ? color : theme.text }]}>
+                            {formattedDebt}
                         </Text>
                     </View>
                 </View>
@@ -72,7 +77,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ item, onPress, isPending }) => 
                     <View style={[styles.badge, { backgroundColor: `${color}15` }]}>
                         <Text style={[styles.badgeText, { color }]}>{text}</Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={18} color={theme.border} style={styles.chevron} />
+                    <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} style={styles.chevron} />
                 </View>
             </View>
         </TouchableOpacity>
@@ -140,7 +145,7 @@ const styles = StyleSheet.create({
         letterSpacing: 0.8,
     },
     chevron: {
-        opacity: 0.3,
+        opacity: 0.6,
         marginRight: -2,
     },
 });

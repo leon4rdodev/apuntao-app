@@ -37,7 +37,7 @@ export default function SyncIndicator() {
         <View style={styles.container}>
             <Animated.View style={{ opacity: fadeAnim }}>
                 <Ionicons
-                    name={hasPendingWrites ? 'cloud-upload-outline' : 'cloud-done-outline'}
+                    name={hasPendingWrites ? 'cloud-upload' : 'cloud-done'}
                     size={20}
                     color={hasPendingWrites ? theme.textSecondary : theme.success}
                 />

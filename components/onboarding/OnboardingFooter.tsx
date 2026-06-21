@@ -38,17 +38,26 @@ export default function OnboardingFooter({
             </View>
 
             <CustomButton
-                title={isLast ? 'EMPEZAR PRUEBA GRATIS' : 'Siguiente'}
+                title={isLast ? 'Probar gratis' : 'Siguiente'}
                 onPress={isLast ? onRegisterPress : onNext}
-                iconName={isLast ? 'rocket-outline' : 'arrow-forward'}
+                iconName={isLast ? 'rocket' : 'arrow-forward'}
                 buttonStyle={[
                     styles.primaryButton,
                     { 
                         backgroundColor: theme.primary,
+                        paddingVertical: 16,
+                        borderRadius: 100,
+                        borderWidth: 0,
                     }
                 ]}
-                textStyle={{ color: theme.textOnPrimary }}
+                textStyle={{ 
+                    color: theme.textOnPrimary,
+                    fontSize: 18,
+                    letterSpacing: 0.5,
+                    fontWeight: '800',
+                }}
                 iconColor={theme.textOnPrimary}
+                iconSize={24}
             />
 
             <CustomButton

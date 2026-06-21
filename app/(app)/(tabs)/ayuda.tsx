@@ -41,20 +41,22 @@ const FAQS = [
     },
 ];
 
-const FAQItem = React.memo(({ question, answer, borderColor }: {
+function FAQItem({ question, answer, borderColor }: {
     question: string;
     answer: string;
     borderColor: string;
-}) => (
-    <View style={[styles.faqItem, { borderTopColor: borderColor }]}>
-        <CustomText size="medium" weight="bold" style={styles.faqQuestion}>
-            {question}
-        </CustomText>
-        <CustomText size="medium" style={styles.faqAnswer}>
-            {answer}
-        </CustomText>
-    </View>
-));
+}) {
+    return (
+        <View style={[styles.faqItem, { borderTopColor: borderColor }]}>
+            <CustomText size="medium" weight="bold" style={styles.faqQuestion}>
+                {question}
+            </CustomText>
+            <CustomText size="medium" style={styles.faqAnswer}>
+                {answer}
+            </CustomText>
+        </View>
+    );
+}
 
 export default function AyudaScreen() {
     const theme = Colors[useColorScheme() || 'light'];
@@ -92,13 +94,13 @@ export default function AyudaScreen() {
                 {/* --- Cabecera Premium --- */}
                 <View style={styles.header}>
                     <View style={[styles.iconWrapper, { backgroundColor: theme.primaryLight }]}>
-                        <Ionicons name="help-buoy-outline" size={32} color={theme.primary} />
+                        <Ionicons name="help-circle" size={32} color={theme.primary} />
                     </View>
                     <CustomText size="xxlarge" weight="bold" style={styles.title}>
                         Preguntas Frecuentes
                     </CustomText>
                     <CustomText size="medium" color={theme.textSecondary} style={styles.subtitle}>
-                        Encuentra respuestas rápidas para aprovechar Apunta'o al máximo.
+                        Encuentra respuestas rápidas para aprovechar Apunta&apos;o al máximo.
                     </CustomText>
                 </View>
 
@@ -131,7 +133,7 @@ export default function AyudaScreen() {
                         theme={theme}
                     />
                     <ActionRow
-                        icon="mail-outline"
+                        icon="mail"
                         text="Enviar un Correo"
                         onPress={handleEmailPress}
                         theme={theme}
@@ -139,7 +141,7 @@ export default function AyudaScreen() {
                 </View>
 
                 <CustomText size="small" color={theme.textSecondary} style={styles.footerText}>
-                    Estamos disponibles para ayudarte de Lunes a Sábado de 9:00 AM a 6:00 PM.
+                    Estamos disponibles para ayudarte{"\n"}de Lunes a Sábado de 9:00 AM a 6:00 PM.
                 </CustomText>
             </ScrollView>
         </View>
@@ -150,7 +152,6 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     scrollContainer: { 
         padding: 20, 
-        paddingTop: 60, 
         paddingBottom: 40 
     },
     header: { alignItems: 'center', marginBottom: 32 },

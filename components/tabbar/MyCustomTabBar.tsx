@@ -1,6 +1,6 @@
 // components/tabbar/MyCustomTabBar.tsx
 import { Colors } from '@/constants/Colors';
-import { AntDesign } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -8,16 +8,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type RouteConfig = {
     [key: string]: {
-        icon: keyof typeof AntDesign.glyphMap;
+        icon: keyof typeof Ionicons.glyphMap;
         label: string;
     };
 };
 
 const ROUTE_CONFIG: RouteConfig = {
-    index: { icon: 'home', label: 'Inicio' },
-    agregar: { icon: 'plus-circle', label: 'Agregar' },
-    cuenta: { icon: 'user', label: 'Cuenta' },
-    ayuda: { icon: 'question-circle', label: 'Ayuda' },
+    index: { icon: 'grid', label: 'Inicio' },
+    agregar: { icon: 'add-circle', label: 'Agregar' },
+    cuenta: { icon: 'person', label: 'Cuenta' },
+    ayuda: { icon: 'help-circle', label: 'Ayuda' },
 };
 
 export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
@@ -55,8 +55,8 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
                     styles.iconContainer, 
                     isFocused && { backgroundColor: theme.primaryLight }
                 ]}>
-                    <AntDesign
-                        name={routeConfig.icon}
+                    <Ionicons
+                        name={isFocused ? routeConfig.icon : `${routeConfig.icon}-outline` as any}
                         size={24}
                         color={isFocused ? theme.primary : theme.textSecondary}
                     />

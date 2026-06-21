@@ -21,21 +21,21 @@ export interface OnboardingStep {
  */
 export const LoginFeatures: Feature[] = [
     {
-        icon: 'book-outline',
+        icon: 'book',
         iconLib: Ionicons,
         text: 'Adiós al Caos del Papel',
         description:
             'Digitaliza tus cuentas y libérate del cuaderno. Tu información, siempre segura y a mano.',
     },
     {
-        icon: 'cash-outline',
+        icon: 'cash',
         iconLib: Ionicons,
         text: 'Control de tus Finanzas',
         description:
             'Visualiza deudas y abonos en tiempo real. Ten la claridad de cuánto tienes por cobrar.',
     },
     {
-        icon: 'shield-checkmark-outline',
+        icon: 'shield-checkmark',
         iconLib: Ionicons,
         text: 'Seguridad de Clase Mundial',
         description:
@@ -49,21 +49,21 @@ export const LoginFeatures: Feature[] = [
  */
 export const ONBOARDING_STEPS: OnboardingStep[] = [
     {
-        icon: 'wallet-outline',
+        icon: 'wallet',
         iconLib: Ionicons,
         title: 'Tu Negocio en la\nPalma de tu Mano',
         subtitle:
             'Digitaliza tu cuaderno de fiado y recupera la tranquilidad. Maneja tus cuentas con precisión profesional.',
         features: [
             {
-                icon: 'person-add-outline',
+                icon: 'person-add',
                 iconLib: Ionicons,
                 text: 'Registro Inteligente',
                 description:
                     'Crea perfiles para tus clientes y mantén su historial de pagos bajo control.',
             },
             {
-                icon: 'bar-chart-outline',
+                icon: 'bar-chart',
                 iconLib: Ionicons,
                 text: 'Balance al Instante',
                 description:
@@ -78,28 +78,28 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
         ],
     },
     {
-        icon: 'shield-checkmark-outline',
+        icon: 'shield-checkmark',
         iconLib: Ionicons,
         title: 'Información Blindada\ny Segura',
         subtitle:
             "El cuaderno se pierde, Apunta'o no. Tus datos se sincronizan en la nube para que nunca pierdas ni un centavo.",
         features: [
             {
-                icon: 'cloud-upload-outline',
+                icon: 'cloud-upload',
                 iconLib: Ionicons,
                 text: 'Respaldo Infinito',
                 description:
                     'Toda tu data se guarda automáticamente en servidores seguros. Protección 24/7.',
             },
             {
-                icon: 'phone-portrait-outline',
+                icon: 'phone-portrait',
                 iconLib: Ionicons,
                 text: 'Acceso en Cualquier Lugar',
                 description:
                     'Cambia de teléfono sin miedo. Al iniciar sesión, todo tu progreso estará esperando por ti.',
             },
             {
-                icon: 'lock-closed-outline',
+                icon: 'lock-closed',
                 iconLib: Ionicons,
                 text: 'Seguridad Biométrica',
                 description:
@@ -108,28 +108,28 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
         ],
     },
     {
-        icon: 'rocket-outline',
+        icon: 'rocket',
         iconLib: Ionicons,
         title: 'Lleva tu Negocio al\nSiguiente Nivel',
         subtitle:
             "Únete a miles de comerciantes que han dejado atrás el caos y hoy disfrutan de un negocio más rentable.",
         features: [
             {
-                icon: 'trending-up-outline',
+                icon: 'trending-up',
                 iconLib: Ionicons,
                 text: 'Adiós a las Deudas Olvidadas',
                 description:
                     'Recupera ese dinero que antes se quedaba en el olvido y aumenta tus ganancias.',
             },
             {
-                icon: 'time-outline',
+                icon: 'time',
                 iconLib: Ionicons,
                 text: 'Máxima Eficiencia',
                 description:
                     'Ahorra horas de cálculos manuales al final del día. Enfócate en vender.',
             },
             {
-                icon: 'sparkles-outline',
+                icon: 'sparkles',
                 iconLib: Ionicons,
                 text: 'Prestigio y Confianza',
                 description:

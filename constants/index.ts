@@ -20,7 +20,7 @@ export const APP_CONFIG = {
     /** Número máximo de reintentos para peticiones de red fallidas. */
     MAX_API_RETRIES: 3,
     /** Tiempo de auto-cierre para notificaciones en milisegundos. */
-    NOTIFICATION_AUTO_CLOSE_DURATION: 3000,
+    NOTIFICATION_AUTO_CLOSE_DURATION: 1500,
 } as const;
 
 // --- Enlaces Externos ---
@@ -32,7 +32,7 @@ export const EXTERNAL_LINKS = {
 // --- Información de Contacto para Soporte ---
 export const SUPPORT_CONTACT = {
     /** Número de teléfono de WhatsApp para soporte. */
-    WHATSAPP_NUMBER: '18096654820',
+    WHATSAPP_NUMBER: '18493759671',
     /** Mensaje predeterminado para iniciar conversación de soporte por WhatsApp. */
     WHATSAPP_MESSAGE: "Hola, necesito ayuda con la aplicación Apunta'o.",
     /** Dirección de correo electrónico para soporte. */

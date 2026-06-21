@@ -9,8 +9,7 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import Animated, {
-    runOnJS,
+import {
     useAnimatedStyle,
     useSharedValue,
     withTiming,
@@ -33,11 +32,10 @@ export default function OnboardingScreen() {
 
     const handleNext = () => {
         if (step < ONBOARDING_STEPS.length - 1) {
-            opacity.value = withTiming(0, { duration: 300 }, (finished) => {
-                if (finished) {
-                    runOnJS(setStep)(step + 1);
-                }
-            });
+            opacity.value = withTiming(0, { duration: 300 });
+            setTimeout(() => {
+                setStep(s => s + 1);
+            }, 300);
         }
     };
 

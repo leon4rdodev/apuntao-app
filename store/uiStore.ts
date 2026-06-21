@@ -9,9 +9,11 @@ type ThemeMode = 'light' | 'dark' | 'system';
 interface UIState {
   themeMode: ThemeMode;
   isBiometricsSupported: boolean;
+  biometricsEnabled: boolean;
   setThemeMode: (mode: ThemeMode) => void;
   toggleTheme: () => void;
   checkBiometrics: () => Promise<void>;
+  setBiometricsEnabled: (enabled: boolean) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -19,7 +21,9 @@ export const useUIStore = create<UIState>()(
     (set, get) => ({
       themeMode: 'system',
       isBiometricsSupported: false,
+      biometricsEnabled: false,
       setThemeMode: (mode) => set({ themeMode: mode }),
+      setBiometricsEnabled: (enabled) => set({ biometricsEnabled: enabled }),
       toggleTheme: () => {
         const currentMode = get().themeMode;
         
@@ -45,7 +49,7 @@ export const useUIStore = create<UIState>()(
     {
       name: 'ui-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({ themeMode: state.themeMode }), // Solo persistir el tema
+      partialize: (state) => ({ themeMode: state.themeMode, biometricsEnabled: state.biometricsEnabled }),
     }
   )
 );

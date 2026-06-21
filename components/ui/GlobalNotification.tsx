@@ -13,13 +13,15 @@ import Animated, {
     Easing,
 } from 'react-native-reanimated';
 
-export function GlobalNotification() {
+interface GlobalNotificationProps {
+    isModalInstance?: boolean;
+}
+
+export function GlobalNotification({ isModalInstance = false }: GlobalNotificationProps) {
     const theme = Colors[useColorScheme() || 'light'];
 
-    // 1. Obtenemos el estado y las acciones del store
-    const { isVisible, message, type, hide } = useNotificationStore();
+    const { isVisible, message, type, hide, activeModalCount } = useNotificationStore();
 
-    // 2. Usamos `useSharedValue` para las animaciones
     const translateY = useSharedValue(-24);
     const opacity = useSharedValue(0);
 
@@ -33,13 +35,11 @@ export function GlobalNotification() {
         }
     }, [isVisible, translateY, opacity]);
 
-    // Estilo animado
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [{ translateY: translateY.value }],
         opacity: opacity.value,
     }));
 
-    // Determina el estilo basado en el tipo de notificación
     const getNotificationStyle = () => {
         switch (type) {
             case 'success':
@@ -65,8 +65,8 @@ export function GlobalNotification() {
 
     const { icon, iconColor, borderColor } = getNotificationStyle();
 
-    // No renderizamos el contenedor si el mensaje está vacío para evitar flashes
     if (!message) return null;
+    if (!isModalInstance && activeModalCount > 0) return null;
 
     return (
         <Animated.View
@@ -76,6 +76,7 @@ export function GlobalNotification() {
                 { 
                     backgroundColor: theme.surface,
                     borderColor: borderColor,
+                    top: isModalInstance ? 20 : 60, 
                 }, 
                 animatedStyle
             ]}
@@ -111,9 +112,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 12,
         paddingHorizontal: 12,
-        borderRadius: 100, // Forma de píldora
+        borderRadius: 100,
         borderWidth: 1,
-        // Sombra premium coherente con ClientCard
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.1,

@@ -9,8 +9,11 @@ import {
     Modal,
     ScrollView,
     Keyboard,
+    useWindowDimensions,
 } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { useNotificationStore } from '@/store/notificationStore';
+import { GlobalNotification } from '@/components/ui/GlobalNotification';
 import Animated, { 
     useAnimatedStyle, 
     useAnimatedKeyboard,
@@ -18,7 +21,6 @@ import Animated, {
     useSharedValue,
     interpolate
 } from 'react-native-reanimated';
-import { useWindowDimensions } from 'react-native';
 
 interface ActionModalProps {
     isVisible: boolean;
@@ -46,22 +48,19 @@ const ActionModal = memo(({
     const { height: screenHeight } = useWindowDimensions();
     const isPresented = useSharedValue(0);
     const keyboard = useAnimatedKeyboard();
+    const { registerModal, unregisterModal } = useNotificationStore();
+
+    useEffect(() => {
+        if (isVisible) {
+            registerModal();
+            return () => unregisterModal();
+        }
+    }, [isVisible, registerModal, unregisterModal]);
 
     const handleClose = useCallback(() => {
         Keyboard.dismiss();
         onClose();
     }, [onClose]);
-
-    // Cerrar modal si el teclado desaparece manualmente
-    useEffect(() => {
-        if (!isVisible) return;
-        
-        const subscription = Keyboard.addListener('keyboardDidHide', () => {
-            onClose();
-        });
-
-        return () => subscription.remove();
-    }, [isVisible, onClose]);
 
     useEffect(() => {
         if (isVisible) {
@@ -69,7 +68,8 @@ const ActionModal = memo(({
         } else {
             isPresented.value = withTiming(0, { duration: 250 });
         }
-    }, [isVisible]);
+    }, [isVisible, isPresented]);
+
 
     const overlayStyle = useAnimatedStyle(() => ({
         opacity: isPresented.value,
@@ -96,54 +96,55 @@ const ActionModal = memo(({
             animationType="none"
             statusBarTranslucent
         >
-            <View style={styles.container}>
-                <TouchableWithoutFeedback onPress={handleClose}>
-                    <Animated.View style={[styles.modalOverlay, overlayStyle]} />
-                </TouchableWithoutFeedback>
+            {/* Backdrop: tapping it closes the modal */}
+            <TouchableWithoutFeedback onPress={handleClose}>
+                <Animated.View style={[styles.modalOverlay, overlayStyle]} />
+            </TouchableWithoutFeedback>
 
-                <Animated.View 
-                    style={[
-                        styles.modalContent, 
-                        { backgroundColor: theme.surface }, 
-                        contentStyle
+            {/* Content: tapping inside does NOT close the modal */}
+            <Animated.View 
+                style={[
+                    styles.modalContent, 
+                    { backgroundColor: theme.surface }, 
+                    contentStyle
+                ]}
+            >
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={[
+                        styles.scrollContent,
+                        { paddingBottom: Math.max(paddingBottom, 24) }
                     ]}
+                    keyboardShouldPersistTaps="always"
+                    bounces={false}
                 >
-                    <ScrollView
-                        showsVerticalScrollIndicator={false}
-                        contentContainerStyle={[
-                            styles.scrollContent,
-                            { paddingBottom: Math.max(paddingBottom, 24) }
-                        ]}
-                        keyboardShouldPersistTaps="handled"
-                        bounces={false}
-                    >
-                        <View style={styles.handleContainer}>
-                            <View style={[styles.handle, { backgroundColor: theme.borderSubtle }]} />
-                        </View>
+                    <View style={styles.handleContainer}>
+                        <View style={[styles.handle, { backgroundColor: theme.borderSubtle }]} />
+                    </View>
 
-                        <CustomText size="large" weight="bold" style={styles.modalTitle}>
-                            {title}
-                        </CustomText>
+                    <CustomText size="large" weight="bold" style={styles.modalTitle}>
+                        {title}
+                    </CustomText>
 
-                        <View style={styles.childrenContainer}>{children}</View>
+                    <View style={styles.childrenContainer}>{children}</View>
 
-                        <View style={styles.modalActions}>
-                            {actions.map((action, index) => (
-                                <View key={action.title || index} style={{ flex: 1 }}>
-                                    <CustomButton
-                                        title={action.title}
-                                        onPress={action.onPress}
-                                        buttonStyle={[action.buttonStyle]}
-                                        textStyle={[{ fontSize: 16 }, action.textStyle]}
-                                        iconName={action.iconName}
-                                        iconColor={action.iconColor}
-                                    />
-                                </View>
-                            ))}
-                        </View>
-                    </ScrollView>
-                </Animated.View>
-            </View>
+                    <View style={styles.modalActions}>
+                        {actions.map((action, index) => (
+                            <View key={action.title || index} style={{ flex: 1 }}>
+                                <CustomButton
+                                    title={action.title}
+                                    onPress={action.onPress}
+                                    buttonStyle={[action.buttonStyle]}
+                                    textStyle={[{ fontSize: 16 }, action.textStyle]}
+                                    iconName={action.iconName}
+                                    iconColor={action.iconColor}
+                                />
+                            </View>
+                        ))}
+                    </View>
+                </ScrollView>
+                <GlobalNotification isModalInstance />
+            </Animated.View>
         </Modal>
     );
 });
@@ -158,7 +159,10 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.45)',
     },
     modalContent: {
-        width: '100%',
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
         maxHeight: '90%',
         borderTopLeftRadius: 32,
         borderTopRightRadius: 32,
@@ -197,5 +201,7 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
 });
+
+ActionModal.displayName = 'ActionModal';
 
 export default ActionModal;

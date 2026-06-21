@@ -102,7 +102,7 @@ export default function CustomInput({
                     style={styles.eyeIcon}
                 >
                     <Ionicons 
-                        name={isPasswordVisible ? "eye-off-outline" : "eye-outline"} 
+                        name={isPasswordVisible ? "eye-off" : "eye"} 
                         size={22} 
                         color={theme.textSecondary} 
                     />

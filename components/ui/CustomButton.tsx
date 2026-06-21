@@ -16,6 +16,7 @@ import {
     ViewStyle,
     useColorScheme,
     type GestureResponderEvent,
+    StyleProp,
 } from 'react-native';
 import { Colors } from '@/constants/Colors';
 
@@ -25,9 +26,9 @@ type CustomButtonProps = {
     /** Función a ejecutar cuando se presiona el botón. */
     onPress: (event: GestureResponderEvent) => void;
     /** Estilos personalizados para el contenedor del botón. */
-    buttonStyle?: ViewStyle | ViewStyle[];
+    buttonStyle?: StyleProp<ViewStyle>;
     /** Estilos personalizados para el texto del botón. */
-    textStyle?: TextStyle | TextStyle[];
+    textStyle?: StyleProp<TextStyle>;
     /** Nombre del ícono de Ionicons (opcional). */
     iconName?: keyof typeof Ionicons.glyphMap;
     /** Si el botón está en estado de carga. Muestra un spinner y se deshabilita. */
@@ -39,6 +40,10 @@ type CustomButtonProps = {
     activeOpacity?: number;
     /** Permite sobreescribir el color del ícono. Si no se provee, usa el color del texto. */
     iconColor?: string;
+    /** Permite sobreescribir el color del spinner de carga. */
+    spinnerColor?: string;
+    /** Permite sobreescribir el tamaño del ícono. */
+    iconSize?: number;
 };
 
 export default function CustomButton({
@@ -52,32 +57,35 @@ export default function CustomButton({
     // ✅ CORRECCIÓN: Recibimos las nuevas props.
     activeOpacity = 0.8, // Valor por defecto de TouchableOpacity.
     iconColor,
+    spinnerColor,
+    iconSize,
 }: CustomButtonProps) {
     const theme = Colors[useColorScheme() || 'light'];
     const isActuallyDisabled = disabled || isLoading;
 
     const defaultButtonStyle: ViewStyle = {
-        backgroundColor: isActuallyDisabled ? theme.border : theme.primary,
+        backgroundColor: isActuallyDisabled ? theme.buttonDisabled : theme.primary,
         ...styles.button,
     };
 
     const defaultTextStyle: TextStyle = {
-        color: isActuallyDisabled ? theme.textSecondary : theme.textOnPrimary,
+        color: isActuallyDisabled ? theme.buttonTextDisabled : theme.textOnPrimary,
         ...styles.text,
     };
 
     // ✅ CORRECCIÓN: El color del ícono ahora es más inteligente.
     // Prioridad: 1. `iconColor` prop, 2. `textStyle` color, 3. `defaultTextStyle` color.
+    const flatTextStyle = StyleSheet.flatten(textStyle);
     const finalIconColor =
         iconColor ||
-        (Array.isArray(textStyle) ? textStyle[0]?.color : textStyle?.color) ||
+        flatTextStyle?.color ||
         defaultTextStyle.color;
 
     return (
         <TouchableOpacity
             style={[
                 defaultButtonStyle, 
-                buttonStyle
+                buttonStyle,
             ]}
             onPress={onPress}
             // ✅ CORRECCIÓN: Usamos la prop activeOpacity.
@@ -85,13 +93,13 @@ export default function CustomButton({
             disabled={isActuallyDisabled}
         >
             {isLoading ? (
-                <ActivityIndicator size="small" color={theme.textOnPrimary} />
+                <ActivityIndicator size="small" color={spinnerColor || theme.textOnPrimary} />
             ) : (
                 <View style={styles.content}>
                     {iconName && (
                         <Ionicons
                             name={iconName}
-                            size={22}
+                            size={iconSize || 22}
                             // ✅ CORRECCIÓN: Usamos el color final calculado.
                             color={finalIconColor as string}
                         />
@@ -111,7 +119,7 @@ export default function CustomButton({
 
 const styles = StyleSheet.create({
     button: {
-        height: 52,
+        minHeight: 52,
         borderRadius: 100, // Forma de píldora para coincidir con los inputs
         alignItems: 'center',
         justifyContent: 'center',
@@ -129,6 +137,6 @@ const styles = StyleSheet.create({
         letterSpacing: 0.3,
     },
     disabled: {
-        opacity: 0.8,
+        opacity: 1,
     },
 });
