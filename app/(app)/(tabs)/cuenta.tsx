@@ -21,7 +21,6 @@ import {
     TouchableOpacity,
     View,
     TextInput,
-    Share,
 } from 'react-native';
 import { authenticateBiometrics, isBiometricsAvailable } from '@/utils/biometrics';
 import { STORAGE_KEYS } from '@/constants';
@@ -38,9 +37,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
 import { useClientStore } from '@/store/clientStore';
-import { useSessionStore } from '@/store/sessionStore';
-import { generateReferralCode } from '@/utils/referral';
-import * as Clipboard from 'expo-clipboard';
 
 export default function CuentaScreen() {
     const theme = Colors[useColorScheme() || 'light'];
@@ -55,14 +51,6 @@ export default function CuentaScreen() {
     const [isEditing, setIsEditing] = useState(false);
     const [newName, setNewName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
-
-    // Referidos
-    const referralCode = useSessionStore((state) => state.referralCode);
-    const referralCount = useSessionStore((state) => state.referralCount);
-    const referralCredits = useSessionStore((state) => state.referralCredits);
-    const setReferralCode = useSessionStore((state) => state.setReferralCode);
-    const setReferralCount = useSessionStore((state) => state.setReferralCount);
-    const setReferralCredits = useSessionStore((state) => state.setReferralCredits);
 
     // --- Refs para Foco ---
     const newNameInputRef = React.useRef<TextInput>(null);
@@ -91,29 +79,6 @@ export default function CuentaScreen() {
         };
         checkConfig();
     }, []);
-
-    // Generate referral code for existing users who don't have one yet
-    React.useEffect(() => {
-        const ensureReferralCode = async () => {
-            if (!referralCode && account) {
-                const auth = getAuth();
-                const user = auth.currentUser;
-                if (user) {
-                    const code = generateReferralCode(user.uid);
-                    setReferralCode(code);
-                    try {
-                        const db = getFirestore();
-                        await updateDoc(doc(db, 'users', user.uid), {
-                            referralCode: code,
-                        });
-                    } catch (err) {
-                        console.warn('Could not save referral code to Firestore:', err);
-                    }
-                }
-            }
-        };
-        ensureReferralCode();
-    }, [referralCode, account, setReferralCode]);
 
     const handleSignOut = useCallback(() => {
         if (hasPendingWrites) {
@@ -213,33 +178,9 @@ export default function CuentaScreen() {
         }
     }, [showNotification]);
 
-    const handleCopyReferralCode = useCallback(async () => {
-        if (!referralCode) {
-            showNotification({ message: 'Código de referido no disponible', type: 'error' });
-            return;
-        }
-        try {
-            await Clipboard.setStringAsync(referralCode);
-            showNotification({ message: 'Código copiado al portapapeles', type: 'success' });
-        } catch (error) {
-            console.error('Error al copiar:', error);
-            showNotification({ message: 'No se pudo copiar el código', type: 'error' });
-        }
-    }, [referralCode, showNotification]);
-
-    const handleShareReferral = useCallback(async () => {
-        if (!referralCode) {
-            showNotification({ message: 'Código de referido no disponible', type: 'error' });
-            return;
-        }
-        const storeName = account?.colmadoName || 'Mi Colmado';
-        const message = `🎯 ¡Te invito a usar Apunta'o! La app para controlar las cuentas del crédito de tu colmado.\n\nUsa mi código de referido: ${referralCode}\n\n📲 Descárgala y obtén 1 mes gratis al registrarte con mi código.`;
-        try {
-            await Share.share({ message });
-        } catch (error) {
-            console.error('Error al compartir:', error);
-        }
-    }, [referralCode, account, showNotification]);
+    const handleOpenReferidos = useCallback(() => {
+        router.push('/referidos');
+    }, [router]);
 
     return (
         <View 
@@ -290,74 +231,6 @@ export default function CuentaScreen() {
 
                 <SubscriptionCard />
 
-                {/* Sección de Referidos */}
-                {referralCode ? (
-                    <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }]}>
-                        <CustomText
-                            size="small"
-                            weight="bold"
-                            color={theme.textSecondary}
-                            style={styles.cardTitle}
-                        >
-                            Invita y Gana
-                        </CustomText>
-
-                        <View style={[styles.referralCodeBadge, { backgroundColor: theme.primaryLight }]}>
-                            <CustomText size="xxlarge" weight="bold" color={theme.primary}>
-                                {referralCode}
-                            </CustomText>
-                        </View>
-
-                        <View style={styles.referralActions}>
-                            <TouchableOpacity
-                                style={[styles.referralActionBtn, { borderColor: theme.border }]}
-                                onPress={handleCopyReferralCode}
-                            >
-                                <Ionicons name="copy-outline" size={20} color={theme.primary} />
-                                <CustomText size="medium" weight="bold" style={{ color: theme.primary, marginLeft: 8 }}>
-                                    Copiar
-                                </CustomText>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.referralActionBtn, { backgroundColor: theme.primary, borderColor: theme.primary }]}
-                                onPress={handleShareReferral}
-                            >
-                                <Ionicons name="share-outline" size={20} color={theme.textOnPrimary} />
-                                <CustomText size="medium" weight="bold" style={{ color: theme.textOnPrimary, marginLeft: 8 }}>
-                                    Compartir
-                                </CustomText>
-                            </TouchableOpacity>
-                        </View>
-
-                        <View style={styles.referralStats}>
-                            <View style={styles.referralStatItem}>
-                                <Ionicons name="people-outline" size={28} color={theme.primary} />
-                                <CustomText size="xlarge" weight="bold" style={{ marginTop: 6 }}>
-                                    {referralCount}
-                                </CustomText>
-                                <CustomText size="small" color={theme.textSecondary}>
-                                    Referidos
-                                </CustomText>
-                            </View>
-                            <View style={[styles.referralStatDivider, { backgroundColor: theme.border }]} />
-                            <View style={styles.referralStatItem}>
-                                <Ionicons name="cash-outline" size={28} color={theme.success} />
-                                <CustomText size="xlarge" weight="bold" style={{ marginTop: 6 }}>
-                                    {referralCredits > 0 ? `RD$ ${referralCredits}` : 'RD$ 0'}
-                                </CustomText>
-                                <CustomText size="small" color={theme.textSecondary}>
-                                    Comisiones
-                                </CustomText>
-                            </View>
-                        </View>
-
-                        <CustomText size="small" color={theme.textSecondary} style={styles.referralInfo}>
-                            Gana el 40% de la primera suscripción de tus referidos. 
-                            Ellos obtienen 1 mes gratis al registrarse con tu código AP-XXXXX.
-                        </CustomText>
-                    </View>
-                ) : null}
-
                 <View
                     style={[
                         styles.card,
@@ -385,7 +258,7 @@ export default function CuentaScreen() {
                     <ActionRow
                         icon="gift-outline"
                         text="Invitar Amigos"
-                        onPress={handleShareReferral}
+                        onPress={handleOpenReferidos}
                         theme={theme}
                     />
                     <ActionRow
@@ -540,46 +413,5 @@ const styles = StyleSheet.create({
     },
     settingIcon: {
         marginRight: 12,
-    },
-    referralCodeBadge: {
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        borderRadius: 16,
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    referralActions: {
-        flexDirection: 'row',
-        gap: 12,
-        marginBottom: 24,
-    },
-    referralActionBtn: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 14,
-        borderRadius: 14,
-        borderWidth: 1.5,
-    },
-    referralStats: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-around',
-        marginBottom: 16,
-        paddingVertical: 8,
-    },
-    referralStatItem: {
-        alignItems: 'center',
-        flex: 1,
-    },
-    referralStatDivider: {
-        width: 1,
-        height: 48,
-    },
-    referralInfo: {
-        textAlign: 'center',
-        lineHeight: 18,
-        marginBottom: 4,
     },
 });

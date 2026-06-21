@@ -26,6 +26,7 @@ export default function AppStackLayout() {
             <Stack screenOptions={{ animation: 'fade_from_bottom' }}>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen name="clients/[id]" options={{ headerShown: false }} />
+                <Stack.Screen name="referidos" options={{ headerShown: false }} />
             </Stack>
             <SubscriptionRenewalModal />
         </>
