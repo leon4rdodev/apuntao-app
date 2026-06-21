@@ -11,11 +11,14 @@ interface NotificationState {
     message: string;
     type: NotificationType;
     timerId?: ReturnType<typeof setTimeout>;
+    activeModalCount: number;
 }
 
 interface NotificationActions {
     show: (payload: { message: string; type?: NotificationType; duration?: number }) => void;
     hide: () => void;
+    registerModal: () => void;
+    unregisterModal: () => void;
 }
 
 // 2. Definimos el estado inicial
@@ -23,6 +26,7 @@ const initialState: NotificationState = {
     isVisible: false,
     message: '',
     type: 'info',
+    activeModalCount: 0,
 };
 
 // 3. Creamos el store
@@ -41,7 +45,7 @@ export const useNotificationStore = create<NotificationState & NotificationActio
             get().hide();
         }, duration);
 
-        set({ timerId: newTimerId });
+        set({ timerId: newTimerId as any });
     },
 
     hide: () => {
@@ -49,14 +53,14 @@ export const useNotificationStore = create<NotificationState & NotificationActio
         if (timerId) {
             clearTimeout(timerId);
         }
-        // Primero ocultamos visualmente (dispara la animación de salida)
         set({ isVisible: false, timerId: undefined });
-        // Luego limpiamos el mensaje después de la animación de salida (~200ms)
-        // para que el componente se desmonte y no bloquee eventos de toque
         setTimeout(() => {
             set({ message: '' });
         }, 250);
     },
+
+    registerModal: () => set((state) => ({ activeModalCount: state.activeModalCount + 1 })),
+    unregisterModal: () => set((state) => ({ activeModalCount: Math.max(0, state.activeModalCount - 1) })),
 }));
 
 // 4. Creamos un hook selector para un uso más limpio
